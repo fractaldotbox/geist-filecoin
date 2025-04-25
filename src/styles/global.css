@@ -125,9 +125,8 @@
 }
 
 * {
-	transition: background-color var(--transition-duration) ease,
-		border-color var(--transition-duration) ease,
-		color var(--transition-duration) ease;
+	transition: background-color var(--transition-duration) ease, border-color
+		var(--transition-duration) ease, color var(--transition-duration) ease;
 }
 
 /* Ensure dark mode is applied to the entire document */
