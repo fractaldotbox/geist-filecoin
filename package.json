@@ -1,0 +1,33 @@
+{
+	"name": "template",
+	"type": "module",
+	"version": "0.0.1",
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview",
+		"check:fix": "biome check --fix",
+		"astro": "astro"
+	},
+	"dependencies": {
+		"@astrojs/react": "^4.2.5",
+		"@astrojs/solid-js": "^5.0.9",
+		"@radix-ui/react-slot": "^1.2.0",
+		"@tailwindcss/vite": "^4.1.4",
+		"@types/react": "^19.1.2",
+		"@types/react-dom": "^19.1.2",
+		"astro": "^5.7.5",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"lucide-react": "^0.503.0",
+		"react": "^19.1.0",
+		"react-dom": "^19.1.0",
+		"solid-js": "^1.9.5",
+		"tailwind-merge": "^3.2.0",
+		"tailwindcss": "^4.1.4"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"tw-animate-css": "^1.2.8"
+	}
+}
