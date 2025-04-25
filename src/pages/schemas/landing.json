@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The main headline of the landing page"
+    },
+    "slug": {
+      "type": "string",
+      "description": "The URL-friendly version of the title"
+    },
+    "hero": {
+      "type": "object",
+      "properties": {
+        "headline": {
+          "type": "string",
+          "description": "The main headline in the hero section"
+        },
+        "subheadline": {
+          "type": "string",
+          "description": "A supporting headline"
+        },
+        "ctaText": {
+          "type": "string",
+          "description": "The call-to-action button text"
+        },
+        "ctaLink": {
+          "type": "string",
+          "description": "The URL for the call-to-action button"
+        },
+        "backgroundImage": {
+          "type": "string",
+          "description": "URL of the hero background image"
+        }
+      },
+      "required": ["headline", "ctaText", "ctaLink"]
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The feature title"
+          },
+          "description": {
+            "type": "string",
+            "description": "The feature description"
+          },
+          "icon": {
+            "type": "string",
+            "description": "URL of the feature icon"
+          }
+        },
+        "required": ["title", "description"]
+      }
+    },
+    "metaDescription": {
+      "type": "string",
+      "description": "A brief description for SEO purposes"
+    }
+  },
+  "required": ["title", "slug", "hero", "features", "metaDescription"]
+} 

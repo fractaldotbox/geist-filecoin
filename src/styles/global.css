@@ -118,3 +118,50 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+/* Add transition for smooth theme switching */
+:root {
+	--transition-duration: 0.3s;
+}
+
+* {
+	transition: background-color var(--transition-duration) ease,
+		border-color var(--transition-duration) ease,
+		color var(--transition-duration) ease;
+}
+
+/* Ensure dark mode is applied to the entire document */
+html.dark {
+	color-scheme: dark;
+}
+
+html.dark body {
+	@apply bg-background text-foreground;
+}
+
+/* Custom drawer animations */
+@keyframes slide-in-right {
+	from {
+		transform: translateX(100%);
+	}
+	to {
+		transform: translateX(0);
+	}
+}
+
+@keyframes slide-out-right {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(100%);
+	}
+}
+
+.drawer-slide-in {
+	animation: slide-in-right 0.3s ease-out;
+}
+
+.drawer-slide-out {
+	animation: slide-out-right 0.3s ease-in;
+}

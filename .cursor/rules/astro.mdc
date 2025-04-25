@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+use astro routing over react router
+
+This project use both react and solidjs, place components in corresponding folder path.
+
+use shadcn components whenever possible.
+documentaitons are avilable on @https://ui.shadcn.com/

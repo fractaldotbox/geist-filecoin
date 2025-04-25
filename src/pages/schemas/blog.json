@@ -1,0 +1,39 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "description": "The title of the blog post"
+      },
+      "slug": {
+        "type": "string",
+        "description": "The URL-friendly version of the title"
+      },
+      "content": {
+        "type": "string",
+        "description": "The main content of the blog post"
+      },
+      "metaDescription": {
+        "type": "string",
+        "description": "A brief description for SEO purposes"
+      },
+      "author": {
+        "type": "string",
+        "description": "The name of the author"
+      },
+      "publishDate": {
+        "type": "string",
+        "format": "date",
+        "description": "The date when the post was published"
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Tags associated with the blog post"
+      }
+    },
+    "required": ["title", "slug", "content", "metaDescription"]
+  }

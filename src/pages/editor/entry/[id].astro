@@ -1,0 +1,9 @@
+---
+export const prerender = false;
+import ContentLayout from '../../../layouts/ContentLayout.astro';
+import { EntryEditor } from '@/components/react/EntryEditor';
+---
+
+<ContentLayout title="Edit Content">
+	<EntryEditor client:load />
+</ContentLayout> 

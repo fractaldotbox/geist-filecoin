@@ -1,0 +1,17 @@
+---
+import Layout from './Layout.astro';
+import { ContentHeader } from '@/components/react/ContentHeader';
+
+interface Props {
+    title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<Layout title={title}>
+    <div class="container mx-auto p-6">
+        <ContentHeader client:load title={title} />
+        <slot />
+    </div>
+</Layout> 
