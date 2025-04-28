@@ -10,6 +10,21 @@
 			"type": "string",
 			"description": "The URL-friendly version of the title"
 		},
+		"heroImage": {
+			"type": "object",
+			"properties": {
+				"mediaType": {
+					"type": "string",
+					"description": "The MIME type of the uploaded image (e.g., image/jpeg, image/png)"
+				},
+				"url": {
+					"type": "string",
+					"description": "The URL or path to the uploaded hero image"
+				}
+			},
+			"required": ["mediaType", "url"],
+			"description": "The hero image for the blog post, supporting file upload"
+		},
 		"content": {
 			"type": "string",
 			"description": "The main content of the blog post"

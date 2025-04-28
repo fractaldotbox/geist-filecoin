@@ -14,6 +14,7 @@ interface SchemaField {
 	items?: {
 		type: string;
 	};
+	properties?: Record<string, SchemaField>;
 }
 
 interface Schema {
@@ -23,7 +24,7 @@ interface Schema {
 }
 
 interface ContentData {
-	[key: string]: string | string[];
+	[key: string]: string | string[] | { mediaType: string; url: string };
 }
 
 export function EntryEditor() {
@@ -70,10 +71,51 @@ export function EntryEditor() {
 		}));
 	};
 
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, name: string) => {
+		const file = e.target.files?.[0];
+		if (file) {
+			setContent((prev) => ({
+				...prev,
+				[name]: {
+					mediaType: file.type,
+					url: URL.createObjectURL(file)
+				}
+			}));
+		}
+	};
+
 	const renderField = (name: string, field: SchemaField) => {
 		const isRequired = schema?.required.includes(name);
 		const label = `${field.description}${isRequired ? " *" : ""}`;
 		const id = `field-${name}`;
+
+		console.log('render', name)
+		// Handle file upload fields
+		if (field.type === "object" && field.properties?.mediaType) {
+			return (
+				<div key={name} className="space-y-2">
+					<label htmlFor={id} className="text-sm font-medium">
+						{label}
+					</label>
+					<Input
+						id={id}
+						type="file"
+						accept="image/*"
+						onChange={(e) => handleFileChange(e, name)}
+						className="cursor-pointer"
+					/>
+					{(content[name] as { url: string })?.url && (
+						<div className="mt-2">
+							<img
+								src={(content[name] as { url: string }).url}
+								alt="Preview"
+								className="max-w-full h-auto max-h-48 rounded"
+							/>
+						</div>
+					)}
+				</div>
+			);
+		}
 
 		if (field.type === "array") {
 			return (
