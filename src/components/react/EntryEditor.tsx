@@ -67,7 +67,6 @@ async function submitContent(values: EntryFormData, progressCallback?: (progress
 			const formData = new FormData();
 			formData.append('file', media.file);
 
-			console.log('formData', submissionData);
 			uploadResponse = await ky.post('/api/upload', {
 				body: formData
 			}).json() as { url: string; cid: string };
@@ -114,7 +113,7 @@ async function submitContent(values: EntryFormData, progressCallback?: (progress
 }
 
 
-export function EntryEditor() {
+export function EntryEditor({ schemaId }: { schemaId?: string }) {
 	const schema = useStore(schemaStore);
 	const [isSchemaExpanded, setIsSchemaExpanded] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -170,12 +169,12 @@ export function EntryEditor() {
 	});
 
 	useEffect(() => {
-		// Get template type from URL
+		// Get template type from URL or use the schemaId passed from props
 		const params = new URLSearchParams(window.location.search);
-		const template = params.get("template") || "blog";
+		const template = schemaId || params.get("template") || "blog";
 
 		loadSchema(template);
-	}, []);
+	}, [schemaId]);
 
 	useEffect(() => {
 		if (schema) {
@@ -302,7 +301,7 @@ export function EntryEditor() {
 				control={form.control}
 				name={name}
 				render={({ field: formField }) => (
-					field.description.toLowerCase().includes("content") ? (
+					field.description?.toLowerCase()?.includes("content") ? (
 						<TextareaField
 							name={name}
 							field={field}

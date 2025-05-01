@@ -2,8 +2,10 @@
 export const prerender = false;
 import { EntryEditor } from "@/components/react/EntryEditor";
 import ContentLayout from "../../../layouts/ContentLayout.astro";
+
+const { id } = Astro.params;
 ---
 
 <ContentLayout title="Edit Content">
-	<EntryEditor client:load />
+	<EntryEditor schemaId={id} client:load />
 </ContentLayout> 

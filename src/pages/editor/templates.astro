@@ -1,0 +1,33 @@
+---
+import { Button } from "@/components/react/ui/button";
+import { Card } from "@/components/react/ui/card";
+import ContentLayout from "@/layouts/ContentLayout.astro";
+import { schemaIds, getAllSchemas, getSchemaById } from "../schemas/schema-loader";
+
+// Load all schemas with their metadata
+const schemas = getAllSchemas();
+---
+
+<ContentLayout title="Content Type Templates">
+    <div class="container mx-auto p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            {schemas.map((schema) => (
+                <Card className="p-6">
+                    <h2 class="text-xl font-semibold mb-2">{schema.id.charAt(0).toUpperCase() + schema.id.slice(1)}</h2>
+                    <p class="text-muted-foreground mb-4">
+                        {schema.id === 'blog' 
+                            ? 'Create a standard blog post with title, content, and meta description.' 
+                            : schema.id === 'product' 
+                                ? 'Create a product page with specifications, pricing, and features.' 
+                                : 'Create a landing page with hero section, features, and call-to-action.'}
+                    </p>
+                    <a href={`/editor/entry/${schema.id}`}>
+                        <Button className="w-full">
+                            Use Template
+                        </Button>
+                    </a>
+                </Card>
+            ))}
+        </div>
+    </div>
+</ContentLayout> 

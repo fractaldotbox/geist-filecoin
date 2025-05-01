@@ -1,28 +1,25 @@
 export const prender = false;
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
-export const blogSchema = JSON.parse(
-	readFileSync(join(process.cwd(), "src/pages/schemas/blog.json"), "utf-8"),
-);
-
-const productSchema = JSON.parse(
-	readFileSync(join(process.cwd(), "src/pages/schemas/product.json"), "utf-8"),
-);
-
-const landingSchema = JSON.parse(
-	readFileSync(join(process.cwd(), "src/pages/schemas/landing.json"), "utf-8"),
-);
+import type { APIRoute } from "astro";
+import { getSchemaById } from "./schema-loader";
 
 // TODO use storage with cloudflare kv
 
-export function GET({ params, request }) {
-	const byId = {
-		landing: landingSchema,
-		product: productSchema,
-		blog: blogSchema,
-	};
+export const GET: APIRoute = ({ params }) => {
+	const schema = getSchemaById(params.id as string);
+	
+	if (!schema) {
+		return new Response(JSON.stringify({ error: "Schema not found" }), {
+			status: 404,
+			headers: {
+				"Content-Type": "application/json"
+			}
+		});
+	}
 
-	return new Response(JSON.stringify(byId[params.id]));
+	return new Response(JSON.stringify(schema), {
+		headers: {
+			"Content-Type": "application/json"
+		}
+	});
 }
