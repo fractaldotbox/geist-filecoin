@@ -1,3 +1,5 @@
+export const prender = false;
+
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -24,16 +26,3 @@ export function GET({ params, request }) {
 
 	return new Response(JSON.stringify(byId[params.id]));
 }
-export const getStaticPaths = () => {
-	return [
-		{
-			params: { id: "landing" },
-		},
-		{
-			params: { id: "product" },
-		},
-		{
-			params: { id: "blog" },
-		},
-	];
-};

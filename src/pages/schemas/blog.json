@@ -50,5 +50,5 @@
 			"description": "Tags associated with the blog post"
 		}
 	},
-	"required": ["title", "slug", "content", "metaDescription"]
+	"required": []
 }

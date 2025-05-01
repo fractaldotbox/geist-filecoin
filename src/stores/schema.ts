@@ -1,15 +1,25 @@
 import { atom } from "nanostores";
 
-interface SchemaField {
+export interface SchemaField {
 	type: string;
 	description: string;
 	format?: string;
 	items?: {
 		type: string;
 	};
+	properties?: {
+		mediaType?: {
+			type: string;
+			description: string;
+		};
+		url?: {
+			type: string;
+			description: string;
+		};
+	};
 }
 
-interface Schema {
+export interface Schema {
 	type: string;
 	properties: Record<string, SchemaField>;
 	required: string[];

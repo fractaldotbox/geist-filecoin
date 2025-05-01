@@ -1,185 +1,328 @@
 import { Button } from "@/components/react/ui/button";
 import { Card } from "@/components/react/ui/card";
-import { Input } from "@/components/react/ui/input";
-import { Textarea } from "@/components/react/ui/textarea";
-import { loadSchema, schemaStore } from "@/stores/schema";
+import { loadSchema, schemaStore, type Schema, type SchemaField } from "@/stores/schema";
 import { useStore } from "@nanostores/react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useForm, useFormState } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import ky from "ky";
+import {
+	Form,
+	FormField,
+} from "@/components/react/ui/form";
+import {
+	ArrayField,
+	DateField,
+	FileField,
+	TextField,
+	TextareaField,
+} from "@/components/react/fields";
+import { simulateProgress } from "@/components/react/ui/global-progress";
+import type { EntryFormData, FileFieldValue } from "@/components/react/fields/types";
 
-interface SchemaField {
-	type: string;
-	description: string;
-	format?: string;
-	items?: {
-		type: string;
+// This would normally be imported from the Lighthouse SDK
+// import lighthouse from "@lighthouse-web3/sdk";
+
+/**
+ * Uploads a file to IPFS using Lighthouse
+ */
+async function uploadFileToLighthouse(file: File, progressCallback?: (progress: number) => void): Promise<{ cid: string, url: string }> {
+	// Simulate uploading for now
+	// When the SDK is properly installed, replace this with actual lighthouse upload
+	// const output = await lighthouse.upload(file, process.env.LIGHTHOUSE_API_KEY);
+
+	// Simulate progress
+	for (let i = 0; i <= 10; i++) {
+		if (progressCallback) {
+			progressCallback(i / 10);
+		}
+		await new Promise(resolve => setTimeout(resolve, 300));
+	}
+
+	// Simulate final response
+	const randomCid = `bafybeig${Math.random().toString(36).substring(2, 10)}`;
+	return {
+		cid: randomCid,
+		url: `https://gateway.lighthouse.storage/ipfs/${randomCid}`,
 	};
-	properties?: Record<string, SchemaField>;
 }
 
-interface Schema {
-	type: string;
-	properties: Record<string, SchemaField>;
-	required: string[];
+// New API endpoint upload function
+async function submitContent(values: EntryFormData, progressCallback?: (progress: number) => void): Promise<{ cid: string, url: string }> {
+	try {
+		console.log('submit', values);
+
+		const media = values?.media as FileFieldValue;
+		let uploadResponse: { url: string; cid: string } | undefined;
+
+		// Create a copy of the values to modify
+		const submissionData = { ...values };
+
+		// Check if media has a URL starting with blob: (which means it's a local file reference)
+		if (media?.file) {
+
+			// Create FormData for file upload
+			const formData = new FormData();
+			formData.append('file', media.file);
+
+			console.log('formData', submissionData);
+			uploadResponse = await ky.post('/api/upload', {
+				body: formData
+			}).json() as { url: string; cid: string };
+
+
+			console.log('uploadResponse', uploadResponse);
+			// Update the media object with the remote URL and CID
+			//@ts-ignore
+			submissionData.media = {
+				mediaType: media.mediaType,
+				cid: uploadResponse.cid
+			};
+		}
+
+		console.log('submissionData', submissionData);
+
+		const response = await ky.post('/api/submit', {
+			json: submissionData,
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json() as { message?: string };
+			throw new Error(errorData.message || 'Upload failed');
+		}
+
+		const data = await response.json() as { cid: string; url: string };
+
+		// Call progress callback with completion
+		if (progressCallback) {
+			progressCallback(1);
+		}
+
+		return {
+			cid: data.cid,
+			url: data.url,
+		};
+	} catch (error) {
+		console.error('Upload error:', error);
+		throw error;
+	}
 }
 
-interface ContentData {
-	[key: string]: string | string[] | { mediaType: string; url: string };
-}
 
 export function EntryEditor() {
 	const schema = useStore(schemaStore);
-	const [content, setContent] = useState<ContentData>({});
 	const [isSchemaExpanded, setIsSchemaExpanded] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [uploadProgress, setUploadProgress] = useState(0);
+
+	// Create form schema based on the loaded schema
+	const createFormSchema = (schema: Schema) => {
+		const schemaShape: Record<string, z.ZodTypeAny> = {};
+
+		for (const [key, field] of Object.entries(schema.properties)) {
+			const isRequired = schema.required.includes(key);
+
+			if (field.type === "object" && field.properties?.mediaType) {
+				schemaShape.media = z.object({
+					mediaType: z.string().optional(),
+					url: z.string().optional(),
+					file: z.instanceof(File).optional(),
+					cid: z.string().optional() // Add the cid property to fix the linter error
+				});
+
+			} else if (field.type === "array") {
+				schemaShape[key] = z.array(z.string())
+			} else if (field.type === "string" && field.format === "date") {
+				const dateSchema = z.string()
+					.refine((val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), {
+						message: "Please enter a valid date"
+					});
+
+				schemaShape[key] = isRequired
+					? dateSchema
+					: dateSchema.optional();
+			} else {
+				const stringSchema = z.string();
+				schemaShape[key] = isRequired
+					? stringSchema.min(1, `${field.description} is required`)
+					: stringSchema;
+			}
+		}
+
+		return z.object(schemaShape);
+	};
+
+	const formSchema = schema ? createFormSchema(schema) : z.object({});
+	const form = useForm<EntryFormData>({
+		resolver: zodResolver(formSchema),
+		defaultValues: {},
+		mode: "onTouched" // Validate on blur
+	});
+
+	// Track form state for errors and dirty fields
+	const { errors, dirtyFields } = useFormState({
+		control: form.control
+	});
 
 	useEffect(() => {
 		// Get template type from URL
 		const params = new URLSearchParams(window.location.search);
 		const template = params.get("template") || "blog";
 
-		// Load schema based on template
 		loadSchema(template);
 	}, []);
 
 	useEffect(() => {
 		if (schema) {
-			// Initialize content with empty values
-			const initialContent: ContentData = {};
+			// Initialize form with empty values
+			const defaultValues: EntryFormData = {};
 			for (const key of Object.keys(schema.properties)) {
 				if (schema.properties[key].type === "array") {
-					initialContent[key] = [];
+					defaultValues[key] = [];
+				} else if (schema.properties[key].type === "object" && schema.properties[key].properties?.mediaType) {
+					defaultValues[key] = { mediaType: "", url: "" };
+				} else if (schema.properties[key].type === "string" && schema.properties[key].format === "date") {
+					defaultValues[key] = undefined; // Default date fields to undefined
 				} else {
-					initialContent[key] = "";
+					defaultValues[key] = "";
 				}
 			}
-			setContent(initialContent);
+			form.reset(defaultValues);
 		}
-	}, [schema]);
+	}, [schema, form]);
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		console.log("Saving content:", content);
+	// Decouple the file upload and metadata upload
+	// as easier to use form-data for the file upload
+	// and json for the metadata upload
+
+	const onSubmit = async (values: EntryFormData) => {
+		setIsSubmitting(true);
+		console.log("debug:", values, typeof values);
+		try {
+			// Show global progress bar
+			await simulateProgress();
+
+			const uploadResult = await submitContent(values, (progress) => {
+				setUploadProgress(progress);
+			});
+
+			console.log('uploadResult', uploadResult);
+			// Process the submission with uploaded files
+			console.log("Form submitted with processed data:", values);
+		} catch (error) {
+			console.error("Error submitting form:", error);
+		} finally {
+			setIsSubmitting(false);
+			setUploadProgress(0);
+		}
 	};
 
-	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-	) => {
-		const { name, value } = e.target;
-		setContent((prev) => ({
-			...prev,
-			[name]: value,
-		}));
-	};
-
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, name: string) => {
-		const file = e.target.files?.[0];
-		if (file) {
-			setContent((prev) => ({
-				...prev,
-				[name]: {
-					mediaType: file.type,
-					url: URL.createObjectURL(file)
-				}
-			}));
+	const onInvalidSubmit = () => {
+		// Mark all required fields as touched to show validation errors
+		if (schema) {
+			for (const field of schema.required) {
+				form.trigger(field);
+			}
 		}
 	};
 
 	const renderField = (name: string, field: SchemaField) => {
-		const isRequired = schema?.required.includes(name);
-		const label = `${field.description}${isRequired ? " *" : ""}`;
-		const id = `field-${name}`;
+		const isRequired = Boolean(schema?.required.includes(name));
+		// A field is dirty if it's been touched by the user or if the form has been submitted
+		const isDirty = !!dirtyFields[name] || form.formState.isSubmitted;
+		const error = errors[name]?.message as string | undefined;
 
-		console.log('render', name)
-		// Handle file upload fields
 		if (field.type === "object" && field.properties?.mediaType) {
+
+			// use separate field
+
 			return (
-				<div key={name} className="space-y-2">
-					<label htmlFor={id} className="text-sm font-medium">
-						{label}
-					</label>
-					<Input
-						id={id}
-						type="file"
-						accept="image/*"
-						onChange={(e) => handleFileChange(e, name)}
-						className="cursor-pointer"
-					/>
-					{(content[name] as { url: string })?.url && (
-						<div className="mt-2">
-							<img
-								src={(content[name] as { url: string }).url}
-								alt="Preview"
-								className="max-w-full h-auto max-h-48 rounded"
-							/>
-						</div>
+				<FormField
+					control={form.control}
+					name="media"
+					render={({ field: formField }) => (
+						<FileField
+							name={name}
+							field={field}
+							formField={formField}
+							isRequired={isRequired}
+							isDirty={isDirty}
+							error={error}
+						/>
 					)}
-				</div>
+				/>
 			);
 		}
 
 		if (field.type === "array") {
 			return (
-				<div key={name} className="space-y-2">
-					<label htmlFor={id} className="text-sm font-medium">
-						{label}
-					</label>
-					<Textarea
-						id={id}
-						name={name}
-						value={
-							Array.isArray(content[name])
-								? (content[name] as string[]).join("\n")
-								: ""
-						}
-						onChange={handleChange}
-						placeholder={`Enter ${name}...`}
-						className="min-h-[100px]"
-					/>
-				</div>
+				<FormField
+					control={form.control}
+					name={name}
+					render={({ field: formField }) => (
+						<ArrayField
+							name={name}
+							field={field}
+							formField={formField}
+							isRequired={isRequired}
+							isDirty={isDirty}
+							error={error}
+						/>
+					)}
+				/>
 			);
 		}
 
 		if (field.type === "string" && field.format === "date") {
 			return (
-				<div key={name} className="space-y-2">
-					<label htmlFor={id} className="text-sm font-medium">
-						{label}
-					</label>
-					<Input
-						id={id}
-						type="date"
-						name={name}
-						value={content[name] as string}
-						onChange={handleChange}
-					/>
-				</div>
+				<FormField
+					control={form.control}
+					name={name}
+					render={({ field: formField }) => (
+						<DateField
+							name={name}
+							field={field}
+							formField={formField}
+							isRequired={isRequired}
+							isDirty={isDirty}
+							error={error}
+						/>
+					)}
+				/>
 			);
 		}
 
 		return (
-			<div key={name} className="space-y-2">
-				<label htmlFor={id} className="text-sm font-medium">
-					{label}
-				</label>
-				{field.description.toLowerCase().includes("content") ? (
-					<Textarea
-						id={id}
-						name={name}
-						value={content[name] as string}
-						onChange={handleChange}
-						placeholder={`Enter ${name}...`}
-						className="min-h-[200px]"
-					/>
-				) : (
-					<Input
-						id={id}
-						name={name}
-						value={content[name] as string}
-						onChange={handleChange}
-						placeholder={`Enter ${name}...`}
-					/>
+			<FormField
+				control={form.control}
+				name={name}
+				render={({ field: formField }) => (
+					field.description.toLowerCase().includes("content") ? (
+						<TextareaField
+							name={name}
+							field={field}
+							formField={formField}
+							isRequired={isRequired}
+							isDirty={isDirty}
+							error={error}
+						/>
+					) : (
+						<TextField
+							name={name}
+							field={field}
+							formField={formField}
+							isRequired={isRequired}
+							isDirty={isDirty}
+							error={error}
+						/>
+					)
 				)}
-			</div>
+			/>
 		);
 	};
 
@@ -193,11 +336,29 @@ export function EntryEditor() {
 				{/* Main Content */}
 				<div className="md:col-span-2">
 					<Card className="p-6">
-						<form onSubmit={handleSubmit} className="space-y-6">
-							{Object.entries(schema.properties).map(([name, field]) =>
-								renderField(name, field),
-							)}
-						</form>
+						<Form {...form}>
+							<form onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-6">
+								{Object.entries(schema.properties).map(([name, field]) =>
+									renderField(name, field)
+								)}
+								<Button
+									type="submit"
+									disabled={isSubmitting}
+									className="w-full"
+								>
+									{isSubmitting ? (
+										<>
+											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+											{uploadProgress > 0 && uploadProgress < 1 ?
+												`Uploading... ${Math.round(uploadProgress * 100)}%` :
+												"Saving..."}
+										</>
+									) : (
+										"Save Content"
+									)}
+								</Button>
+							</form>
+						</Form>
 					</Card>
 				</div>
 				{/* Sidebar */}
@@ -240,13 +401,6 @@ export function EntryEditor() {
 										</ul>
 									</div>
 								)}
-							</div>
-
-							<div className="pt-4 border-t">
-								<h2 className="text-lg font-semibold mb-4">Action</h2>
-								<Button onClick={handleSubmit} className="w-full">
-									Save Content
-								</Button>
 							</div>
 						</div>
 					</Card>
