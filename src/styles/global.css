@@ -1,5 +1,8 @@
 @import "tailwindcss";
+
 @import "tw-animate-css";
+
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -157,10 +160,51 @@ html.dark body {
 	}
 }
 
+/* Form field animation */
+@keyframes slide-up {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
 .drawer-slide-in {
 	animation: slide-in-right 0.3s ease-out;
 }
 
 .drawer-slide-out {
 	animation: slide-out-right 0.3s ease-in;
+}
+
+.field-slide-up {
+	animation: slide-up 0.4s ease-out;
+}
+
+/* Add staggered animation delay utilities */
+.delay-0 {
+	animation-delay: 0ms;
+}
+
+.delay-100 {
+	animation-delay: 100ms;
+}
+
+.delay-200 {
+	animation-delay: 200ms;
+}
+
+.delay-300 {
+	animation-delay: 300ms;
+}
+
+.delay-400 {
+	animation-delay: 400ms;
+}
+
+.delay-500 {
+	animation-delay: 500ms;
 }

@@ -21,6 +21,7 @@ import {
 } from "@/components/react/fields";
 import { simulateProgress } from "@/components/react/ui/global-progress";
 import type { EntryFormData, FileFieldValue } from "@/components/react/fields/types";
+import { MarkdownField } from "./fields/MarkdownField";
 
 // This would normally be imported from the Lighthouse SDK
 // import lighthouse from "@lighthouse-web3/sdk";
@@ -118,6 +119,7 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 	const [isSchemaExpanded, setIsSchemaExpanded] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
+	const [isAnimated, setIsAnimated] = useState(false);
 
 	// Create form schema based on the loaded schema
 	const createFormSchema = (schema: Schema) => {
@@ -192,6 +194,11 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 				}
 			}
 			form.reset(defaultValues);
+
+			// Trigger animation after form is initialized
+			setTimeout(() => {
+				setIsAnimated(true);
+			}, 100);
 		}
 	}, [schema, form]);
 
@@ -230,29 +237,34 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 		}
 	};
 
-	const renderField = (name: string, field: SchemaField) => {
+	const renderField = (name: string, field: SchemaField, index: number) => {
 		const isRequired = Boolean(schema?.required.includes(name));
 		// A field is dirty if it's been touched by the user or if the form has been submitted
 		const isDirty = !!dirtyFields[name] || form.formState.isSubmitted;
 		const error = errors[name]?.message as string | undefined;
 
+		// Animation delay based on field index
+		const delayClass = isAnimated ? `delay-${Math.min(index * 100, 500)}` : '';
+		const animationClass = isAnimated ? 'field-slide-up' : 'opacity-0';
+
 		if (field.type === "object" && field.properties?.mediaType) {
-
 			// use separate field
-
 			return (
 				<FormField
+					key={name}
 					control={form.control}
 					name="media"
 					render={({ field: formField }) => (
-						<FileField
-							name={name}
-							field={field}
-							formField={formField}
-							isRequired={isRequired}
-							isDirty={isDirty}
-							error={error}
-						/>
+						<div className={`${animationClass} ${delayClass}`}>
+							<FileField
+								name={name}
+								field={field}
+								formField={formField}
+								isRequired={isRequired}
+								isDirty={isDirty}
+								error={error}
+							/>
+						</div>
 					)}
 				/>
 			);
@@ -261,17 +273,20 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 		if (field.type === "array") {
 			return (
 				<FormField
+					key={name}
 					control={form.control}
 					name={name}
 					render={({ field: formField }) => (
-						<ArrayField
-							name={name}
-							field={field}
-							formField={formField}
-							isRequired={isRequired}
-							isDirty={isDirty}
-							error={error}
-						/>
+						<div className={`${animationClass} ${delayClass}`}>
+							<ArrayField
+								name={name}
+								field={field}
+								formField={formField}
+								isRequired={isRequired}
+								isDirty={isDirty}
+								error={error}
+							/>
+						</div>
 					)}
 				/>
 			);
@@ -280,17 +295,20 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 		if (field.type === "string" && field.format === "date") {
 			return (
 				<FormField
+					key={name}
 					control={form.control}
 					name={name}
 					render={({ field: formField }) => (
-						<DateField
-							name={name}
-							field={field}
-							formField={formField}
-							isRequired={isRequired}
-							isDirty={isDirty}
-							error={error}
-						/>
+						<div className={`${animationClass} ${delayClass}`}>
+							<DateField
+								name={name}
+								field={field}
+								formField={formField}
+								isRequired={isRequired}
+								isDirty={isDirty}
+								error={error}
+							/>
+						</div>
 					)}
 				/>
 			);
@@ -298,28 +316,32 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 
 		return (
 			<FormField
+				key={name}
 				control={form.control}
 				name={name}
 				render={({ field: formField }) => (
-					field.description?.toLowerCase()?.includes("content") ? (
-						<TextareaField
-							name={name}
-							field={field}
-							formField={formField}
-							isRequired={isRequired}
-							isDirty={isDirty}
-							error={error}
-						/>
-					) : (
-						<TextField
-							name={name}
-							field={field}
-							formField={formField}
-							isRequired={isRequired}
-							isDirty={isDirty}
-							error={error}
-						/>
-					)
+					<div className={`${animationClass} ${delayClass}`}>
+						{/* always use markdown field for now */}
+						{field.description?.toLowerCase()?.includes("content") ? (
+							<MarkdownField
+								name={name}
+								field={field}
+								formField={formField}
+								isRequired={isRequired}
+								isDirty={isDirty}
+								error={error}
+							/>
+						) : (
+							<TextField
+								name={name}
+								field={field}
+								formField={formField}
+								isRequired={isRequired}
+								isDirty={isDirty}
+								error={error}
+							/>
+						)}
+					</div>
 				)}
 			/>
 		);
@@ -332,18 +354,17 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 	return (
 		<div className="container mx-auto p-6">
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-				{/* Main Content */}
 				<div className="md:col-span-2">
 					<Card className="p-6">
 						<Form {...form}>
 							<form onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-6">
-								{Object.entries(schema.properties).map(([name, field]) =>
-									renderField(name, field)
+								{Object.entries(schema.properties).map(([name, field], index) =>
+									renderField(name, field, index)
 								)}
 								<Button
 									type="submit"
 									disabled={isSubmitting}
-									className="w-full"
+									className={`w-full ${isAnimated ? 'field-slide-up delay-500' : 'opacity-0'}`}
 								>
 									{isSubmitting ? (
 										<>

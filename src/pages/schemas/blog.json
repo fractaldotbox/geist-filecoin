@@ -27,7 +27,7 @@
 		},
 		"content": {
 			"type": "string",
-			"description": "The main content of the blog post"
+			"description": "The main content of the blog post. (markdown supported)"
 		},
 		"metaDescription": {
 			"type": "string",
