@@ -5,13 +5,13 @@ import type {
 	DealParameters,
 	UploadFileReturnType,
 } from "@lighthouse-web3/sdk/dist/types";
-import ky, { type DownloadProgress, type Progress } from "ky";
+import ky, { type Progress } from "ky";
 
 export const createLighthouseEndpoint = (isWrapWithDirectory = false) => {
 	const search = new URLSearchParams(
-		"wrap-with-directory=" + isWrapWithDirectory,
+		`wrap-with-directory=${isWrapWithDirectory}`,
 	);
-	return lighthouseConfig.lighthouseNode + `/api/v0/add?${search.toString()}`;
+	return `${lighthouseConfig.lighthouseNode}/api/v0/add?${search.toString()}`;
 };
 
 export type UploadLighthouseParams = {
@@ -22,8 +22,7 @@ export type UploadLighthouseParams = {
 	formData?: FormData;
 	files?: File[];
 	dealParameters?: DealParameters | undefined;
-	// use DownloadProgress over IUploadProgressCallback for more metadata
-	uploadProgressCallback?: (data: DownloadProgress) => void;
+	uploadProgressCallback?: (data: Progress) => void;
 };
 
 export const asFormData = (formData?: FormData, files?: File[]) => {
@@ -71,7 +70,7 @@ export const uploadFiles = async <T extends boolean>(
 
 	const isWrapWithDirectory = isDirectory || files.length > 1;
 
-	let endpoint = createLighthouseEndpoint(isWrapWithDirectory);
+	const endpoint = createLighthouseEndpoint(isWrapWithDirectory);
 
 	const token = `Bearer ${accessToken}`;
 

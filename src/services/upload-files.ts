@@ -1,9 +1,7 @@
-
 import {
 	uploadFiles as uploadFilesLighthouse,
 	uploadText,
 } from "@/lib/filecoin/lighthouse/isomorphic";
-
 
 import type { Progress } from "ky";
 
@@ -29,15 +27,14 @@ const apiKey = import.meta.env.LIGHTHOUSE_API_KEY;
 // Lighthouse effectively submit to their endpoint with another form data based request
 
 export const uploadFiles = async ({
-    file,
-    uploadProgressCallback,
+	file,
+	uploadProgressCallback,
 }: UploadFilesParams<{ file: File }>) => {
-
-    // Upload the temporary file to Lighthouse
-    const response = await uploadFilesLighthouse(
-        [file],
-        apiKey,
-        uploadProgressCallback,
-    );
-    return response;
-}
+	// Upload the temporary file to Lighthouse
+	const response = await uploadFilesLighthouse(
+		[file],
+		apiKey,
+		uploadProgressCallback,
+	);
+	return response;
+};

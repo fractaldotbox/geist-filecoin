@@ -1,17 +1,3 @@
-import { Button } from "@/components/react/ui/button";
-import { Card } from "@/components/react/ui/card";
-import { loadSchema, schemaStore, type Schema, type SchemaField } from "@/stores/schema";
-import { useStore } from "@nanostores/react";
-import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useForm, useFormState } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import ky from "ky";
-import {
-	Form,
-	FormField,
-} from "@/components/react/ui/form";
 import {
 	ArrayField,
 	DateField,
@@ -19,8 +5,27 @@ import {
 	TextField,
 	TextareaField,
 } from "@/components/react/fields";
+import type {
+	EntryFormData,
+	FileFieldValue,
+} from "@/components/react/fields/types";
+import { Button } from "@/components/react/ui/button";
+import { Card } from "@/components/react/ui/card";
+import { Form, FormField } from "@/components/react/ui/form";
 import { simulateProgress } from "@/components/react/ui/global-progress";
-import type { EntryFormData, FileFieldValue } from "@/components/react/fields/types";
+import {
+	type Schema,
+	type SchemaField,
+	loadSchema,
+	schemaStore,
+} from "@/stores/schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useStore } from "@nanostores/react";
+import ky from "ky";
+import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm, useFormState } from "react-hook-form";
+import * as z from "zod";
 import { MarkdownField } from "./fields/MarkdownField";
 
 // This would normally be imported from the Lighthouse SDK
@@ -29,7 +34,10 @@ import { MarkdownField } from "./fields/MarkdownField";
 /**
  * Uploads a file to IPFS using Lighthouse
  */
-async function uploadFileToLighthouse(file: File, progressCallback?: (progress: number) => void): Promise<{ cid: string, url: string }> {
+async function uploadFileToLighthouse(
+	file: File,
+	progressCallback?: (progress: number) => void,
+): Promise<{ cid: string; url: string }> {
 	// Simulate uploading for now
 	// When the SDK is properly installed, replace this with actual lighthouse upload
 	// const output = await lighthouse.upload(file, process.env.LIGHTHOUSE_API_KEY);
@@ -39,7 +47,7 @@ async function uploadFileToLighthouse(file: File, progressCallback?: (progress: 
 		if (progressCallback) {
 			progressCallback(i / 10);
 		}
-		await new Promise(resolve => setTimeout(resolve, 300));
+		await new Promise((resolve) => setTimeout(resolve, 300));
 	}
 
 	// Simulate final response
@@ -51,9 +59,12 @@ async function uploadFileToLighthouse(file: File, progressCallback?: (progress: 
 }
 
 // New API endpoint upload function
-async function submitContent(values: EntryFormData, progressCallback?: (progress: number) => void): Promise<{ cid: string, url: string }> {
+async function submitContent(
+	values: EntryFormData,
+	progressCallback?: (progress: number) => void,
+): Promise<{ cid: string; url: string }> {
 	try {
-		console.log('submit', values);
+		console.log("submit", values);
 
 		const media = values?.media as FileFieldValue;
 		let uploadResponse: { url: string; cid: string } | undefined;
@@ -63,40 +74,40 @@ async function submitContent(values: EntryFormData, progressCallback?: (progress
 
 		// Check if media has a URL starting with blob: (which means it's a local file reference)
 		if (media?.file) {
-
 			// Create FormData for file upload
 			const formData = new FormData();
-			formData.append('file', media.file);
+			formData.append("file", media.file);
 
-			uploadResponse = await ky.post('/api/upload', {
-				body: formData
-			}).json() as { url: string; cid: string };
+			uploadResponse = (await ky
+				.post("/api/upload", {
+					body: formData,
+				})
+				.json()) as { url: string; cid: string };
 
-
-			console.log('uploadResponse', uploadResponse);
+			console.log("uploadResponse", uploadResponse);
 			// Update the media object with the remote URL and CID
 			//@ts-ignore
 			submissionData.media = {
 				mediaType: media.mediaType,
-				cid: uploadResponse.cid
+				cid: uploadResponse.cid,
 			};
 		}
 
-		console.log('submissionData', submissionData);
+		console.log("submissionData", submissionData);
 
-		const response = await ky.post('/api/submit', {
+		const response = await ky.post("/api/submit", {
 			json: submissionData,
 			headers: {
-				'Content-Type': 'application/json'
-			}
+				"Content-Type": "application/json",
+			},
 		});
 
 		if (!response.ok) {
-			const errorData = await response.json() as { message?: string };
-			throw new Error(errorData.message || 'Upload failed');
+			const errorData = (await response.json()) as { message?: string };
+			throw new Error(errorData.message || "Upload failed");
 		}
 
-		const data = await response.json() as { cid: string; url: string };
+		const data = (await response.json()) as { cid: string; url: string };
 
 		// Call progress callback with completion
 		if (progressCallback) {
@@ -108,11 +119,10 @@ async function submitContent(values: EntryFormData, progressCallback?: (progress
 			url: data.url,
 		};
 	} catch (error) {
-		console.error('Upload error:', error);
+		console.error("Upload error:", error);
 		throw error;
 	}
 }
-
 
 export function EntryEditor({ schemaId }: { schemaId?: string }) {
 	const schema = useStore(schemaStore);
@@ -133,20 +143,18 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 					mediaType: z.string().optional(),
 					url: z.string().optional(),
 					file: z.instanceof(File).optional(),
-					cid: z.string().optional() // Add the cid property to fix the linter error
+					cid: z.string().optional(), // Add the cid property to fix the linter error
 				});
-
 			} else if (field.type === "array") {
-				schemaShape[key] = z.array(z.string())
+				schemaShape[key] = z.array(z.string());
 			} else if (field.type === "string" && field.format === "date") {
-				const dateSchema = z.string()
+				const dateSchema = z
+					.string()
 					.refine((val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), {
-						message: "Please enter a valid date"
+						message: "Please enter a valid date",
 					});
 
-				schemaShape[key] = isRequired
-					? dateSchema
-					: dateSchema.optional();
+				schemaShape[key] = isRequired ? dateSchema : dateSchema.optional();
 			} else {
 				const stringSchema = z.string();
 				schemaShape[key] = isRequired
@@ -162,12 +170,12 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 	const form = useForm<EntryFormData>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {},
-		mode: "onTouched" // Validate on blur
+		mode: "onTouched", // Validate on blur
 	});
 
 	// Track form state for errors and dirty fields
 	const { errors, dirtyFields } = useFormState({
-		control: form.control
+		control: form.control,
 	});
 
 	useEffect(() => {
@@ -185,9 +193,15 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 			for (const key of Object.keys(schema.properties)) {
 				if (schema.properties[key].type === "array") {
 					defaultValues[key] = [];
-				} else if (schema.properties[key].type === "object" && schema.properties[key].properties?.mediaType) {
+				} else if (
+					schema.properties[key].type === "object" &&
+					schema.properties[key].properties?.mediaType
+				) {
 					defaultValues[key] = { mediaType: "", url: "" };
-				} else if (schema.properties[key].type === "string" && schema.properties[key].format === "date") {
+				} else if (
+					schema.properties[key].type === "string" &&
+					schema.properties[key].format === "date"
+				) {
 					defaultValues[key] = undefined; // Default date fields to undefined
 				} else {
 					defaultValues[key] = "";
@@ -217,7 +231,7 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 				setUploadProgress(progress);
 			});
 
-			console.log('uploadResult', uploadResult);
+			console.log("uploadResult", uploadResult);
 			// Process the submission with uploaded files
 			console.log("Form submitted with processed data:", values);
 		} catch (error) {
@@ -244,8 +258,8 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 		const error = errors[name]?.message as string | undefined;
 
 		// Animation delay based on field index
-		const delayClass = isAnimated ? `delay-${Math.min(index * 100, 500)}` : '';
-		const animationClass = isAnimated ? 'field-slide-up' : 'opacity-0';
+		const delayClass = isAnimated ? `delay-${Math.min(index * 100, 500)}` : "";
+		const animationClass = isAnimated ? "field-slide-up" : "opacity-0";
 
 		if (field.type === "object" && field.properties?.mediaType) {
 			// use separate field
@@ -357,21 +371,24 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 				<div className="md:col-span-2">
 					<Card className="p-6">
 						<Form {...form}>
-							<form onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-6">
+							<form
+								onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)}
+								className="space-y-6"
+							>
 								{Object.entries(schema.properties).map(([name, field], index) =>
-									renderField(name, field, index)
+									renderField(name, field, index),
 								)}
 								<Button
 									type="submit"
 									disabled={isSubmitting}
-									className={`w-full ${isAnimated ? 'field-slide-up delay-500' : 'opacity-0'}`}
+									className={`w-full ${isAnimated ? "field-slide-up delay-500" : "opacity-0"}`}
 								>
 									{isSubmitting ? (
 										<>
 											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-											{uploadProgress > 0 && uploadProgress < 1 ?
-												`Uploading... ${Math.round(uploadProgress * 100)}%` :
-												"Saving..."}
+											{uploadProgress > 0 && uploadProgress < 1
+												? `Uploading... ${Math.round(uploadProgress * 100)}%`
+												: "Saving..."}
 										</>
 									) : (
 										"Save Content"
