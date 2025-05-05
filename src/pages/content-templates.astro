@@ -1,0 +1,42 @@
+---
+import { Button } from "@/components/react/ui/button";
+import { Card } from "@/components/react/ui/card";
+import ContentLayout from "../layouts/ContentLayout.astro";
+---
+
+<ContentLayout title="Content Templates">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        <Card className="p-6">
+            <h2 class="text-xl font-semibold mb-2">Blog Post</h2>
+            <p class="text-muted-foreground mb-4">Create a standard blog post with title, content, and meta description.</p>
+            <Button 
+                className="w-full" 
+                onClick={() => window.location.href = '/content?template=blog'}
+            >
+                Use Template
+            </Button>
+        </Card>
+
+        <Card className="p-6">
+            <h2 class="text-xl font-semibold mb-2">Product Page</h2>
+            <p class="text-muted-foreground mb-4">Create a product page with specifications, pricing, and features.</p>
+            <Button 
+                className="w-full" 
+                onClick={() => window.location.href = '/content?template=product'}
+            >
+                Use Template
+            </Button>
+        </Card>
+
+        <Card className="p-6">
+            <h2 class="text-xl font-semibold mb-2">Landing Page</h2>
+            <p class="text-muted-foreground mb-4">Create a landing page with hero section, features, and call-to-action.</p>
+            <Button 
+                className="w-full" 
+                onClick={() => window.location.href = '/content?template=landing'}
+            >
+                Use Template
+            </Button>
+        </Card>
+    </div>
+</ContentLayout> 

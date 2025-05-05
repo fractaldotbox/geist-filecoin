@@ -1,0 +1,54 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"properties": {
+		"title": {
+			"type": "string",
+			"description": "The title of the blog post"
+		},
+		"slug": {
+			"type": "string",
+			"description": "The URL-friendly version of the title"
+		},
+		"heroImage": {
+			"type": "object",
+			"properties": {
+				"mediaType": {
+					"type": "string",
+					"description": "The MIME type of the uploaded image (e.g., image/jpeg, image/png)"
+				},
+				"url": {
+					"type": "string",
+					"description": "The URL or path to the uploaded hero image"
+				}
+			},
+			"required": ["mediaType", "url"],
+			"description": "The hero image for the blog post, supporting file upload"
+		},
+		"content": {
+			"type": "string",
+			"description": "The main content of the blog post. (markdown supported)"
+		},
+		"metaDescription": {
+			"type": "string",
+			"description": "A brief description for SEO purposes"
+		},
+		"author": {
+			"type": "string",
+			"description": "The name of the author"
+		},
+		"publishDate": {
+			"type": "string",
+			"format": "date",
+			"description": "The date when the post was published"
+		},
+		"tags": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			},
+			"description": "Tags associated with the blog post"
+		}
+	},
+	"required": []
+}

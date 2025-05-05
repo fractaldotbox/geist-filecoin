@@ -1,5 +1,8 @@
 @import "tailwindcss";
+
 @import "tw-animate-css";
+
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -117,4 +120,91 @@
 	body {
 		@apply bg-background text-foreground;
 	}
+}
+
+/* Add transition for smooth theme switching */
+:root {
+	--transition-duration: 0.3s;
+}
+
+* {
+	transition: background-color var(--transition-duration) ease, border-color
+		var(--transition-duration) ease, color var(--transition-duration) ease;
+}
+
+/* Ensure dark mode is applied to the entire document */
+html.dark {
+	color-scheme: dark;
+}
+
+html.dark body {
+	@apply bg-background text-foreground;
+}
+
+/* Custom drawer animations */
+@keyframes slide-in-right {
+	from {
+		transform: translateX(100%);
+	}
+	to {
+		transform: translateX(0);
+	}
+}
+
+@keyframes slide-out-right {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(100%);
+	}
+}
+
+/* Form field animation */
+@keyframes slide-up {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.drawer-slide-in {
+	animation: slide-in-right 0.3s ease-out;
+}
+
+.drawer-slide-out {
+	animation: slide-out-right 0.3s ease-in;
+}
+
+.field-slide-up {
+	animation: slide-up 0.4s ease-out;
+}
+
+/* Add staggered animation delay utilities */
+.delay-0 {
+	animation-delay: 0ms;
+}
+
+.delay-100 {
+	animation-delay: 100ms;
+}
+
+.delay-200 {
+	animation-delay: 200ms;
+}
+
+.delay-300 {
+	animation-delay: 300ms;
+}
+
+.delay-400 {
+	animation-delay: 400ms;
+}
+
+.delay-500 {
+	animation-delay: 500ms;
 }
