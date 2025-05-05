@@ -2,7 +2,11 @@
 import { Button } from "@/components/react/ui/button";
 import { Card } from "@/components/react/ui/card";
 import ContentLayout from "@/layouts/ContentLayout.astro";
-import { schemaIds, getAllSchemas, getSchemaById } from "../../schemas/schema-loader";
+import {
+	getAllSchemas,
+	getSchemaById,
+	schemaIds,
+} from "../../schemas/schema-loader";
 
 // Load all schemas with their metadata
 const schemas = getAllSchemas();

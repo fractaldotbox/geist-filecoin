@@ -1,16 +1,18 @@
+import { uploadFiles as uploadFilesLighthouse } from "@/lib/filecoin/lighthouse/browser";
 import kavach from "@lighthouse-web3/kavach";
 import lighthouse from "@lighthouse-web3/sdk";
-import type { IUploadProgressCallback } from "@lighthouse-web3/sdk/dist/types";
+import type {
+	IFileUploadedResponse,
+	IUploadProgressCallback,
+} from "@lighthouse-web3/sdk/dist/types";
 import ky, { type Options, type Progress } from "ky";
 import { http, type Account, createWalletClient } from "viem";
 import { sepolia } from "viem/chains";
-import { uploadFiles as uploadFilesLighthouse } from "@/lib/filecoin/lighthouse/browser";
 // import { CID } from 'multiformats/cid'
 
-import os from 'node:os';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 
 // Supposedly lighthouse can be treeshake for node/browser, to be validated
 
@@ -47,7 +49,7 @@ export const signAuthMessage = async (account: any) => {
 
 	const { error, message } = authMessage;
 	if (error || !message) {
-		throw new Error("authMessage error" + error);
+		throw new Error(`authMessage error${error}`);
 	}
 
 	return client.signMessage({
@@ -66,7 +68,7 @@ export const uploadFiles = async (
 	apiKey: string,
 	uploadProgressCallback?: (data: Progress) => void,
 ): Promise<any> => {
-	let output;
+	let output: { data: IFileUploadedResponse };
 
 	if (global.window) {
 		output = await uploadFilesLighthouse<false>({
@@ -114,14 +116,13 @@ export const uploadFiles = async (
 };
 
 export const retrievePoDsi = async (cid: string) => {
-	let response = await ky.get(`${LIGHTHOUSE_API_ROOT}/get_proof`, {
+	const response = await ky.get(`${LIGHTHOUSE_API_ROOT}/get_proof`, {
 		searchParams: {
 			cid,
 			network: "testnet", // Change the network to mainnet when ready
 		},
 	});
-	const data = await response.json();
-	return JSON.parse(data);
+	return await response.json();
 };
 
 // .uploadText has no deal params options
@@ -133,7 +134,7 @@ export const uploadText = async (text: string, apiKey: string) => {
 
 	const response = await lighthouse.uploadText(text, apiKey);
 
-	const { data } = response;w
+	const { data } = response;
 
 	return {
 		name: data.Name,
