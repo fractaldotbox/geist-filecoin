@@ -1,7 +1,10 @@
 import { uploadFiles as uploadFilesLighthouse } from "@/lib/filecoin/lighthouse/browser";
 import kavach from "@lighthouse-web3/kavach";
 import lighthouse from "@lighthouse-web3/sdk";
-import type { IUploadProgressCallback } from "@lighthouse-web3/sdk/dist/types";
+import type {
+	IFileUploadedResponse,
+	IUploadProgressCallback,
+} from "@lighthouse-web3/sdk/dist/types";
 import ky, { type Options, type Progress } from "ky";
 import { http, type Account, createWalletClient } from "viem";
 import { sepolia } from "viem/chains";
@@ -46,7 +49,7 @@ export const signAuthMessage = async (account: any) => {
 
 	const { error, message } = authMessage;
 	if (error || !message) {
-		throw new Error("authMessage error" + error);
+		throw new Error(`authMessage error${error}`);
 	}
 
 	return client.signMessage({
@@ -65,7 +68,7 @@ export const uploadFiles = async (
 	apiKey: string,
 	uploadProgressCallback?: (data: Progress) => void,
 ): Promise<any> => {
-	let output;
+	let output: { data: IFileUploadedResponse };
 
 	if (global.window) {
 		output = await uploadFilesLighthouse<false>({
@@ -119,8 +122,7 @@ export const retrievePoDsi = async (cid: string) => {
 			network: "testnet", // Change the network to mainnet when ready
 		},
 	});
-	const data = await response.json();
-	return JSON.parse(data);
+	return await response.json();
 };
 
 // .uploadText has no deal params options
@@ -133,7 +135,6 @@ export const uploadText = async (text: string, apiKey: string) => {
 	const response = await lighthouse.uploadText(text, apiKey);
 
 	const { data } = response;
-	w;
 
 	return {
 		name: data.Name,
