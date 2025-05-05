@@ -1,7 +1,4 @@
-import type { SchemaId } from './schema-loader';
+import type { SchemaId } from "./schema-loader";
 
 // Export all schema-related functionality
-export type { 
-  SchemaId
-};
-
+export type { SchemaId };

@@ -1,5 +1,5 @@
-import type { ControllerRenderProps, FieldValues } from "react-hook-form";
 import { Input } from "@/components/react/ui/input";
+import type { ControllerRenderProps, FieldValues } from "react-hook-form";
 
 export const FileInput = ({
 	field,
@@ -28,16 +28,17 @@ export const FileInput = ({
 			value={field?.value?.fileName}
 			onChange={(event) => {
 				const files = event?.target?.files;
-				const file = (isMultipleFiles || isAcceptDirectory ? files : files?.[0]) as File;
+				const file = (
+					isMultipleFiles || isAcceptDirectory ? files : files?.[0]
+				) as File;
 
 				if (file) {
 					field.onChange({
 						mediaType: file.type,
 						url: URL.createObjectURL(file),
-						file
+						file,
 					});
 				}
-
 
 				// field.onChange(file);
 			}}

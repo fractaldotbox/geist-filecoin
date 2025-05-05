@@ -1,3 +1,1 @@
-export function ContentTypeEditor() {
-
-}
+export function ContentTypeEditor() {}

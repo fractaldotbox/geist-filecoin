@@ -2,13 +2,12 @@
 import { Button } from "@/components/react/ui/button";
 import { Card } from "@/components/react/ui/card";
 import ContentLayout from "@/layouts/ContentLayout.astro";
-import { loadAllSchemaIds } from "../schemas/schema-loader";
+import { loadAllSchemaIds } from "../../schemas/schema-loader";
 
-// Load all schemas with their metadata
 const schemaIds = await loadAllSchemaIds();
 ---
 
-<ContentLayout title="Content Type Templates">
+<ContentLayout title="Content Structure Type">
     <div class="container mx-auto p-6">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {schemaIds.map((schemaId:string) => (
