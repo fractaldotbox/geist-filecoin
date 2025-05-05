@@ -1,5 +1,5 @@
-import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { type ZodType, z } from "zod";
 
@@ -10,7 +10,6 @@ import {
 	uploadText,
 } from "@/lib/filecoin/lighthouse/isomorphic";
 
-import { toast } from "sonner";
 import { FileField } from "@/components/react/fields/FileField";
 import { FileInput } from "@/components/react/fields/FileInput";
 import { Button } from "@/components/react/ui/button";
@@ -25,6 +24,7 @@ import {
 } from "@/components/react/ui/form";
 import { Progress } from "@/components/react/ui/progress";
 import { Textarea } from "@/components/react/ui/textarea";
+import { toast } from "sonner";
 
 const lorem = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque semper porttitor massa, non placerat dolor rutrum vel. Morbi eu elit vitae odio hendrerit mollis. Proin at nibh auctor, laoreet ante vel, commodo leo. Sed viverra neque id lectus dictum, non accumsan tortor rhoncus. Fusce consectetur est vitae viverra pellentesque. Nunc pharetra felis libero, at rhoncus est euismod et. Morbi ac ultrices lectus, quis commodo eros. Etiam vestibulum finibus imperdiet. Nulla dictum tempor neque ac varius.
 Duis sed malesuada odio. Aenean fermentum tristique nunc a dictum. Donec posuere varius pharetra. Sed vitae nisi leo. Nam eget velit id erat sagittis molestie. Fusce feugiat turpis nec neque sodales, sit amet lobortis velit tempus. Curabitur nisi quam, consectetur in velit ac, gravida convallis ante. Etiam condimentum, ligula ut pharetra vehicula, odio ligula laoreet sem, et convallis metus mauris ut tellus. Fusce libero risus, vulputate a suscipit commodo, tincidunt vel ex. Duis quis ultrices ex, in feugiat dolor. Nullam ultrices lorem augue, ac pellentesque velit finibus vel.
@@ -109,7 +109,12 @@ UPLOAD_FORM_BY_TYPE[UploadFormType.Text] = {
 					<FormLabel>File</FormLabel>
 					<FormControl>
 						<div className="w-full">
-							<Textarea id="file" {...field} className="h-[400px]" value={field?.value || ""} />
+							<Textarea
+								id="file"
+								{...field}
+								className="h-[400px]"
+								value={field?.value || ""}
+							/>
 						</div>
 					</FormControl>
 					<FormDescription>Upload file to Filecoin</FormDescription>
