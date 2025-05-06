@@ -22,10 +22,11 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useStore } from "@nanostores/react";
 import ky from "ky";
-import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import * as z from "zod";
+import { EditorSidebar } from "./EditorSidebar";
 import { MarkdownField } from "./fields/MarkdownField";
 
 // This would normally be imported from the Lighthouse SDK
@@ -93,8 +94,6 @@ async function submitContent(
 			};
 		}
 
-		console.log("submissionData", submissionData);
-
 		const response = await ky.post("/api/submit", {
 			json: submissionData,
 			headers: {
@@ -126,10 +125,12 @@ async function submitContent(
 
 export function EntryEditor({ schemaId }: { schemaId?: string }) {
 	const schema = useStore(schemaStore);
-	const [isSchemaExpanded, setIsSchemaExpanded] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [isAnimated, setIsAnimated] = useState(false);
+	const [submissionResult, setSubmissionResult] = useState<
+		{ cid: string; url: string } | undefined
+	>(undefined);
 
 	// Create form schema based on the loaded schema
 	const createFormSchema = (schema: Schema) => {
@@ -222,6 +223,7 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 
 	const onSubmit = async (values: EntryFormData) => {
 		setIsSubmitting(true);
+		setSubmissionResult(undefined); // Reset submission result
 		console.log("debug:", values, typeof values);
 		try {
 			// Show global progress bar
@@ -234,6 +236,9 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 			console.log("uploadResult", uploadResult);
 			// Process the submission with uploaded files
 			console.log("Form submitted with processed data:", values);
+
+			// Set the submission result
+			setSubmissionResult(uploadResult);
 		} catch (error) {
 			console.error("Error submitting form:", error);
 		} finally {
@@ -398,49 +403,8 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 						</Form>
 					</Card>
 				</div>
-				{/* Sidebar */}
 				<div className="md:col-span-1 sticky top-6">
-					<Card className="p-4">
-						<div className="space-y-6">
-							{/* Schema Section */}
-							<div>
-								<button
-									type="button"
-									onClick={() => setIsSchemaExpanded(!isSchemaExpanded)}
-									className="flex items-center justify-between w-full text-left"
-								>
-									<h2 className="text-lg font-semibold">Schema</h2>
-									{isSchemaExpanded ? (
-										<ChevronDown className="h-4 w-4" />
-									) : (
-										<ChevronRight className="h-4 w-4" />
-									)}
-								</button>
-								{isSchemaExpanded && schema && (
-									<div className="mt-4 space-y-2 text-sm">
-										<div className="font-medium">Type: {schema.type}</div>
-										<div className="font-medium">Required fields:</div>
-										<ul className="list-disc pl-4">
-											{schema.required.map((field) => (
-												<li key={field}>{field}</li>
-											))}
-										</ul>
-										<div className="font-medium mt-2">Properties:</div>
-										<ul className="list-disc pl-4">
-											{Object.entries(schema.properties).map(
-												([name, field]) => (
-													<li key={name}>
-														{name} ({field.type})
-														{field.format && ` - ${field.format}`}
-													</li>
-												),
-											)}
-										</ul>
-									</div>
-								)}
-							</div>
-						</div>
-					</Card>
+					<EditorSidebar schema={schema} submissionResult={submissionResult} />
 				</div>
 			</div>
 		</div>
