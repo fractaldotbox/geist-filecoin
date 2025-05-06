@@ -18,15 +18,15 @@ export const loadAllSchemaIds = async () => {
 };
 
 // Load a schema from storage
-export async function loadSchema(filename: string): Promise<Schema> {
+export async function loadSchema(schemaId: string): Promise<Schema> {
 	try {
-		const content = await storage.getItem(`${filename}.json`);
+		const content = await storage.getItem(`${schemaId}`);
 		if (!content) {
-			throw new Error(`Schema ${filename}.json not found`);
+			throw new Error(`Schema ${schemaId} not found`);
 		}
 		return typeof content === "string" ? JSON.parse(content) : content;
 	} catch (error) {
-		console.error(`Error loading schema ${filename}:`, error);
+		console.error(`Error loading schema ${schemaId}:`, error);
 		return {};
 	}
 }
