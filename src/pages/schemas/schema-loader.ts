@@ -1,41 +1,40 @@
-import { readFileSync } from "node:fs";
+import { createStorage } from "unstorage";
+import fsLiteDriver from "unstorage/drivers/fs-lite";
+
 import { join } from "node:path";
 
 // Define a common type for all schemas
 export type Schema = Record<string, unknown>;
 
-// Load a schema from a file
-export function loadSchema(filename: string): Schema {
+// Create storage instance with filesystem driver
+const storage = createStorage({
+	driver: fsLiteDriver({
+		base: join(process.cwd(), "src/schemas"),
+	}),
+});
+
+export const loadAllSchemaIds = async () => {
+	return await storage.getKeys();
+};
+
+// Load a schema from storage
+export async function loadSchema(schemaId: string): Promise<Schema> {
 	try {
-		return JSON.parse(
-			readFileSync(
-				join(process.cwd(), `src/pages/schemas/${filename}.json`),
-				"utf-8",
-			),
-		);
+		const content = await storage.getItem(`${schemaId}`);
+		if (!content) {
+			throw new Error(`Schema ${schemaId} not found`);
+		}
+		return typeof content === "string" ? JSON.parse(content) : content;
 	} catch (error) {
-		console.error(`Error loading schema ${filename}:`, error);
+		console.error(`Error loading schema ${schemaId}:`, error);
 		return {};
 	}
 }
 
-// Schema IDs
-export const schemaIds = ["landing", "product", "blog"] as const;
-export type SchemaId = (typeof schemaIds)[number];
+export type SchemaId = string;
 
-// Load all schemas
-export const schemas: Record<SchemaId, Schema> = {
-	landing: loadSchema("landing"),
-	product: loadSchema("product"),
-	blog: loadSchema("blog"),
+export const getSchemaWithId = async (id: string) => {
+	const schema = await loadSchema(id);
+
+	return schema;
 };
-
-// Get all schemas with their IDs
-export function getAllSchemas() {
-	return schemaIds.map((id) => ({ id, schema: schemas[id] }));
-}
-
-// Get a schema by ID
-export function getSchemaById(id: string) {
-	return schemas[id as SchemaId] || null;
-}
