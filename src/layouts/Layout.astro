@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
 import { GlobalProgressProvider } from "@/components/react/GlobalProgressProvider";
 ---
 
@@ -11,8 +12,21 @@ import { GlobalProgressProvider } from "@/components/react/GlobalProgressProvide
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Geist</title>
+		<ClientRouter />
 	</head>
 	<body>
+		<script is:inline>
+			const storageKey = "vite-ui-theme";
+			function applyTheme() {
+				const theme = localStorage.getItem(storageKey);
+			  theme === "dark"
+				? document.documentElement.classList.add("dark")
+				: document.documentElement.classList.remove("dark");
+			}
+		  
+			document.addEventListener("astro:after-swap", applyTheme);
+			applyTheme();
+		  </script>
 		<GlobalProgressProvider client:load />
 		<slot />
 	</body>
