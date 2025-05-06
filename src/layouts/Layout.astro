@@ -1,6 +1,8 @@
 ---
 import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
 import { GlobalProgressProvider } from "@/components/react/GlobalProgressProvider";
+import { THEME_STORAGE_KEY } from "@/stores/theme";
 ---
 
 <!doctype html>
@@ -11,8 +13,20 @@ import { GlobalProgressProvider } from "@/components/react/GlobalProgressProvide
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Geist</title>
+		<ClientRouter />
 	</head>
 	<body>
+		<script is:inline  define:vars={{ storageKey: THEME_STORAGE_KEY }}>
+			function applyTheme() {
+			  const theme = localStorage.getItem(storageKey);
+			  theme === "dark"
+				? document.documentElement.classList.add("dark")
+				: document.documentElement.classList.remove("dark");
+			}
+		  
+			document.addEventListener("astro:after-swap", applyTheme);
+			applyTheme();
+		  </script>
 		<GlobalProgressProvider client:load />
 		<slot />
 	</body>
