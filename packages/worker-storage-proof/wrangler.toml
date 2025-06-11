@@ -1,0 +1,6 @@
+name = "storage-proof-worker"
+main = "src/index.ts"
+compatibility_date = "2024-02-20"
+
+[vars]
+ENVIRONMENT = "development" 
