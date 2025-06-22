@@ -5,12 +5,11 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/react/ui/dropdown-menu";
-import { setTheme, themeStore } from "@/stores/theme";
-import { useStore } from "@nanostores/react";
+import { useThemeStore } from "@/stores/theme";
 import { Moon, Sun } from "lucide-react";
 
 export function ThemeToggle() {
-	const theme = useStore(themeStore);
+	const { theme, setTheme } = useThemeStore();
 
 	const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
 		console.log("Theme toggle clicked:", newTheme);

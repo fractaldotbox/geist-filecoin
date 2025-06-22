@@ -1,28 +1,75 @@
 import { Progress } from "@/components/react/ui/progress";
-import { useStore } from "@nanostores/react";
-import { atom } from "nanostores";
-import { useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import type { ReactNode } from "react";
 
-// Progress store with atomic state management
-export const progressStore = atom<{
+// Progress context
+interface ProgressContextType {
 	isVisible: boolean;
 	value: number;
-}>({
-	isVisible: false,
-	value: 0,
-});
+	showProgress: () => void;
+	updateProgress: (value: number) => void;
+	hideProgress: () => void;
+}
 
-// Helper functions to control the progress
+const ProgressContext = createContext<ProgressContextType | undefined>(undefined);
+
+// Progress provider component
+export function ProgressProvider({ children }: { children: ReactNode }) {
+	const [isVisible, setIsVisible] = useState(false);
+	const [value, setValue] = useState(0);
+
+	const showProgress = () => {
+		setIsVisible(true);
+		setValue(0);
+	};
+
+	const updateProgress = (newValue: number) => {
+		setIsVisible(true);
+		setValue(newValue);
+	};
+
+	const hideProgress = () => {
+		setIsVisible(false);
+		setValue(0);
+	};
+
+	return (
+		<ProgressContext.Provider
+			value={{
+				isVisible,
+				value,
+				showProgress,
+				updateProgress,
+				hideProgress,
+			}}
+		>
+			{children}
+		</ProgressContext.Provider>
+	);
+}
+
+// Hook to use progress context
+export function useProgress() {
+	const context = useContext(ProgressContext);
+	if (context === undefined) {
+		throw new Error("useProgress must be used within a ProgressProvider");
+	}
+	return context;
+}
+
+// Helper functions to control the progress (for backward compatibility)
 export function showProgress(): void {
-	progressStore.set({ isVisible: true, value: 0 });
+	// This will be called from outside the context, so we'll use a global state
+	// For now, we'll use a simple approach with a custom event
+	window.dispatchEvent(new CustomEvent('showProgress'));
 }
 
 export function updateProgress(value: number): void {
-	progressStore.set({ isVisible: true, value });
+	window.dispatchEvent(new CustomEvent('updateProgress', { detail: { value } }));
 }
 
 export function hideProgress(): void {
-	progressStore.set({ isVisible: false, value: 0 });
+	window.dispatchEvent(new CustomEvent('hideProgress'));
 }
 
 // Simulate progress for demo purposes
@@ -46,14 +93,26 @@ export async function simulateProgress(): Promise<void> {
 }
 
 export function GlobalProgress() {
-	const { isVisible, value } = useStore(progressStore);
+	const { isVisible, value, showProgress: show, updateProgress: update, hideProgress: hide } = useProgress();
 
 	useEffect(() => {
+		// Listen for global progress events
+		const handleShow = () => show();
+		const handleUpdate = (event: CustomEvent) => update(event.detail.value);
+		const handleHide = () => hide();
+
+		window.addEventListener('showProgress', handleShow);
+		window.addEventListener('updateProgress', handleUpdate as EventListener);
+		window.addEventListener('hideProgress', handleHide);
+
 		// Cleanup function
 		return () => {
-			hideProgress();
+			window.removeEventListener('showProgress', handleShow);
+			window.removeEventListener('updateProgress', handleUpdate as EventListener);
+			window.removeEventListener('hideProgress', handleHide);
+			hide();
 		};
-	}, []);
+	}, [show, update, hide]);
 
 	if (!isVisible) return null;
 
