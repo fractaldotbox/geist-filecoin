@@ -113,8 +113,6 @@ export const events = {
   uiStateSet: tables.uiState.set,
 }
 
-	// TODO rename schema into content type
-
 // Materializers are used to map events to state (https://docs.livestore.dev/reference/state/materializers)
 const materializers = State.SQLite.materializers(events, {
   'v1.EntryCreated': ({ id, contentTypeId, title, content, mediaType, mediaUrl, mediaCid, tags, publishedAt }) => 
