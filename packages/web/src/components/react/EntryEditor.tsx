@@ -124,17 +124,23 @@ async function submitContent(
 export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 	// Get template type from URL or use the contentTypeId passed from props
 	const params = new URLSearchParams(window.location.search);
-	const contentTypeIdFromUrl = contentTypeId || params.get("contentType") || "blog";
+	const contentTypeIdFromUrl =
+		contentTypeId || params.get("contentType") || "blog";
 
 	// Use LiveStore-based content type hooks
 	const contentTypeData = useContentType(contentTypeIdFromUrl);
 
-	const contentType = contentTypeData ? {
-		type: "object" as const,
-		...contentTypeData,
-		properties: JSON.parse(contentTypeData.properties) as Record<string, ContentTypeField>,
-		required: JSON.parse(contentTypeData.required) as string[]
-	} : null;
+	const contentType = contentTypeData
+		? {
+				type: "object" as const,
+				...contentTypeData,
+				properties: JSON.parse(contentTypeData.properties) as Record<
+					string,
+					ContentTypeField
+				>,
+				required: JSON.parse(contentTypeData.required) as string[],
+			}
+		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
@@ -187,15 +193,9 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 
 			if (field.type === "array") {
 				defaultValues[key] = [];
-			} else if (
-				field.type === "object" &&
-				field.properties?.mediaType
-			) {
+			} else if (field.type === "object" && field.properties?.mediaType) {
 				defaultValues[key] = { mediaType: "", url: "" };
-			} else if (
-				field.type === "string" &&
-				field.format === "date"
-			) {
+			} else if (field.type === "string" && field.format === "date") {
 				defaultValues[key] = "";
 			} else {
 				defaultValues[key] = "";
@@ -266,7 +266,11 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 		}
 	};
 
-	const renderField = (name: string, field: ContentTypeField, index: number) => {
+	const renderField = (
+		name: string,
+		field: ContentTypeField,
+		index: number,
+	) => {
 		const isRequired = Boolean(contentType?.required.includes(name));
 		// A field is dirty if it's been touched by the user or if the form has been submitted
 		const isDirty = !!dirtyFields[name] || form.formState.isSubmitted;
@@ -390,8 +394,8 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 								onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)}
 								className="space-y-6"
 							>
-								{Object.entries(contentType.properties).map(([name, field], index) =>
-									renderField(name, field, index),
+								{Object.entries(contentType.properties).map(
+									([name, field], index) => renderField(name, field, index),
 								)}
 								<Button
 									type="submit"
@@ -414,7 +418,10 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 					</Card>
 				</div>
 				<div className="md:col-span-1 sticky top-6">
-					<EditorSidebar contentType={contentType} submissionResult={submissionResult} />
+					<EditorSidebar
+						contentType={contentType}
+						submissionResult={submissionResult}
+					/>
 				</div>
 			</div>
 		</div>

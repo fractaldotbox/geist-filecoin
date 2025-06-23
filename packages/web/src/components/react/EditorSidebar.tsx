@@ -47,12 +47,14 @@ export function EditorSidebar({
 								</ul>
 								<div className="font-medium mt-2">Properties:</div>
 								<ul className="list-disc pl-4">
-									{Object.entries(contentType.properties).map(([name, field]) => (
-										<li key={name}>
-											{name} ({field.type})
-											{field.format && ` - ${field.format}`}
-										</li>
-									))}
+									{Object.entries(contentType.properties).map(
+										([name, field]) => (
+											<li key={name}>
+												{name} ({field.type})
+												{field.format && ` - ${field.format}`}
+											</li>
+										),
+									)}
 								</ul>
 							</div>
 						)}

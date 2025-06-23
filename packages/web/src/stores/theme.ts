@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -11,15 +11,15 @@ const initialTheme =
 
 // Hook to get and set theme using localStorage
 export function useTheme() {
-	const [theme, setThemeState] = useState<Theme>(initialTheme)
-	
+	const [theme, setThemeState] = useState<Theme>(initialTheme);
+
 	useEffect(() => {
-		const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme
+		const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
 		if (storedTheme && storedTheme !== theme) {
-			setThemeState(storedTheme)
+			setThemeState(storedTheme);
 		}
-	}, [theme])
-	
+	}, [theme]);
+
 	const setTheme = (newTheme: Theme) => {
 		if (typeof window !== "undefined") {
 			localStorage.setItem(THEME_STORAGE_KEY, newTheme);
@@ -29,12 +29,12 @@ export function useTheme() {
 				? document.documentElement.classList.add("dark")
 				: document.documentElement.classList.remove("dark");
 		}
-	}
-	
-	return { theme, setTheme }
+	};
+
+	return { theme, setTheme };
 }
 
 // Legacy compatibility - export a hook that mimics the old themeStore behavior
 export function useThemeStore() {
-	return useTheme()
+	return useTheme();
 }

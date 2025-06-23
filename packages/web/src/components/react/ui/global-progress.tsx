@@ -1,5 +1,5 @@
 import { Progress } from "@/components/react/ui/progress";
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 // Progress context
@@ -11,7 +11,9 @@ interface ProgressContextType {
 	hideProgress: () => void;
 }
 
-const ProgressContext = createContext<ProgressContextType | undefined>(undefined);
+const ProgressContext = createContext<ProgressContextType | undefined>(
+	undefined,
+);
 
 // Progress provider component
 export function ProgressProvider({ children }: { children: ReactNode }) {
@@ -61,15 +63,17 @@ export function useProgress() {
 export function showProgress(): void {
 	// This will be called from outside the context, so we'll use a global state
 	// For now, we'll use a simple approach with a custom event
-	window.dispatchEvent(new CustomEvent('showProgress'));
+	window.dispatchEvent(new CustomEvent("showProgress"));
 }
 
 export function updateProgress(value: number): void {
-	window.dispatchEvent(new CustomEvent('updateProgress', { detail: { value } }));
+	window.dispatchEvent(
+		new CustomEvent("updateProgress", { detail: { value } }),
+	);
 }
 
 export function hideProgress(): void {
-	window.dispatchEvent(new CustomEvent('hideProgress'));
+	window.dispatchEvent(new CustomEvent("hideProgress"));
 }
 
 // Simulate progress for demo purposes
@@ -93,7 +97,13 @@ export async function simulateProgress(): Promise<void> {
 }
 
 export function GlobalProgress() {
-	const { isVisible, value, showProgress: show, updateProgress: update, hideProgress: hide } = useProgress();
+	const {
+		isVisible,
+		value,
+		showProgress: show,
+		updateProgress: update,
+		hideProgress: hide,
+	} = useProgress();
 
 	useEffect(() => {
 		// Listen for global progress events
@@ -101,15 +111,18 @@ export function GlobalProgress() {
 		const handleUpdate = (event: CustomEvent) => update(event.detail.value);
 		const handleHide = () => hide();
 
-		window.addEventListener('showProgress', handleShow);
-		window.addEventListener('updateProgress', handleUpdate as EventListener);
-		window.addEventListener('hideProgress', handleHide);
+		window.addEventListener("showProgress", handleShow);
+		window.addEventListener("updateProgress", handleUpdate as EventListener);
+		window.addEventListener("hideProgress", handleHide);
 
 		// Cleanup function
 		return () => {
-			window.removeEventListener('showProgress', handleShow);
-			window.removeEventListener('updateProgress', handleUpdate as EventListener);
-			window.removeEventListener('hideProgress', handleHide);
+			window.removeEventListener("showProgress", handleShow);
+			window.removeEventListener(
+				"updateProgress",
+				handleUpdate as EventListener,
+			);
+			window.removeEventListener("hideProgress", handleHide);
 			hide();
 		};
 	}, [show, update, hide]);
