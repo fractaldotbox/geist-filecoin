@@ -126,7 +126,6 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 	const params = new URLSearchParams(window.location.search);
 	const contentTypeIdFromUrl = contentTypeId || params.get("contentType") || "blog";
 
-
 	// Use LiveStore-based content type hooks
 	const contentTypeData = useContentType(contentTypeIdFromUrl);
 
@@ -179,11 +178,39 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 		return z.object(schemaShape);
 	};
 
+	// Create default values based on content type
+	const createDefaultValues = (contentType: ContentType): EntryFormData => {
+		const defaultValues: EntryFormData = {};
+		for (const key of Object.keys(contentType.properties)) {
+			const field = contentType.properties[key];
+			if (!field) continue;
+
+			if (field.type === "array") {
+				defaultValues[key] = [];
+			} else if (
+				field.type === "object" &&
+				field.properties?.mediaType
+			) {
+				defaultValues[key] = { mediaType: "", url: "" };
+			} else if (
+				field.type === "string" &&
+				field.format === "date"
+			) {
+				defaultValues[key] = "";
+			} else {
+				defaultValues[key] = "";
+			}
+		}
+		return defaultValues;
+	};
+
 	const formSchema = contentType ? createFormSchema(contentType) : z.object({});
+	const defaultValues = contentType ? createDefaultValues(contentType) : {};
+
 	const form = useForm<EntryFormData>({
 		resolver: zodResolver(formSchema),
-		defaultValues: {},
-		mode: "onTouched", // Validate on blur
+		defaultValues,
+		mode: "onTouched",
 	});
 
 	// Track form state for errors and dirty fields
@@ -191,40 +218,14 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 		control: form.control,
 	});
 
-
-
 	useEffect(() => {
 		if (contentType && contentTypeData) {
-			// Initialize form with empty values
-			const defaultValues: EntryFormData = {};
-			for (const key of Object.keys(contentType.properties)) {
-				const field = contentType.properties[key];
-				if (!field) continue;
-
-				if (field.type === "array") {
-					defaultValues[key] = [];
-				} else if (
-					field.type === "object" &&
-					field.properties?.mediaType
-				) {
-					defaultValues[key] = { mediaType: "", url: "" };
-				} else if (
-					field.type === "string" &&
-					field.format === "date"
-				) {
-					defaultValues[key] = undefined; // Default date fields to undefined
-				} else {
-					defaultValues[key] = "";
-				}
-			}
-			form.reset(defaultValues);
-
 			// Trigger animation after form is initialized
 			setTimeout(() => {
 				setIsAnimated(true);
 			}, 100);
 		}
-	}, [contentType, contentTypeData, form]);
+	}, [contentType, contentTypeData]);
 
 	// Decouple the file upload and metadata upload
 	// as easier to use form-data for the file upload

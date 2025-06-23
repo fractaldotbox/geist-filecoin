@@ -1,7 +1,7 @@
 import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import { useStore } from "@livestore/react";
 import { allContentTypes$ } from "@/livestore/queries";
-import { BLOG, LANDING, PRODUCT } from "@/schemas/schema";
+import { BLOG, LANDING, PRODUCT } from "@/content-type/content-type";
 
 
 export function useContentTypeSeeder() {
@@ -10,9 +10,7 @@ export function useContentTypeSeeder() {
 	const existingContentTypes = store.useQuery(allContentTypes$);
 
 	const seedContentTypes = () => {
-		console.log('seedContentTypes');
       if (existingContentTypes.length > 0) {
-        console.log("Content types already exist. Skipping seed.");
         return;
       }
 

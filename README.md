@@ -1,6 +1,6 @@
 # Geist Filecoin
 
-A modern content management system built with Astro, React, and LiveStore for local-first data management.
+A modern content management system built with React and LiveStore for local-first data management.
 
 ## Features
 
@@ -19,115 +19,6 @@ This project uses [LiveStore](https://docs.livestore.dev/) for local-first data 
 - **Event sourcing** for data changes
 - **React integration** with hooks and providers
 
-### LiveStore Setup
-
-The LiveStore integration includes:
-
-1. **Schema Definition** (`src/livestore/schema.ts`)
-   - Defines data models for entries, schemas, and UI state
-   - Includes events for CRUD operations
-   - Materializers map events to database changes
-
-2. **Worker Configuration** (`src/livestore/livestore.worker.ts`)
-   - Handles background processing and synchronization
-   - Configured for Cloudflare Workers sync
-
-3. **React Integration**
-   - `LiveStoreProvider` wraps the application
-   - `useLiveStore` hook provides easy access to LiveStore operations
-   - Predefined queries for common operations
-
-4. **Cloudflare Worker** (`src/worker/index.ts`)
-   - Handles synchronization between clients
-   - Basic authentication (configure for production)
-
-### Getting Started
-
-1. **Install dependencies**:
-   ```bash
-   pnpm install
-   ```
-
-2. **Set up environment variables**:
-   ```bash
-   cp env.sample .env
-   # Edit .env with your configuration
-   ```
-
-3. **Start development servers**:
-   ```bash
-   # Terminal 1: Start the main application
-   pnpm dev
-   
-   # Terminal 2: Start the Cloudflare Worker (optional for local development)
-   pnpm dev:worker
-   ```
-
-4. **Access the application**:
-   - Main app: http://localhost:60001
-   - LiveStore devtools: http://localhost:60001/_livestore
-
-### Using LiveStore in Components
-
-```tsx
-import { useLiveStore } from '@/components/react/hooks/useLiveStore'
-import { useStore } from '@livestore/react'
-import { allEntries$ } from '@/livestore/queries'
-
-function MyComponent() {
-  const { createEntry, updateEntry, deleteEntry } = useLiveStore()
-  const { store } = useStore()
-  
-  // Query data
-  const entries = store.useQuery(allEntries$)
-  
-  // Create entry
-  const handleCreate = () => {
-    createEntry({
-      schemaId: 'blog',
-      title: 'My Post',
-      content: 'Content here...',
-    })
-  }
-  
-  return (
-    <div>
-      {entries.map(entry => (
-        <div key={entry.id}>{entry.title}</div>
-      ))}
-    </div>
-  )
-}
-```
-
-### Data Model
-
-The LiveStore schema includes:
-
-- **Entries**: Content entries with title, content, media, and metadata
-- **Schemas**: Content type definitions with properties and validation
-- **UI State**: Local UI state for forms and user preferences
-
-### Development
-
-- **LiveStore DevTools**: Available at `http://localhost:60001/_livestore` during development
-- **Worker Development**: Use `pnpm dev:worker` to run the sync worker locally
-- **Schema Changes**: Update `src/livestore/schema.ts` and restart the development server
-
-### Production Deployment
-
-1. **Deploy Cloudflare Worker**:
-   ```bash
-   pnpm wrangler deploy
-   ```
-
-2. **Update environment variables** with production sync URL
-
-3. **Build and deploy the application**:
-   ```bash
-   pnpm build
-   ```
-
 ## Project Structure
 
 ```
@@ -144,7 +35,6 @@ packages/web/
 │       ├── hooks/useLiveStore.ts
 │       └── LiveStoreEntryEditor.tsx
 ├── wrangler.toml           # Cloudflare Worker config
-└── astro.config.mjs        # Astro configuration with LiveStore
 ```
 
 ## Contributing
@@ -156,11 +46,11 @@ packages/web/
 5. Submit a pull request
 
 # Note on Techstack
-- Original motivation is to use Astro, however as a local-first, client sync heavy app merit of Astro is limited 
-- Currently to integrate Livestore in React, a global Provider is required
-- Future we could keep Astro island architecture and integrate solid once the integraiton reaches maturirty. 
-
-
+- Original motivation is to use Astro for both CMS and the published website. 
+  - It's on hold as  
+   - as local-first, client sync heavy app, merit of Astro island architecture is limited, unless flow of seeding data is made easy & performant from astro to client. [Related](https://github.com/livestorejs/livestore/issues/364)
+   - Livestore/ Solid integration is not mature yet. Embeding React inside astro isn't feasiable as integratinos require a a global Provider
+   
 
 ## License
 
