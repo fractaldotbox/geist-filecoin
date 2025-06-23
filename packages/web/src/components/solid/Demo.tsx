@@ -2,9 +2,9 @@ import { createResource } from "solid-js";
 
 export const Demo = () => {
 	const [name] = createResource(() =>
-		fetch("https://swapi.info/api/people/1")
-			.then((result) => result.json())
-			.then((data) => data.name),
+		apiClient
+			.get("https://swapi.info/api/people/1")
+			.then((data: any) => data.name),
 	);
 
 	return (

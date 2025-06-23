@@ -1,4 +1,4 @@
-import { atom } from "nanostores";
+import { useEffect, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -9,15 +9,32 @@ const initialTheme =
 		? (localStorage.getItem(THEME_STORAGE_KEY) as Theme) || "system"
 		: "system";
 
-export const themeStore = atom<Theme>(initialTheme);
+// Hook to get and set theme using localStorage
+export function useTheme() {
+	const [theme, setThemeState] = useState<Theme>(initialTheme);
 
-export function setTheme(theme: Theme) {
-	if (typeof window !== "undefined") {
-		localStorage.setItem(THEME_STORAGE_KEY, theme);
-		themeStore.set(theme);
+	useEffect(() => {
+		const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
+		if (storedTheme && storedTheme !== theme) {
+			setThemeState(storedTheme);
+		}
+	}, [theme]);
 
-		theme === "dark"
-			? document.documentElement.classList.add("dark")
-			: document.documentElement.classList.remove("dark");
-	}
+	const setTheme = (newTheme: Theme) => {
+		if (typeof window !== "undefined") {
+			localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+			setThemeState(newTheme);
+
+			newTheme === "dark"
+				? document.documentElement.classList.add("dark")
+				: document.documentElement.classList.remove("dark");
+		}
+	};
+
+	return { theme, setTheme };
+}
+
+// Legacy compatibility - export a hook that mimics the old themeStore behavior
+export function useThemeStore() {
+	return useTheme();
 }

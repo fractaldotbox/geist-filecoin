@@ -1,5 +1,5 @@
-.astro
 .vscode
 node_modules/
 .env
 .turbo
+.wrangler/

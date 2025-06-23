@@ -1,4 +1,4 @@
-import type { SchemaField } from "@/stores/schema";
+import type { ContentTypeField } from "@/stores/schema";
 import type { ControllerRenderProps } from "react-hook-form";
 
 export type EntryFormData = {
@@ -18,7 +18,7 @@ export type FileFieldValue = {
 
 export interface FieldProps {
 	name: string;
-	field: SchemaField;
+	field: ContentTypeField;
 	formField: ControllerRenderProps<EntryFormData, string>;
 	isRequired: boolean;
 	isDirty: boolean;
