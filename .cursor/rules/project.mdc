@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---                                                                                                                                                                              use react router                                                                                                                                                                                                                                                                                                                                                  use shadcn components whenever possible.
+documentaitons are avilable on @https://ui.shadcn.com/                                                                                                                                                                                                                                                                                                            when it is necessary to create form, use react-hook-form 
