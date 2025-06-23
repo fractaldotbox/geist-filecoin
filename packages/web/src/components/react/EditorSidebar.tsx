@@ -1,11 +1,11 @@
 import { Card } from "@/components/react/ui/card";
-import type { Schema } from "@/stores/schema";
+import type { ContentType } from "@/stores/schema";
 import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 
 interface EditorSidebarProps {
-	schema: Schema;
+	contentType: ContentType;
 	submissionResult?: {
 		cid: string;
 		url: string;
@@ -13,41 +13,41 @@ interface EditorSidebarProps {
 }
 
 export function EditorSidebar({
-	schema,
+	contentType,
 	submissionResult,
 }: EditorSidebarProps) {
-	const [isSchemaExpanded, setIsSchemaExpanded] = useState(false);
+	const [isContentTypeExpanded, setIsContentTypeExpanded] = useState(false);
 
 	return (
 		<div className="space-y-4">
 			<Card className="p-4">
 				<div className="space-y-6">
-					{/* Schema Section */}
+					{/* Content Type Section */}
 					<div>
 						<button
 							type="button"
-							onClick={() => setIsSchemaExpanded(!isSchemaExpanded)}
+							onClick={() => setIsContentTypeExpanded(!isContentTypeExpanded)}
 							className="flex items-center justify-between w-full text-left"
 						>
-							<h2 className="text-lg font-semibold">Schema</h2>
-							{isSchemaExpanded ? (
+							<h2 className="text-lg font-semibold">Content Type</h2>
+							{isContentTypeExpanded ? (
 								<ChevronDown className="h-4 w-4" />
 							) : (
 								<ChevronRight className="h-4 w-4" />
 							)}
 						</button>
-						{isSchemaExpanded && schema && (
+						{isContentTypeExpanded && contentType && (
 							<div className="mt-4 space-y-2 text-sm">
-								<div className="font-medium">Type: {schema.type}</div>
+								<div className="font-medium">Type: {contentType.type}</div>
 								<div className="font-medium">Required fields:</div>
 								<ul className="list-disc pl-4">
-									{schema.required.map((field) => (
+									{contentType.required.map((field) => (
 										<li key={field}>{field}</li>
 									))}
 								</ul>
 								<div className="font-medium mt-2">Properties:</div>
 								<ul className="list-disc pl-4">
-									{Object.entries(schema.properties).map(([name, field]) => (
+									{Object.entries(contentType.properties).map(([name, field]) => (
 										<li key={name}>
 											{name} ({field.type})
 											{field.format && ` - ${field.format}`}

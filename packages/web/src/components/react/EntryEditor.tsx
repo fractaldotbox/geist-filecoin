@@ -14,9 +14,9 @@ import { Card } from "@/components/react/ui/card";
 import { Form, FormField } from "@/components/react/ui/form";
 import { simulateProgress } from "@/components/react/ui/global-progress";
 import {
-	type Schema,
-	type SchemaField,
-	useSchema,
+	type ContentType,
+	type ContentTypeField,
+	useContentType,
 } from "@/stores/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import ky from "ky";
@@ -121,20 +121,21 @@ async function submitContent(
 	}
 }
 
-export function EntryEditor({ schemaId }: { schemaId?: string }) {
-	// Get template type from URL or use the schemaId passed from props
+export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
+	// Get template type from URL or use the contentTypeId passed from props
 	const params = new URLSearchParams(window.location.search);
-	const contentTypeId = schemaId || params.get("contentType") || "blog";
+	const contentTypeIdFromUrl = contentTypeId || params.get("contentType") || "blog";
 
 
-	// Use LiveStore-based schema hooks
-	const schema = useSchema(contentTypeId);
+	// Use LiveStore-based content type hooks
+	const contentTypeData = useContentType(contentTypeIdFromUrl);
 
-	const contentType = {
-		...schema,
-		properties: JSON.parse(schema.properties),
-		required: JSON.parse(schema.required)
-	}
+	const contentType = contentTypeData ? {
+		type: "object" as const,
+		...contentTypeData,
+		properties: JSON.parse(contentTypeData.properties) as Record<string, ContentTypeField>,
+		required: JSON.parse(contentTypeData.required) as string[]
+	} : null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
@@ -143,12 +144,12 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 		{ cid: string; url: string } | undefined
 	>(undefined);
 
-	// Create form schema based on the loaded schema
-	const createFormSchema = (schema: Schema) => {
+	// Create form schema based on the loaded content type
+	const createFormSchema = (contentType: ContentType) => {
 		const schemaShape: Record<string, z.ZodTypeAny> = {};
 
-		for (const [key, field] of Object.entries(schema.properties)) {
-			const isRequired = schema.required.includes(key);
+		for (const [key, field] of Object.entries(contentType.properties)) {
+			const isRequired = contentType.required.includes(key);
 
 			if (field.type === "object" && field.properties?.mediaType) {
 				schemaShape.media = z.object({
@@ -193,20 +194,23 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 
 
 	useEffect(() => {
-		if (contentType) {
+		if (contentType && contentTypeData) {
 			// Initialize form with empty values
 			const defaultValues: EntryFormData = {};
 			for (const key of Object.keys(contentType.properties)) {
-				if (contentType.properties[key].type === "array") {
+				const field = contentType.properties[key];
+				if (!field) continue;
+
+				if (field.type === "array") {
 					defaultValues[key] = [];
 				} else if (
-					contentType.properties[key].type === "object" &&
-					contentType.properties[key].properties?.mediaType
+					field.type === "object" &&
+					field.properties?.mediaType
 				) {
 					defaultValues[key] = { mediaType: "", url: "" };
 				} else if (
-					contentType.properties[key].type === "string" &&
-					contentType.properties[key].format === "date"
+					field.type === "string" &&
+					field.format === "date"
 				) {
 					defaultValues[key] = undefined; // Default date fields to undefined
 				} else {
@@ -220,7 +224,7 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 				setIsAnimated(true);
 			}, 100);
 		}
-	}, [contentType, form]);
+	}, [contentType, contentTypeData, form]);
 
 	// Decouple the file upload and metadata upload
 	// as easier to use form-data for the file upload
@@ -261,7 +265,7 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 		}
 	};
 
-	const renderField = (name: string, field: SchemaField, index: number) => {
+	const renderField = (name: string, field: ContentTypeField, index: number) => {
 		const isRequired = Boolean(contentType?.required.includes(name));
 		// A field is dirty if it's been touched by the user or if the form has been submitted
 		const isDirty = !!dirtyFields[name] || form.formState.isSubmitted;
@@ -409,7 +413,7 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 					</Card>
 				</div>
 				<div className="md:col-span-1 sticky top-6">
-					<EditorSidebar schema={contentType} submissionResult={submissionResult} />
+					<EditorSidebar contentType={contentType} submissionResult={submissionResult} />
 				</div>
 			</div>
 		</div>

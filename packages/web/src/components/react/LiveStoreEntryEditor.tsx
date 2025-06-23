@@ -14,7 +14,7 @@ export function LiveStoreEntryEditor() {
         <div>
             <h2>LiveStore Entry Editor</h2>
             <p>Total entries: {entries.length}</p>
-            <p>Current schema: {uiState?.currentSchemaId}</p>
+            <p>Current content type: {uiState?.currentContentTypeId}</p>
         </div>
     );
 } 

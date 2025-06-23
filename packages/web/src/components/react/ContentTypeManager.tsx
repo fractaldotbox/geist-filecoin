@@ -3,20 +3,20 @@ import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Badge } from './ui/badge'
 import { Alert, AlertDescription } from './ui/alert'
-import { allSchemas$ } from '../../livestore/queries'
-import { useSchemaSeeder } from './hooks/useSchemaSeeder'
+import { allContentTypes$ } from '../../livestore/queries'
+import { useContentTypeSeeder } from './hooks/useContentTypeSeeder'
 import { Download, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react'
 import { useLiveStore } from './hooks/useLiveStore'
+import { Link } from "react-router-dom"
 
 export function ContentTypeManager() {
-    const { seedSchemas } = useSchemaSeeder()
+    const { seedContentTypes } = useContentTypeSeeder()
     const { store } = useStore()
     // Query content types from LiveStore
-    const contentTypes = store.useQuery(allSchemas$)
+    const contentTypes = store.useQuery(allContentTypes$)
 
     const handleSeedContentTypes = () => {
-        console.log('Seeding content types')
-        seedSchemas()
+        seedContentTypes()
     }
 
     return (
@@ -26,7 +26,7 @@ export function ContentTypeManager() {
                 <div>
                     <h1 className="text-2xl font-bold">Content Type Manager</h1>
                     <p className="text-muted-foreground">
-                        Manage your content types and seed from available templates
+                        Manage your content types and seed from available content types
                     </p>
                 </div>
 
@@ -51,11 +51,12 @@ export function ContentTypeManager() {
                             </p>
 
                             <div className="flex gap-2">
-                                <a href={`/editor/entry/${contentType.id}`} className="flex-1">
+
+                                <Link to={`/editor/entry/${contentType.id}`} className="flex-1">
                                     <Button className="w-full">
                                         Use Content Type
                                     </Button>
-                                </a>
+                                </Link>
                             </div>
                         </Card>
                     ))}

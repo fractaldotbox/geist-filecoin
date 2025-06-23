@@ -5,7 +5,7 @@ import type { EntryFormData, FileFieldValue } from '../fields/types'
 export const useLiveStore = () => {
   const { store } = useStore()
 
-  const createEntry = (entryData: EntryFormData & { schemaId: string }) => {
+  const createEntry = (entryData: EntryFormData & { contentTypeId: string }) => {
     const id = crypto.randomUUID()
     const now = new Date()
     
@@ -15,14 +15,14 @@ export const useLiveStore = () => {
     return store.commit(
       events.entryCreated({
         id,
-        schemaId: entryData.schemaId,
-        title: entryData.title || '',
-        content: entryData.content || '',
-        mediaType: media?.mediaType,
-        mediaUrl: media?.url,
-        mediaCid: media?.cid,
-        tags: entryData.tags ? JSON.stringify(entryData.tags) : undefined,
-        publishedAt: entryData.publishedAt,
+        contentTypeId: entryData.contentTypeId,
+        title: (entryData.title as string) || '',
+        content: (entryData.content as string) || '',
+        mediaType: media?.mediaType || '',
+        mediaUrl: media?.url || '',
+        mediaCid: media?.cid || '',
+        tags: entryData.tags ? JSON.stringify(entryData.tags) : '',
+        publishedAt: entryData.publishedAt ? new Date(entryData.publishedAt as string) : new Date(),
       })
     )
   }
@@ -34,13 +34,13 @@ export const useLiveStore = () => {
     return store.commit(
       events.entryUpdated({
         id,
-        title: entryData.title,
-        content: entryData.content,
-        mediaType: media?.mediaType,
-        mediaUrl: media?.url,
-        mediaCid: media?.cid,
-        tags: entryData.tags ? JSON.stringify(entryData.tags) : undefined,
-        publishedAt: entryData.publishedAt,
+        title: (entryData.title as string) || '',
+        content: (entryData.content as string) || '',
+        mediaType: media?.mediaType || '',
+        mediaUrl: media?.url || '',
+        mediaCid: media?.cid || '',
+        tags: entryData.tags ? JSON.stringify(entryData.tags) : '',
+        publishedAt: entryData.publishedAt ? new Date(entryData.publishedAt as string) : new Date(),
       })
     )
   }
@@ -54,7 +54,7 @@ export const useLiveStore = () => {
     )
   }
 
-  const createSchema = (schemaData: {
+  const createContentType = (contentTypeData: {
     id: string
     name: string
     description: string
@@ -62,36 +62,36 @@ export const useLiveStore = () => {
     required: string[]
   }) => {
     return store.commit(
-      events.schemaCreated({
-        id: schemaData.id,
-        name: schemaData.name,
-        description: schemaData.description,
-        properties: JSON.stringify(schemaData.properties),
-        required: JSON.stringify(schemaData.required),
+      events.contentTypeCreated({
+        id: contentTypeData.id,
+        name: contentTypeData.name,
+        description: contentTypeData.description,
+        properties: JSON.stringify(contentTypeData.properties),
+        required: JSON.stringify(contentTypeData.required),
       })
     )
   }
 
-  const updateSchema = (id: string, schemaData: Partial<{
+  const updateContentType = (id: string, contentTypeData: Partial<{
     name: string
     description: string
     properties: Record<string, any>
     required: string[]
   }>) => {
     return store.commit(
-      events.schemaUpdated({
+      events.contentTypeUpdated({
         id,
-        name: schemaData.name,
-        description: schemaData.description,
-        properties: schemaData.properties ? JSON.stringify(schemaData.properties) : undefined,
-        required: schemaData.required ? JSON.stringify(schemaData.required) : undefined,
+        name: contentTypeData.name || '',
+        description: contentTypeData.description || '',
+        properties: contentTypeData.properties ? JSON.stringify(contentTypeData.properties) : '',
+        required: contentTypeData.required ? JSON.stringify(contentTypeData.required) : '',
       })
     )
   }
 
-  const deleteSchema = (id: string) => {
+  const deleteContentType = (id: string) => {
     return store.commit(
-      events.schemaDeleted({
+      events.contentTypeDeleted({
         id,
         deletedAt: new Date(),
       })
@@ -99,7 +99,7 @@ export const useLiveStore = () => {
   }
 
   const setUiState = (uiState: {
-    currentSchemaId?: string
+    currentContentTypeId?: string
     formData?: string
     isSubmitting?: boolean
     uploadProgress?: number
@@ -112,9 +112,9 @@ export const useLiveStore = () => {
     createEntry,
     updateEntry,
     deleteEntry,
-    createSchema,
-    updateSchema,
-    deleteSchema,
+    createContentType,
+    updateContentType,
+    deleteContentType,
     setUiState,
   }
 } 

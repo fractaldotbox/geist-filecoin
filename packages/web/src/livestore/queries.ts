@@ -13,10 +13,10 @@ export const allEntries$ = queryDb(
   { label: 'allEntries' },
 )
 
-// Query for entries by schema
-export const entriesBySchema$ = (schemaId: string) => queryDb(
-  (get) => tables.entries.where({ schemaId, deletedAt: null }).orderBy('createdAt', 'desc'),
-  { label: `entriesBySchema-${schemaId}` },
+// Query for entries by content type
+export const entriesByContentType$ = (contentTypeId: string) => queryDb(
+  (get) => tables.entries.where({ contentTypeId, deletedAt: null }).orderBy('createdAt', 'desc'),
+  { label: `entriesByContentType-${contentTypeId}` },
 )
 
 // Query for a specific entry
@@ -25,14 +25,14 @@ export const entryById$ = (id: string) => queryDb(
   { label: `entryById-${id}` },
 )
 
-// Query for all schemas
-export const allSchemas$ = queryDb(
-  (get) => tables.schemas.orderBy('createdAt', 'desc'),
-  { label: 'allSchemas' },
+// Query for all content types
+export const allContentTypes$ = queryDb(
+  (get) => tables.contentTypes.orderBy('createdAt', 'desc'),
+  { label: 'allContentTypes' },
 )
 
-// Query for a specific schema
-export const schemaById$ = (id: string) => queryDb(
-  (get) => tables.schemas.where({ id }).first(),
-  { label: `schemaById-${id}` },
+// Query for a specific content type
+export const contentTypeById$ = (id: string) => queryDb(
+  (get) => tables.contentTypes.where({ id }).first(),
+  { label: `contentTypeById-${id}` },
 ) 

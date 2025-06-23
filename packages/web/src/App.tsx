@@ -7,7 +7,7 @@ import HomePage from '@/pages/HomePage'
 import ContentTypeSelectPage from '@/pages/editor/ContentTypeSelectPage'
 import ContentTypeEditorPage from '@/pages/editor/ContentTypeEditorPage'
 import EntryEditorPage from '@/pages/editor/EntryEditorPage'
-import SchemasPage from '@/pages/SchemasPage'
+import ContentTypesPage from '@/pages/ContentTypesPage'
 
 function App() {
     useEffect(() => {
@@ -32,7 +32,7 @@ function App() {
                     <Route path="/editor/content-type/select" element={<ContentTypeSelectPage />} />
                     <Route path="/editor/content-type/:id" element={<ContentTypeEditorPage />} />
                     <Route path="/editor/entry/:id" element={<EntryEditorPage />} />
-                    <Route path="/schemas" element={<SchemasPage />} />
+                    <Route path="/content-types" element={<ContentTypesPage />} />
                 </Routes>
             </Layout>
         </div>

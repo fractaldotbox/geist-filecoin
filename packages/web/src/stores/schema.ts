@@ -1,8 +1,8 @@
 import { useStore } from '@livestore/react'
-import { allSchemas$, schemaById$, uiState$ } from '../livestore/queries.js'
+import { allContentTypes$, contentTypeById$, uiState$ } from '../livestore/queries.js'
 import { useLiveStore } from '../components/react/hooks/useLiveStore.js'
 
-export interface SchemaField {
+export interface ContentTypeField {
 	type: string;
 	description: string;
 	format?: string;
@@ -21,47 +21,45 @@ export interface SchemaField {
 	};
 }
 
-export interface Schema {
+export interface ContentType {
 	type: string;
-	properties: Record<string, SchemaField>;
+	properties: Record<string, ContentTypeField>;
 	required: string[];
 }
 
-// Hook to get schema from LiveStore
-export function useSchema(schemaId: string) {
+// Hook to get content type from LiveStore
+export function useContentType(contentTypeId: string) {
 	const { store } = useStore()
-	const { createSchema } = useLiveStore();
-	const existingSchemas = store.useQuery(allSchemas$);
 
-	return store.useQuery(schemaById$(schemaId))
+	return store.useQuery(contentTypeById$(contentTypeId))
 }
 
-// Hook to get schema with loading state
-export function useSchemaWithLoading(schemaId: string) {
+// Hook to get content type with loading state
+export function useContentTypeWithLoading(contentTypeId: string) {
 	const { store } = useStore()
 
-	const schema = store.useQuery(schemaById$(schemaId))
+	const contentType = store.useQuery(contentTypeById$(contentTypeId))
 	// Note: LiveStore doesn't expose loading state directly in this version
 	// We'll return undefined for isLoading for now
-	return { schema, isLoading: undefined }
+	return { contentType, isLoading: undefined }
 }
 
-// Legacy compatibility - export a hook that mimics the old schemaStore behavior
-export function useSchemaStore() {
+// Legacy compatibility - export a hook that mimics the old contentTypeStore behavior
+export function useContentTypeStore() {
 	const { store } = useStore()
 	const { setUiState } = useLiveStore()
 	
-	// Get current schema ID from UI state
+	// Get current content type ID from UI state
 	const uiState = store.useQuery(uiState$)
 	
-	const currentSchemaId = uiState?.currentSchemaId || ''
-	const schema = useSchema(currentSchemaId)
+	const currentContentTypeId = uiState?.currentContentTypeId || ''
+	const contentType = useContentType(currentContentTypeId)
 
 	
 	return {
-		schema,
-		currentSchemaId,
-		setCurrentSchemaId: (id: string) => setUiState({ currentSchemaId: id })
+		contentType,
+		currentContentTypeId,
+		setCurrentContentTypeId: (id: string) => setUiState({ currentContentTypeId: id })
 	}
 }
 

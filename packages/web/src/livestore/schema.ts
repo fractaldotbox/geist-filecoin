@@ -6,7 +6,7 @@ export const tables = {
     name: 'entries',
     columns: {
       id: State.SQLite.text({ primaryKey: true }),
-      schemaId: State.SQLite.text({ default: '' }),
+      contentTypeId: State.SQLite.text({ default: '' }),
       title: State.SQLite.text({ default: '' }),
       content: State.SQLite.text({ default: '' }),
       mediaType: State.SQLite.text({ nullable: true }),
@@ -20,8 +20,8 @@ export const tables = {
     },
   }),
 
-  schemas: State.SQLite.table({
-    name: 'schemas',
+  contentTypes: State.SQLite.table({
+    name: 'contentTypes',
     columns: {
       id: State.SQLite.text({ primaryKey: true }),
       name: State.SQLite.text({ default: '' }),
@@ -38,12 +38,12 @@ export const tables = {
   uiState: State.SQLite.clientDocument({
     name: 'uiState',
     schema: Schema.Struct({ 
-      currentSchemaId: Schema.String,
+      currentContentTypeId: Schema.String,
       formData: Schema.String, // JSON string
       isSubmitting: Schema.Boolean,
       uploadProgress: Schema.Number,
     }),
-    default: { id: SessionIdSymbol, value: { currentSchemaId: '', formData: '{}', isSubmitting: false, uploadProgress: 0 } },
+    default: { id: SessionIdSymbol, value: { currentContentTypeId: '', formData: '{}', isSubmitting: false, uploadProgress: 0 } },
   }),
 }
 
@@ -53,7 +53,7 @@ export const events = {
     name: 'v1.EntryCreated',
     schema: Schema.Struct({ 
       id: Schema.String, 
-      schemaId: Schema.String,
+      contentTypeId: Schema.String,
       title: Schema.String, 
       content: Schema.String,
       mediaType: Schema.String,
@@ -83,8 +83,8 @@ export const events = {
     schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.Date }),
   }),
 
-  schemaCreated: Events.synced({
-    name: 'v1.SchemaCreated',
+  contentTypeCreated: Events.synced({
+    name: 'v1.ContentTypeCreated',
     schema: Schema.Struct({ 
       id: Schema.String, 
       name: Schema.String, 
@@ -94,8 +94,8 @@ export const events = {
     }),
   }),
 
-  schemaUpdated: Events.synced({
-    name: 'v1.SchemaUpdated',
+  contentTypeUpdated: Events.synced({
+    name: 'v1.ContentTypeUpdated',
     schema: Schema.Struct({ 
       id: Schema.String,
       name: Schema.String,
@@ -105,8 +105,8 @@ export const events = {
     }),
   }),
 
-  schemaDeleted: Events.synced({
-    name: 'v1.SchemaDeleted',
+  contentTypeDeleted: Events.synced({
+    name: 'v1.ContentTypeDeleted',
     schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.Date }),
   }),
 
@@ -117,10 +117,10 @@ export const events = {
 
 // Materializers are used to map events to state (https://docs.livestore.dev/reference/state/materializers)
 const materializers = State.SQLite.materializers(events, {
-  'v1.EntryCreated': ({ id, schemaId, title, content, mediaType, mediaUrl, mediaCid, tags, publishedAt }) => 
+  'v1.EntryCreated': ({ id, contentTypeId, title, content, mediaType, mediaUrl, mediaCid, tags, publishedAt }) => 
     tables.entries.insert({ 
       id, 
-      schemaId, 
+      contentTypeId, 
       title, 
       content, 
       mediaType, 
@@ -147,8 +147,8 @@ const materializers = State.SQLite.materializers(events, {
   'v1.EntryDeleted': ({ id, deletedAt }) => 
     tables.entries.update({ deletedAt }).where({ id }),
 
-  'v1.SchemaCreated': ({ id, name, description, properties, required }) => 
-    tables.schemas.insert({ 
+  'v1.ContentTypeCreated': ({ id, name, description, properties, required }) => 
+    tables.contentTypes.insert({ 
       id, 
       name, 
       description, 
@@ -158,8 +158,8 @@ const materializers = State.SQLite.materializers(events, {
       updatedAt: new Date(),
     }),
 
-  'v1.SchemaUpdated': ({ id, name, description, properties, required }) => 
-    tables.schemas.update({ 
+  'v1.ContentTypeUpdated': ({ id, name, description, properties, required }) => 
+    tables.contentTypes.update({ 
       name, 
       description, 
       properties, 
@@ -167,8 +167,8 @@ const materializers = State.SQLite.materializers(events, {
       updatedAt: new Date(),
     }).where({ id }),
 
-  'v1.SchemaDeleted': ({ id, deletedAt }) => 
-    tables.schemas.update({ deletedAt }).where({ id }),
+  'v1.ContentTypeDeleted': ({ id, deletedAt }) => 
+    tables.contentTypes.update({ deletedAt }).where({ id }),
 })
 
 const state = State.SQLite.makeState({ tables, materializers })

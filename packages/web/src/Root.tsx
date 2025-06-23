@@ -20,6 +20,7 @@ const adapter = makePersistedAdapter({
 export const AppWithLiveStore: React.FC = () => (
     <LiveStoreProvider
         schema={schema}
+        storeId={import.meta.env.VITE_LIVESTORE_STORE_ID}
         adapter={adapter}
         renderLoading={(_) => <></>}
         batchUpdates={batchUpdates}

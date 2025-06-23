@@ -8,7 +8,7 @@ export default function EntryEditorPage() {
     return (
         <div className="container mx-auto p-6">
             <ContentHeader title="Edit Content" />
-            <EntryEditor schemaId={id as string} />
+            <EntryEditor contentTypeId={id as string} />
         </div>
     )
 } 
