@@ -49,11 +49,31 @@ export const tables = {
 		},
 	}),
 
+	spaces: State.SQLite.table({
+		name: "spaces",
+		columns: {
+			id: State.SQLite.text({ primaryKey: true }),
+			name: State.SQLite.text({ default: "" }),
+			description: State.SQLite.text({ default: "" }),
+			storageProvider: State.SQLite.text({ default: "storacha" }), // "s3" or "storacha"
+			storageProviderCredentials: State.SQLite.text({ nullable: true }), // Storage provider credentials
+			spaceProof: State.SQLite.text({ nullable: true }), // Space proof for verification
+			isActive: State.SQLite.integer({ default: 1 }), // 1 for true, 0 for false
+			createdAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
+			updatedAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
+			deletedAt: State.SQLite.integer({
+				nullable: true,
+				schema: Schema.DateFromNumber,
+			}),
+		},
+	}),
+
 	// Client documents can be used for local-only state (e.g. form inputs)
 	uiState: State.SQLite.clientDocument({
 		name: "uiState",
 		schema: Schema.Struct({
 			currentContentTypeId: Schema.String,
+			currentSpaceId: Schema.String,
 			formData: Schema.String, // JSON string
 			isSubmitting: Schema.Boolean,
 			uploadProgress: Schema.Number,
@@ -62,6 +82,7 @@ export const tables = {
 			id: SessionIdSymbol,
 			value: {
 				currentContentTypeId: "",
+				currentSpaceId: "",
 				formData: "{}",
 				isSubmitting: false,
 				uploadProgress: 0,
@@ -130,6 +151,36 @@ export const events = {
 
 	contentTypeDeleted: Events.synced({
 		name: "v1.ContentTypeDeleted",
+		schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.Date }),
+	}),
+
+	spaceCreated: Events.synced({
+		name: "v1.SpaceCreated",
+		schema: Schema.Struct({
+			id: Schema.String,
+			name: Schema.String,
+			description: Schema.String,
+			storageProvider: Schema.String,
+			storageProviderCredentials: Schema.String,
+			spaceProof: Schema.String,
+		}),
+	}),
+
+	spaceUpdated: Events.synced({
+		name: "v1.SpaceUpdated",
+		schema: Schema.Struct({
+			id: Schema.String,
+			name: Schema.String,
+			description: Schema.String,
+			storageProvider: Schema.String,
+			storageProviderCredentials: Schema.String,
+			spaceProof: Schema.String,
+			isActive: Schema.Boolean,
+		}),
+	}),
+
+	spaceDeleted: Events.synced({
+		name: "v1.SpaceDeleted",
 		schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.Date }),
 	}),
 
@@ -213,6 +264,35 @@ const materializers = State.SQLite.materializers(events, {
 
 	"v1.ContentTypeDeleted": ({ id, deletedAt }) =>
 		tables.contentTypes.update({ deletedAt }).where({ id }),
+
+	"v1.SpaceCreated": ({ id, name, description, storageProvider, storageProviderCredentials, spaceProof }) =>
+		tables.spaces.insert({
+			id,
+			name,
+			description,
+			storageProvider,
+			storageProviderCredentials,
+			spaceProof,
+			isActive: 1,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		}),
+
+	"v1.SpaceUpdated": ({ id, name, description, storageProvider, storageProviderCredentials, spaceProof, isActive }) =>
+		tables.spaces
+			.update({
+				name,
+				description,
+				storageProvider,
+				storageProviderCredentials,
+				spaceProof,
+				isActive: isActive ? 1 : 0,
+				updatedAt: new Date(),
+			})
+			.where({ id }),
+
+	"v1.SpaceDeleted": ({ id, deletedAt }) =>
+		tables.spaces.update({ deletedAt }).where({ id }),
 });
 
 const state = State.SQLite.makeState({ tables, materializers });

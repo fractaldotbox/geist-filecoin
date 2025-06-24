@@ -26,6 +26,8 @@ import { useForm, useFormState } from "react-hook-form";
 import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
 import { MarkdownField } from "./fields/MarkdownField";
+import { useLiveStore } from "./hooks/useLiveStore";
+import { allEntries$ } from "@/livestore/queries";
 
 // This would normally be imported from the Lighthouse SDK
 // import lighthouse from "@lighthouse-web3/sdk";
@@ -57,63 +59,42 @@ async function uploadFileToLighthouse(
 	};
 }
 
-// New API endpoint upload function
-async function submitContent(
-	values: EntryFormData,
+// Function to handle file upload before creating entry event
+async function uploadFileIfNeeded(
+	media: FileFieldValue | undefined,
 	progressCallback?: (progress: number) => void,
-): Promise<{ cid: string; url: string }> {
+): Promise<{ mediaType: string; mediaUrl: string; mediaCid: string }> {
+	// If no media or media doesn't have a file, return empty values
+	if (!media || !media.file) {
+		return {
+			mediaType: media?.mediaType || "",
+			mediaUrl: media?.url || "",
+			mediaCid: media?.cid || "",
+		};
+	}
+
 	try {
-		console.log("submit", values);
+		// Create FormData for file upload
+		const formData = new FormData();
+		formData.append("file", media.file);
 
-		const media = values?.media as FileFieldValue;
-		let uploadResponse: { url: string; cid: string } | undefined;
+		const uploadResponse = (await ky
+			.post("/api/upload", {
+				body: formData,
+			})
+			.json()) as { url: string; cid: string };
 
-		// Create a copy of the values to modify
-		const submissionData = { ...values };
+		console.log("uploadResponse", uploadResponse);
 
-		// Check if media has a URL starting with blob: (which means it's a local file reference)
-		if (media?.file) {
-			// Create FormData for file upload
-			const formData = new FormData();
-			formData.append("file", media.file);
-
-			uploadResponse = (await ky
-				.post("/api/upload", {
-					body: formData,
-				})
-				.json()) as { url: string; cid: string };
-
-			console.log("uploadResponse", uploadResponse);
-			// Update the media object with the remote URL and CID
-			//@ts-ignore
-			submissionData.media = {
-				mediaType: media.mediaType,
-				cid: uploadResponse.cid,
-			};
-		}
-
-		const response = await ky.post("/api/submit", {
-			json: submissionData,
-			headers: {
-				"Content-Type": "application/json",
-			},
-		});
-
-		if (!response.ok) {
-			const errorData = (await response.json()) as { message?: string };
-			throw new Error(errorData.message || "Upload failed");
-		}
-
-		const data = (await response.json()) as { cid: string; url: string };
-
-		// Call progress callback with completion
+		// Call progress callback
 		if (progressCallback) {
 			progressCallback(1);
 		}
 
 		return {
-			cid: data.cid,
-			url: data.url,
+			mediaType: media.mediaType,
+			mediaUrl: uploadResponse.url,
+			mediaCid: uploadResponse.cid,
 		};
 	} catch (error) {
 		console.error("Upload error:", error);
@@ -127,19 +108,32 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 	const contentTypeIdFromUrl =
 		contentTypeId || params.get("contentType") || "blog";
 
-	// Use LiveStore-based content type hooks
+	// Use LiveStore-based content type hooks and entry creation
 	const contentTypeData = useContentType(contentTypeIdFromUrl);
+	const { store, createEntry } = useLiveStore();
+
+	useEffect(() => {
+
+		return store.subscribe(allEntries$, {
+			onUpdate: (newValue) => {
+				console.log("allEntries", newValue);
+			},
+			onUnsubsubscribe: () => {
+
+			},
+		})
+	}, [store]);
 
 	const contentType = contentTypeData
 		? {
-				type: "object" as const,
-				...contentTypeData,
-				properties: JSON.parse(contentTypeData.properties) as Record<
-					string,
-					ContentTypeField
-				>,
-				required: JSON.parse(contentTypeData.required) as string[],
-			}
+			type: "object" as const,
+			...contentTypeData,
+			properties: JSON.parse(contentTypeData.properties) as Record<
+				string,
+				ContentTypeField
+			>,
+			required: JSON.parse(contentTypeData.required) as string[],
+		}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -227,10 +221,7 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 		}
 	}, [contentType, contentTypeData]);
 
-	// Decouple the file upload and metadata upload
-	// as easier to use form-data for the file upload
-	// and json for the metadata upload
-
+	// Create entry using LiveStore events instead of direct API calls
 	const onSubmit = async (values: EntryFormData) => {
 		setIsSubmitting(true);
 		setSubmissionResult(undefined); // Reset submission result
@@ -239,18 +230,31 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 			// Show global progress bar
 			await simulateProgress();
 
-			const uploadResult = await submitContent(values, (progress) => {
-				setUploadProgress(progress);
+			// Handle file upload if needed
+			const media = values?.media as FileFieldValue | undefined;
+			const { mediaType, mediaUrl, mediaCid } = await uploadFileIfNeeded(
+				media,
+				(progress: number) => {
+					setUploadProgress(progress);
+				}
+			);
+
+			// Create entry using LiveStore event
+			await createEntry({
+				...values,
+				contentTypeId: contentTypeIdFromUrl,
+				media: { mediaType, url: mediaUrl, cid: mediaCid },
 			});
 
-			console.log("uploadResult", uploadResult);
-			// Process the submission with uploaded files
-			console.log("Form submitted with processed data:", values);
+			console.log("Entry created successfully");
 
-			// Set the submission result
-			setSubmissionResult(uploadResult);
+			// Set the submission result for the sidebar
+			setSubmissionResult({
+				cid: mediaCid || "local",
+				url: mediaUrl || "local"
+			});
 		} catch (error) {
-			console.error("Error submitting form:", error);
+			console.error("Error creating entry:", error);
 		} finally {
 			setIsSubmitting(false);
 			setUploadProgress(0);

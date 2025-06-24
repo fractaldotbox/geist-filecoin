@@ -1,4 +1,3 @@
-import { ContentHeader } from "@/components/react/ContentHeader";
 import { ContentTypeEditor } from "@/components/react/ContentTypeEditor";
 import { useParams } from "react-router-dom";
 
@@ -7,7 +6,9 @@ export default function ContentTypeEditorPage() {
 
 	return (
 		<div className="container mx-auto p-6">
-			<ContentHeader title="Edit Content Type" />
+			<div className="mb-6">
+				<h1 className="text-2xl font-bold">Edit Content Type</h1>
+			</div>
 			<ContentTypeEditor />
 		</div>
 	);
