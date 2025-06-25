@@ -1,5 +1,5 @@
 name = "websocket-server"
-main = "./src/cf-worker/index.ts"
+main = "./src/index.ts"
 compatibility_date = "2025-05-08"
 # compatibility_flags = ["nodejs_compat"]
 

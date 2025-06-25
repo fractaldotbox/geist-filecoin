@@ -1,5 +1,5 @@
 {
-	"name": "geist-filecoin",
+	"name": "@geist-filecoin/cms",
 	"private": true,
 	"scripts": {
 		"build": "turbo run build",

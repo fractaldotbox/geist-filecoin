@@ -1,0 +1,34 @@
+{
+	"name": "@geist-filecoin/storage",
+	"type": "module",
+	"version": "0.0.1",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"lint": "biome check --fix",
+		"test": "vitest",
+		"test:ui": "vitest --ui"
+	},
+	"dependencies": {
+		"@ipld/dag-ucan": "^3.4.5",
+		"@noble/ed25519": "^2.2.0",
+		"@noble/hashes": "^1.6.1",
+		"@web3-storage/w3up-client": "^17.3.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@types/node": "^22.15.17",
+		"@vitest/ui": "^2.1.8",
+		"typescript": "^5.8.3",
+		"vitest": "^2.1.8"
+	}
+}
