@@ -462,7 +462,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 										key={space.id}
 										className={`p-6 ${space.isActive ? "border-green-500 border-2" : ""}`}
 									>
-										<div className="flex items-start justify-between mb-4">
+										<div className="flex items-start justify-between mb-2">
 											<div className="flex-1">
 												<h3 className="text-xl font-semibold mb-1 flex flex-row align-center items-center gap-2">
 													{space.isActive ? (
@@ -472,7 +472,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 													)}
 													{space.name}
 												</h3>
-												<div className="flex gap-2 mb-2 items-center">
+												<div className="flex gap-2 items-center">
 													<Badge variant="secondary">
 														{
 															STORAGE_PROVIDER_LABELS[
