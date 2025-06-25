@@ -9,7 +9,7 @@ import ContentTypeEditorPage from "@/pages/editor/ContentTypeEditorPage";
 import ContentTypeSelectPage from "@/pages/editor/ContentTypeSelectPage";
 import EntryEditorPage from "@/pages/editor/EntryEditorPage";
 import { THEME_STORAGE_KEY } from "@/stores/theme";
-import { useEffect, useState, createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 
 // Create context for spaces drawer
@@ -20,7 +20,7 @@ const SpacesDrawerContext = createContext<{
 export const useSpacesDrawer = () => {
 	const context = useContext(SpacesDrawerContext);
 	if (!context) {
-		throw new Error('useSpacesDrawer must be used within SpacesDrawerProvider');
+		throw new Error("useSpacesDrawer must be used within SpacesDrawerProvider");
 	}
 	return context;
 };

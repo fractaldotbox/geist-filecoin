@@ -43,13 +43,18 @@ export const contentTypeById$ = (id: string) =>
 
 // Query for all active spaces
 export const allSpaces$ = queryDb(
-	(get) => tables.spaces.where({ deletedAt: null }).orderBy("createdAt", "desc"),
+	(get) =>
+		tables.spaces.where({ deletedAt: null }).orderBy("createdAt", "desc"),
 	{ label: "allSpaces" },
 );
 
 // Query for the first active space (used as current space for now)
 export const firstActiveSpace$ = queryDb(
-	(get) => tables.spaces.where({ deletedAt: null, isActive: 1 }).orderBy("createdAt", "desc").first({ fallback: () => null }),
+	(get) =>
+		tables.spaces
+			.where({ deletedAt: null, isActive: 1 })
+			.orderBy("createdAt", "desc")
+			.first({ fallback: () => null }),
 	{ label: "firstActiveSpace" },
 );
 

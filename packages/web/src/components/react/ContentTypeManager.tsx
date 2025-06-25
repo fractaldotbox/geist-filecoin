@@ -1,10 +1,16 @@
 import { useStore } from "@livestore/react";
-import { AlertCircle, CheckCircle, Download, RefreshCw, Folder } from "lucide-react";
+import {
+	AlertCircle,
+	CheckCircle,
+	Download,
+	Folder,
+	RefreshCw,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import { useSpacesDrawer } from "../../App";
 import { allContentTypes$, allSpaces$ } from "../../livestore/queries";
 import { useContentTypeSeeder } from "./hooks/useContentTypeSeeder";
 import { useLiveStore } from "./hooks/useLiveStore";
-import { useSpacesDrawer } from "../../App";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -43,10 +49,15 @@ export function ContentTypeManager() {
 					<AlertDescription className="text-orange-800 dark:text-orange-300">
 						<div className="flex flex-col gap-3">
 							<p>
-								<strong>Space Required:</strong> You need to create a content space before you can work with content types.
-								Spaces define where your content will be stored and how it's organized.
+								<strong>Space Required:</strong> You need to create a content
+								space before you can work with content types. Spaces define
+								where your content will be stored and how it's organized.
 							</p>
-							<Button onClick={openSpacesDrawer} className="self-start" size="sm">
+							<Button
+								onClick={openSpacesDrawer}
+								className="self-start"
+								size="sm"
+							>
 								<Folder className="w-4 h-4 mr-2" />
 								Create Your First Space
 							</Button>
@@ -78,7 +89,7 @@ export function ContentTypeManager() {
 								<h2 className="text-xl font-semibold">
 									{contentType.name ||
 										contentType.id.charAt(0).toUpperCase() +
-										contentType.id.slice(1)}
+											contentType.id.slice(1)}
 								</h2>
 								<Badge variant="outline">Content Type</Badge>
 							</div>

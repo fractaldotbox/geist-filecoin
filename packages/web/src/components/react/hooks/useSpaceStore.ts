@@ -11,6 +11,7 @@ export const useSpaceStore = () => {
 		storageProvider: string;
 		storageProviderCredentials: string;
 		spaceProof: string;
+		isActive: boolean;
 	}) => {
 		return store.commit(
 			events.spaceCreated({
@@ -20,6 +21,7 @@ export const useSpaceStore = () => {
 				storageProvider: spaceData.storageProvider,
 				storageProviderCredentials: spaceData.storageProviderCredentials || "",
 				spaceProof: spaceData.spaceProof || "",
+				isActive: spaceData.isActive,
 			}),
 		);
 	};
@@ -63,4 +65,4 @@ export const useSpaceStore = () => {
 		updateSpace,
 		deleteSpace,
 	};
-}; 
+};

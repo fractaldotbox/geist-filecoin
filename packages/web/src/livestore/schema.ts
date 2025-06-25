@@ -163,6 +163,7 @@ export const events = {
 			storageProvider: Schema.String,
 			storageProviderCredentials: Schema.String,
 			spaceProof: Schema.String,
+			isActive: Schema.Boolean,
 		}),
 	}),
 
@@ -265,7 +266,15 @@ const materializers = State.SQLite.materializers(events, {
 	"v1.ContentTypeDeleted": ({ id, deletedAt }) =>
 		tables.contentTypes.update({ deletedAt }).where({ id }),
 
-	"v1.SpaceCreated": ({ id, name, description, storageProvider, storageProviderCredentials, spaceProof }) =>
+	"v1.SpaceCreated": ({
+		id,
+		name,
+		description,
+		storageProvider,
+		storageProviderCredentials,
+		spaceProof,
+		isActive,
+	}) =>
 		tables.spaces.insert({
 			id,
 			name,
@@ -273,12 +282,20 @@ const materializers = State.SQLite.materializers(events, {
 			storageProvider,
 			storageProviderCredentials,
 			spaceProof,
-			isActive: 1,
+			isActive: isActive ? 1 : 0,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		}),
 
-	"v1.SpaceUpdated": ({ id, name, description, storageProvider, storageProviderCredentials, spaceProof, isActive }) =>
+	"v1.SpaceUpdated": ({
+		id,
+		name,
+		description,
+		storageProvider,
+		storageProviderCredentials,
+		spaceProof,
+		isActive,
+	}) =>
 		tables.spaces
 			.update({
 				name,

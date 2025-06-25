@@ -1,10 +1,10 @@
-import { useStore } from "@livestore/react";
 import { Button } from "@/components/react/ui/button";
 import { Card } from "@/components/react/ui/card";
-import { FilePlus, Folder, AlertCircle } from "lucide-react";
+import { useStore } from "@livestore/react";
+import { AlertCircle, FilePlus, Folder } from "lucide-react";
 import { Link } from "react-router-dom";
-import { allSpaces$ } from "../livestore/queries";
 import { useSpacesDrawer } from "../App";
+import { allSpaces$ } from "../livestore/queries";
 
 export default function HomePage() {
 	const { store } = useStore();
@@ -30,11 +30,16 @@ export default function HomePage() {
 								</div>
 								<h3 className="text-xl font-semibold mb-2">Get Started</h3>
 								<p className="text-muted-foreground mb-6 max-w-md">
-									Before you can create content entries, you need to set up a content space.
-									Spaces help you organize your content and define where it gets stored.
+									Before you can create content entries, you need to set up a
+									content space. Spaces help you organize your content and
+									define where it gets stored.
 								</p>
 								<div className="flex flex-col sm:flex-row gap-4 items-center">
-									<Button size="lg" className="flex items-center gap-2" onClick={openSpacesDrawer}>
+									<Button
+										size="lg"
+										className="flex items-center gap-2"
+										onClick={openSpacesDrawer}
+									>
 										<Folder className="w-5 h-5" />
 										Manage Space
 									</Button>

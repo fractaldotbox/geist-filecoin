@@ -13,6 +13,7 @@ import { Button } from "@/components/react/ui/button";
 import { Card } from "@/components/react/ui/card";
 import { Form, FormField } from "@/components/react/ui/form";
 import { simulateProgress } from "@/components/react/ui/global-progress";
+import { allEntries$ } from "@/livestore/queries";
 import {
 	type ContentType,
 	type ContentTypeField,
@@ -27,7 +28,6 @@ import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
 import { MarkdownField } from "./fields/MarkdownField";
 import { useLiveStore } from "./hooks/useLiveStore";
-import { allEntries$ } from "@/livestore/queries";
 
 // This would normally be imported from the Lighthouse SDK
 // import lighthouse from "@lighthouse-web3/sdk";
@@ -113,27 +113,24 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 	const { store, createEntry } = useLiveStore();
 
 	useEffect(() => {
-
 		return store.subscribe(allEntries$, {
 			onUpdate: (newValue) => {
 				console.log("allEntries", newValue);
 			},
-			onUnsubsubscribe: () => {
-
-			},
-		})
+			onUnsubsubscribe: () => {},
+		});
 	}, [store]);
 
 	const contentType = contentTypeData
 		? {
-			type: "object" as const,
-			...contentTypeData,
-			properties: JSON.parse(contentTypeData.properties) as Record<
-				string,
-				ContentTypeField
-			>,
-			required: JSON.parse(contentTypeData.required) as string[],
-		}
+				type: "object" as const,
+				...contentTypeData,
+				properties: JSON.parse(contentTypeData.properties) as Record<
+					string,
+					ContentTypeField
+				>,
+				required: JSON.parse(contentTypeData.required) as string[],
+			}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -236,7 +233,7 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 				media,
 				(progress: number) => {
 					setUploadProgress(progress);
-				}
+				},
 			);
 
 			// Create entry using LiveStore event
@@ -251,7 +248,7 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 			// Set the submission result for the sidebar
 			setSubmissionResult({
 				cid: mediaCid || "local",
-				url: mediaUrl || "local"
+				url: mediaUrl || "local",
 			});
 		} catch (error) {
 			console.error("Error creating entry:", error);
