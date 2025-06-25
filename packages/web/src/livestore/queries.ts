@@ -40,3 +40,26 @@ export const contentTypeById$ = (id: string) =>
 	queryDb((get) => tables.contentTypes.where({ id }).first(), {
 		label: `contentTypeById-${id}`,
 	});
+
+// Query for all active spaces
+export const allSpaces$ = queryDb(
+	(get) =>
+		tables.spaces.where({ deletedAt: null }).orderBy("createdAt", "desc"),
+	{ label: "allSpaces" },
+);
+
+// Query for the first active space (used as current space for now)
+export const firstActiveSpace$ = queryDb(
+	(get) =>
+		tables.spaces
+			.where({ deletedAt: null, isActive: 1 })
+			.orderBy("createdAt", "desc")
+			.first({ fallback: () => null }),
+	{ label: "firstActiveSpace" },
+);
+
+// Query for a specific space
+export const spaceById$ = (id: string) =>
+	queryDb((get) => tables.spaces.where({ id, deletedAt: null }).first(), {
+		label: `spaceById-${id}`,
+	});
