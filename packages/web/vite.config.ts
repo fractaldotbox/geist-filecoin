@@ -11,31 +11,6 @@ export default defineConfig({
 		react(),
 		tailwindcss(),
 		livestoreDevtoolsPlugin({ schemaPath: "./src/livestore/schema.ts" }),
-		// Running `wrangler dev` as part of `vite dev` needed for `@livestore/sync-cf`
-		{
-			name: "wrangler-dev",
-			configureServer: async (server) => {
-				const wrangler = spawn(
-					"./node_modules/.bin/wrangler",
-					["dev", "--port", "8787"],
-					{
-						stdio: ["ignore", "inherit", "inherit"],
-					},
-				);
-				const shutdown = () => {
-					if (wrangler.killed === false) {
-						wrangler.kill();
-					}
-					process.exit(0);
-				};
-				server.httpServer?.on("close", shutdown);
-				process.on("SIGTERM", shutdown);
-				process.on("SIGINT", shutdown);
-				wrangler.on("exit", (code) =>
-					console.error(`wrangler dev exited with code ${code}`),
-				);
-			},
-		},
 	],
 	resolve: {
 		alias: {
