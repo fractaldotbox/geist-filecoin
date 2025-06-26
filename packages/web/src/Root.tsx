@@ -5,6 +5,8 @@ import type React from "react";
 import { unstable_batchedUpdates as batchUpdates } from "react-dom";
 
 import App from "./App.js";
+import { AuthProvider } from "./components/react/AuthProvider.js";
+import { StorachaProvider } from "./components/react/StorachaProvider.js";
 import LiveStoreWorker from "./livestore/livestore.worker?worker";
 import { schema } from "./livestore/schema.js";
 
@@ -25,6 +27,10 @@ export const AppWithLiveStore: React.FC = () => (
 		batchUpdates={batchUpdates}
 		syncPayload={{ authToken: "insecure-token-change-me" }}
 	>
-		<App />
+		<StorachaProvider>
+			<AuthProvider>
+				<App />
+			</AuthProvider>
+		</StorachaProvider>
 	</LiveStoreProvider>
 );

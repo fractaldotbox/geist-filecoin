@@ -61,15 +61,15 @@ export const useLiveStore = () => {
 	};
 
 	const createContentType = (contentTypeData: {
-		id: string;
 		name: string;
 		description: string;
 		properties: Record<string, any>;
 		required: string[];
 	}) => {
+		const id = crypto.randomUUID();
 		return store.commit(
 			events.contentTypeCreated({
-				id: contentTypeData.id,
+				id,
 				name: contentTypeData.name,
 				description: contentTypeData.description,
 				properties: JSON.stringify(contentTypeData.properties),
@@ -120,6 +120,28 @@ export const useLiveStore = () => {
 		return store.commit(events.uiStateSet(uiState));
 	};
 
+	const createStorachaStorageAuthorization = (authData: {
+		id: string;
+		spaceId: string;
+		delegationCid: string;
+		clientDid: string;
+		isActive: boolean;
+		authorizedAt: Date;
+		expiresAt?: Date;
+	}) => {
+		return store.commit(
+			events.storachaStorageAuthorized({
+				id: authData.id,
+				spaceId: authData.spaceId,
+				delegationCid: authData.delegationCid,
+				clientDid: authData.clientDid,
+				isActive: authData.isActive,
+				authorizedAt: authData.authorizedAt,
+				expiresAt: authData.expiresAt,
+			}),
+		);
+	};
+
 	return {
 		store,
 		createEntry,
@@ -129,5 +151,6 @@ export const useLiveStore = () => {
 		updateContentType,
 		deleteContentType,
 		setUiState,
+		createStorachaStorageAuthorization,
 	};
 };

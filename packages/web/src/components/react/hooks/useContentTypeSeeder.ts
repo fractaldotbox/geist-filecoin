@@ -14,8 +14,8 @@ export function useContentTypeSeeder() {
 		}
 
 		[BLOG, LANDING, PRODUCT].map(({ id, description, schema }) => {
+			console.log("seeding content type", id);
 			createContentType({
-				id,
 				name: id,
 				description,
 				properties: schema.properties,

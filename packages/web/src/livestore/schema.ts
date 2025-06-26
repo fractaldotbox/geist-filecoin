@@ -68,6 +68,24 @@ export const tables = {
 		},
 	}),
 
+	storageAuthorizations: State.SQLite.table({
+		name: "storageAuthorizations",
+		columns: {
+			id: State.SQLite.text({ primaryKey: true }),
+			spaceId: State.SQLite.text(),
+			delegationCid: State.SQLite.text(),
+			clientDid: State.SQLite.text(),
+			isActive: State.SQLite.integer({ default: 1 }), // 1 for true, 0 for false
+			authorizedAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
+			expiresAt: State.SQLite.integer({
+				nullable: true,
+				schema: Schema.DateFromNumber,
+			}),
+			createdAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
+			updatedAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
+		},
+	}),
+
 	// Client documents can be used for local-only state (e.g. form inputs)
 	uiState: State.SQLite.clientDocument({
 		name: "uiState",
@@ -183,6 +201,19 @@ export const events = {
 	spaceDeleted: Events.synced({
 		name: "v1.SpaceDeleted",
 		schema: Schema.Struct({ id: Schema.String, deletedAt: Schema.Date }),
+	}),
+
+	storachaStorageAuthorized: Events.synced({
+		name: "v1.StorachaStorageAuthorized",
+		schema: Schema.Struct({
+			id: Schema.String,
+			spaceId: Schema.String,
+			delegationCid: Schema.String,
+			clientDid: Schema.String,
+			isActive: Schema.Boolean,
+			authorizedAt: Schema.Date,
+			expiresAt: Schema.optional(Schema.Date),
+		}),
 	}),
 
 	uiStateSet: tables.uiState.set,
@@ -310,6 +341,27 @@ const materializers = State.SQLite.materializers(events, {
 
 	"v1.SpaceDeleted": ({ id, deletedAt }) =>
 		tables.spaces.update({ deletedAt }).where({ id }),
+
+	"v1.StorachaStorageAuthorized": ({
+		id,
+		spaceId,
+		delegationCid,
+		clientDid,
+		isActive,
+		authorizedAt,
+		expiresAt,
+	}) =>
+		tables.storageAuthorizations.insert({
+			id,
+			spaceId,
+			delegationCid,
+			clientDid,
+			isActive: isActive ? 1 : 0,
+			authorizedAt,
+			expiresAt,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		}),
 });
 
 const state = State.SQLite.makeState({ tables, materializers });
