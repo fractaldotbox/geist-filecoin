@@ -13,7 +13,7 @@ import { Button } from "@/components/react/ui/button";
 import { Card } from "@/components/react/ui/card";
 import { Form, FormField } from "@/components/react/ui/form";
 import { simulateProgress } from "@/components/react/ui/global-progress";
-import { allEntries$ } from "@/livestore/queries";
+import { allEntries$, firstActiveSpace$, latestStorageAuthorizationForSpace$ } from "@/livestore/queries";
 import {
 	type ContentType,
 	type ContentTypeField,
@@ -32,51 +32,77 @@ import { useLiveStore } from "./hooks/useLiveStore";
 // This would normally be imported from the Lighthouse SDK
 // import lighthouse from "@lighthouse-web3/sdk";
 
+// Upload mode enum
+export enum UploadMode {
+	StorachaDelegated = "storacha_delegated",
+	Server = "server",
+}
+
 /**
- * Uploads a file to IPFS using Lighthouse
+ * Uploads a file directly to Storacha using delegated token
  */
-async function uploadFileToLighthouse(
+async function uploadFileToStoracha(
+	file: File,
+	delegatedToken: string,
+	progressCallback?: (progress: number) => void,
+): Promise<{ cid: string; url: string }> {
+	try {
+		if (!delegatedToken) {
+			throw new Error("Storacha delegated token not found");
+		}
+
+		// Create FormData for Storacha upload
+		const formData = new FormData();
+		formData.append("file", file);
+
+		// Simulate progress updates
+		if (progressCallback) {
+			progressCallback(0.3);
+		}
+
+		// Upload directly to Storacha
+		const response = await ky.post("https://up.storacha.network/", {
+			headers: {
+				Authorization: `Bearer ${delegatedToken}`,
+			},
+			body: formData,
+		});
+
+		if (progressCallback) {
+			progressCallback(0.8);
+		}
+
+		const result = await response.json() as { cid: string };
+
+		if (progressCallback) {
+			progressCallback(1);
+		}
+
+		return {
+			cid: result.cid,
+			url: `https://w3s.link/ipfs/${result.cid}`,
+		};
+	} catch (error) {
+		console.error("Storacha upload error:", error);
+		throw error;
+	}
+}
+
+/**
+ * Uploads a file to server endpoint
+ */
+async function uploadFileWithApi(
 	file: File,
 	progressCallback?: (progress: number) => void,
 ): Promise<{ cid: string; url: string }> {
-	// Simulate uploading for now
-	// When the SDK is properly installed, replace this with actual lighthouse upload
-	// const output = await lighthouse.upload(file, process.env.LIGHTHOUSE_API_KEY);
-
-	// Simulate progress
-	for (let i = 0; i <= 10; i++) {
-		if (progressCallback) {
-			progressCallback(i / 10);
-		}
-		await new Promise((resolve) => setTimeout(resolve, 300));
-	}
-
-	// Simulate final response
-	const randomCid = `bafybeig${Math.random().toString(36).substring(2, 10)}`;
-	return {
-		cid: randomCid,
-		url: `https://gateway.lighthouse.storage/ipfs/${randomCid}`,
-	};
-}
-
-// Function to handle file upload before creating entry event
-async function uploadFileIfNeeded(
-	media: FileFieldValue | undefined,
-	progressCallback?: (progress: number) => void,
-): Promise<{ mediaType: string; mediaUrl: string; mediaCid: string }> {
-	// If no media or media doesn't have a file, return empty values
-	if (!media || !media.file) {
-		return {
-			mediaType: media?.mediaType || "",
-			mediaUrl: media?.url || "",
-			mediaCid: media?.cid || "",
-		};
-	}
-
 	try {
 		// Create FormData for file upload
 		const formData = new FormData();
-		formData.append("file", media.file);
+		formData.append("file", file);
+
+		if (progressCallback) {
+			progressCallback(0.5);
+		}
 
 		const uploadResponse = (await ky
 			.post("/api/upload", {
@@ -92,9 +118,54 @@ async function uploadFileIfNeeded(
 		}
 
 		return {
+			cid: uploadResponse.cid,
+			url: uploadResponse.url,
+		};
+	} catch (error) {
+		console.error("API upload error:", error);
+		throw error;
+	}
+}
+
+// Function to handle file upload before creating entry event
+async function uploadFile(
+	media: FileFieldValue | undefined,
+	uploadMode: UploadMode = UploadMode.StorachaDelegated,
+	progressCallback?: (progress: number) => void,
+	delegatedToken?: string,
+): Promise<{ mediaType: string; mediaUrl: string; mediaCid: string }> {
+	console.log("uploadFile", media, uploadMode);
+	// If no media or media doesn't have a file, return empty values
+	if (!media || !media.file) {
+		return {
+			mediaType: media?.mediaType || "",
+			mediaUrl: media?.url || "",
+			mediaCid: media?.cid || "",
+		};
+	}
+
+	try {
+		let uploadResult: { cid: string; url: string };
+
+		// Branch between upload modes
+		switch (uploadMode) {
+			case UploadMode.StorachaDelegated:
+				if (!delegatedToken) {
+					throw new Error("Delegated token is required for Storacha upload");
+				}
+				uploadResult = await uploadFileToStoracha(media.file, delegatedToken, progressCallback);
+				break;
+			case UploadMode.Server:
+				uploadResult = await uploadFileWithApi(media.file, progressCallback);
+				break;
+			default:
+				throw new Error(`Unknown upload mode: ${uploadMode}`);
+		}
+
+		return {
 			mediaType: media.mediaType,
-			mediaUrl: uploadResponse.url,
-			mediaCid: uploadResponse.cid,
+			mediaUrl: uploadResult.url,
+			mediaCid: uploadResult.cid,
 		};
 	} catch (error) {
 		console.error("Upload error:", error);
@@ -102,7 +173,13 @@ async function uploadFileIfNeeded(
 	}
 }
 
-export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
+export function EntryEditor({
+	contentTypeId,
+	uploadMode = UploadMode.Server
+}: {
+	contentTypeId?: string;
+	uploadMode?: UploadMode;
+}) {
 	// Get template type from URL or use the contentTypeId passed from props
 	const params = new URLSearchParams(window.location.search);
 	const contentTypeIdFromUrl =
@@ -112,25 +189,30 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 	const contentTypeData = useContentType(contentTypeIdFromUrl);
 	const { store, createEntry } = useLiveStore();
 
+	// Get active space and its storage authorization
+	const activeSpace = store.useQuery(firstActiveSpace$);
+	const storageAuth = activeSpace
+		? store.useQuery(latestStorageAuthorizationForSpace$(activeSpace.id))
+		: null;
+
 	useEffect(() => {
 		return store.subscribe(allEntries$, {
 			onUpdate: (newValue) => {
 				console.log("allEntries", newValue);
 			},
-			onUnsubsubscribe: () => {},
 		});
 	}, [store]);
 
 	const contentType = contentTypeData
 		? {
-				type: "object" as const,
-				...contentTypeData,
-				properties: JSON.parse(contentTypeData.properties) as Record<
-					string,
-					ContentTypeField
-				>,
-				required: JSON.parse(contentTypeData.required) as string[],
-			}
+			type: "object" as const,
+			...contentTypeData,
+			properties: JSON.parse(contentTypeData.properties) as Record<
+				string,
+				ContentTypeField
+			>,
+			required: JSON.parse(contentTypeData.required) as string[],
+		}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -227,13 +309,24 @@ export function EntryEditor({ contentTypeId }: { contentTypeId?: string }) {
 			// Show global progress bar
 			await simulateProgress();
 
-			// Handle file upload if needed
+			// Get delegated token from storage authorization if using Storacha mode
+			let delegatedToken: string | undefined;
+			if (uploadMode === UploadMode.StorachaDelegated) {
+				if (!storageAuth || !storageAuth.delegationCid) {
+					throw new Error("No Storacha storage authorization found for the active space");
+				}
+				delegatedToken = storageAuth.delegationCid;
+			}
+
+			// Handle file upload if needed with specified upload mode
 			const media = values?.media as FileFieldValue | undefined;
-			const { mediaType, mediaUrl, mediaCid } = await uploadFileIfNeeded(
+			const { mediaType, mediaUrl, mediaCid } = await uploadFile(
 				media,
+				uploadMode,
 				(progress: number) => {
 					setUploadProgress(progress);
 				},
+				delegatedToken,
 			);
 
 			// Create entry using LiveStore event

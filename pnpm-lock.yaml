@@ -64,8 +64,8 @@ importers:
         specifier: ^1.6.1
         version: 1.8.0
       '@web3-storage/w3up-client':
-        specifier: ^17.3.0
-        version: 17.3.0
+        specifier: ^16.5.2
+        version: 16.5.2
     devDependencies:
       '@biomejs/biome':
         specifier: 1.9.4
@@ -4460,26 +4460,6 @@ packages:
 
   /@web3-storage/w3up-client@17.1.2:
     resolution: {integrity: sha512-vS6pvbIfr0iUorH7LBGm24GDBMQ4xdJRlFTlLWktfEAqzBiPE3v7lXDDF4suXl9DzjkLYK8+eSuSqb5+zru2eA==}
-    engines: {node: '>=18'}
-    dependencies:
-      '@ipld/dag-ucan': 3.4.5
-      '@ucanto/client': 9.0.1
-      '@ucanto/core': 10.4.0
-      '@ucanto/interface': 10.3.0
-      '@ucanto/principal': 9.0.2
-      '@ucanto/transport': 9.2.0
-      '@web3-storage/access': 20.3.0
-      '@web3-storage/blob-index': 1.0.5
-      '@web3-storage/capabilities': 18.1.0
-      '@web3-storage/did-mailto': 2.1.0
-      '@web3-storage/filecoin-client': 3.3.5
-      '@web3-storage/upload-client': 17.1.4
-    transitivePeerDependencies:
-      - encoding
-    dev: false
-
-  /@web3-storage/w3up-client@17.3.0:
-    resolution: {integrity: sha512-2AaaZgFEk3Y+ARMGEtQr496IbMh2QJVaRxETAzSQUfxd1hQeP/X9Cf5PoIOLv/VhkaptO2r7CLQGijIE2jEvNw==}
     engines: {node: '>=18'}
     dependencies:
       '@ipld/dag-ucan': 3.4.5

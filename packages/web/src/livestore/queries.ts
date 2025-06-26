@@ -31,7 +31,7 @@ export const entryById$ = (id: string) =>
 
 // Query for all content types
 export const allContentTypes$ = queryDb(
-	(get) => tables.contentTypes.orderBy("createdAt", "desc"),
+	(get) => tables.contentTypes.where({ deletedAt: null }).orderBy("createdAt", "desc"),
 	{ label: "allContentTypes" },
 );
 
@@ -63,3 +63,33 @@ export const spaceById$ = (id: string) =>
 	queryDb((get) => tables.spaces.where({ id, deletedAt: null }).first(), {
 		label: `spaceById-${id}`,
 	});
+
+// Query for all active storage authorizations
+export const allActiveStorageAuthorizations$ = queryDb(
+	(get) =>
+		tables.storageAuthorizations
+			.where({ isActive: 1 })
+			.orderBy("createdAt", "desc"),
+	{ label: "allActiveStorageAuthorizations" },
+);
+
+// Query for storage authorizations by space
+export const storageAuthorizationsBySpace$ = (spaceId: string) =>
+	queryDb(
+		(get) =>
+			tables.storageAuthorizations
+				.where({ spaceId, isActive: 1 })
+				.orderBy("createdAt", "desc"),
+		{ label: `storageAuthorizationsBySpace-${spaceId}` },
+	);
+
+// Query for the latest active storage authorization for a space
+export const latestStorageAuthorizationForSpace$ = (spaceId: string) =>
+	queryDb(
+		(get) =>
+			tables.storageAuthorizations
+				.where({ spaceId, isActive: 1 })
+				.orderBy("createdAt", "desc")
+				.first({ fallback: () => null }),
+		{ label: `latestStorageAuthorizationForSpace-${spaceId}` },
+	);

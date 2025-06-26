@@ -10,7 +10,7 @@ export default defineConfig({
 	plugins: [
 		react(),
 		tailwindcss(),
-		livestoreDevtoolsPlugin({ schemaPath: "./src/livestore/schema.ts" })
+		livestoreDevtoolsPlugin({ schemaPath: "./src/livestore/schema.ts" }),
 	],
 	resolve: {
 		alias: {

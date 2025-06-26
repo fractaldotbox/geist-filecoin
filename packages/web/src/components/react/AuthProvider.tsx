@@ -1,25 +1,33 @@
 import ky from "ky";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
 import type { ReactNode } from "react";
+import { useStore } from "@livestore/react";
+import { firstActiveSpace$ } from "../../livestore/queries";
 
 // Auth context types
 interface AuthUser {
-    id: string;
-    email?: string;
-    name?: string;
-    [key: string]: any;
+	id: string;
+	email?: string;
+	name?: string;
+	[key: string]: any;
 }
 
 interface AuthResponse {
-    user?: AuthUser;
+	user?: AuthUser;
 }
 
 interface AuthContextType {
-    user: AuthUser | null;
-    isLoading: boolean;
-    isAuthenticated: boolean;
-    error: string | null;
-    refetch: () => Promise<void>;
+	user: AuthUser | null;
+	isLoading: boolean;
+	isAuthenticated: boolean;
+	error: string | null;
+	refetch: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,72 +36,72 @@ const API_URL = "http://localhost:8787";
 
 // Auth provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<AuthUser | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+	const { store } = useStore();
+	const activeSpace = store.useQuery(firstActiveSpace$);
+	const [user, setUser] = useState<AuthUser | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
-    const fetchAuth = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
-            const authData = await ky.post(`${API_URL}/api/auth`, {
-                json: {
-                    spaceId: localStorage.getItem("activeSpaceKey") || "",
-                }
-            }).json<AuthResponse>();
-            console.log("authData", authData);
+	const fetchAuth = useCallback(async () => {
+		try {
+			setIsLoading(true);
+			setError(null);
+			const authData = await ky
+				.post(`${API_URL}/api/auth`, {
+					json: {
+						spaceId: activeSpace?.id || "",
+					},
+				})
+				.json<AuthResponse>();
+			console.log("authData", authData);
 
-            // Handle both { user: {...} } and direct user object formats
-            const userData = authData.user || (authData.id ? authData as AuthUser : null);
-            setUser(userData);
-        } catch (err) {
-            console.error(err);
-            setUser(null);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+			// Handle both { user: {...} } and direct user object formats
+			const userData = authData.user || null;
+			setUser(userData);
+		} catch (err) {
+			console.error(err);
+			setUser(null);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [activeSpace?.id]);
 
-    const refetch = async () => {
-        await fetchAuth();
-    };
+	const refetch = async () => {
+		await fetchAuth();
+	};
 
-    // Fetch auth on mount
-    useEffect(() => {
-        fetchAuth();
-    }, [fetchAuth]);
+	// Fetch auth on mount and when active space changes
+	useEffect(() => {
+		fetchAuth();
+	}, [fetchAuth]);
 
-    const value: AuthContextType = {
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        error,
-        refetch,
-    };
+	const value: AuthContextType = {
+		user,
+		isLoading,
+		isAuthenticated: !!user,
+		error,
+		refetch,
+	};
 
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 // Hook to use auth context
 export function useAuth() {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
+	const context = useContext(AuthContext);
+	if (context === undefined) {
+		throw new Error("useAuth must be used within an AuthProvider");
+	}
+	return context;
 }
 
 // HOC to wrap components with auth
 export function withAuth<P extends object>(Component: React.ComponentType<P>) {
-    return function AuthenticatedComponent(props: P) {
-        return (
-            <AuthProvider>
-                <Component {...props} />
-            </AuthProvider>
-        );
-    };
-} 
+	return function AuthenticatedComponent(props: P) {
+		return (
+			<AuthProvider>
+				<Component {...props} />
+			</AuthProvider>
+		);
+	};
+}
