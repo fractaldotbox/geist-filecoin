@@ -13,7 +13,11 @@ import { Button } from "@/components/react/ui/button";
 import { Card } from "@/components/react/ui/card";
 import { Form, FormField } from "@/components/react/ui/form";
 import { simulateProgress } from "@/components/react/ui/global-progress";
-import { allEntries$, firstActiveSpace$, latestStorageAuthorizationForSpace$ } from "@/livestore/queries";
+import {
+	allEntries$,
+	firstActiveSpace$,
+	latestStorageAuthorizationForSpace$,
+} from "@/livestore/queries";
 import {
 	type ContentType,
 	type ContentTypeField,
@@ -29,8 +33,10 @@ import { EditorSidebar } from "./EditorSidebar";
 import { MarkdownField } from "./fields/MarkdownField";
 import { useLiveStore } from "./hooks/useLiveStore";
 
-// This would normally be imported from the Lighthouse SDK
-// import lighthouse from "@lighthouse-web3/sdk";
+import * as Client from "@web3-storage/w3up-client";
+import { Signer } from "@web3-storage/w3up-client/principal/ed25519";
+import * as Proof from "@web3-storage/w3up-client/proof";
+import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
 
 // Upload mode enum
 export enum UploadMode {
@@ -51,36 +57,45 @@ async function uploadFileToStoracha(
 			throw new Error("Storacha delegated token not found");
 		}
 
-		// Create FormData for Storacha upload
-		const formData = new FormData();
-		formData.append("file", file);
-
-		// Simulate progress updates
+		// Report initial progress
 		if (progressCallback) {
-			progressCallback(0.3);
+			progressCallback(0.1);
 		}
 
-		// Upload directly to Storacha
-		const response = await ky.post("https://up.storacha.network/", {
-			headers: {
-				Authorization: `Bearer ${delegatedToken}`,
+		// Create client with delegated token (assuming it's a base64 encoded delegation)
+		const store = new StoreMemory();
+		const client = await Client.create({ store });
+
+		if (progressCallback) {
+			progressCallback(0.2);
+		}
+
+		// Parse the delegated proof
+		const proof = await Proof.parse(delegatedToken);
+		const space = await client.addSpace(proof);
+		await client.setCurrentSpace(space.did());
+
+		if (progressCallback) {
+			progressCallback(0.4);
+		}
+
+		// Upload the file using the Storacha client
+		const cid = await client.uploadFile(file, {
+			onShardStored: () => {
+				// Update progress as shards are stored
+				if (progressCallback) {
+					progressCallback(0.8);
+				}
 			},
-			body: formData,
 		});
-
-		if (progressCallback) {
-			progressCallback(0.8);
-		}
-
-		const result = await response.json() as { cid: string };
 
 		if (progressCallback) {
 			progressCallback(1);
 		}
 
 		return {
-			cid: result.cid,
-			url: `https://w3s.link/ipfs/${result.cid}`,
+			cid: cid.toString(),
+			url: `https://w3s.link/ipfs/${cid}`,
 		};
 	} catch (error) {
 		console.error("Storacha upload error:", error);
@@ -153,7 +168,11 @@ async function uploadFile(
 				if (!delegatedToken) {
 					throw new Error("Delegated token is required for Storacha upload");
 				}
-				uploadResult = await uploadFileToStoracha(media.file, delegatedToken, progressCallback);
+				uploadResult = await uploadFileToStoracha(
+					media.file,
+					delegatedToken,
+					progressCallback,
+				);
 				break;
 			case UploadMode.Server:
 				uploadResult = await uploadFileWithApi(media.file, progressCallback);
@@ -175,10 +194,8 @@ async function uploadFile(
 
 export function EntryEditor({
 	contentTypeId,
-	uploadMode = UploadMode.Server
 }: {
 	contentTypeId?: string;
-	uploadMode?: UploadMode;
 }) {
 	// Get template type from URL or use the contentTypeId passed from props
 	const params = new URLSearchParams(window.location.search);
@@ -205,14 +222,14 @@ export function EntryEditor({
 
 	const contentType = contentTypeData
 		? {
-			type: "object" as const,
-			...contentTypeData,
-			properties: JSON.parse(contentTypeData.properties) as Record<
-				string,
-				ContentTypeField
-			>,
-			required: JSON.parse(contentTypeData.required) as string[],
-		}
+				type: "object" as const,
+				...contentTypeData,
+				properties: JSON.parse(contentTypeData.properties) as Record<
+					string,
+					ContentTypeField
+				>,
+				required: JSON.parse(contentTypeData.required) as string[],
+			}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -306,6 +323,8 @@ export function EntryEditor({
 		setSubmissionResult(undefined); // Reset submission result
 		console.log("debug:", values, typeof values);
 		try {
+			// TODO extract as space attribute
+			const uploadMode = UploadMode.StorachaDelegated;
 			// Show global progress bar
 			await simulateProgress();
 
@@ -313,7 +332,9 @@ export function EntryEditor({
 			let delegatedToken: string | undefined;
 			if (uploadMode === UploadMode.StorachaDelegated) {
 				if (!storageAuth || !storageAuth.delegationCid) {
-					throw new Error("No Storacha storage authorization found for the active space");
+					throw new Error(
+						"No Storacha storage authorization found for the active space",
+					);
 				}
 				delegatedToken = storageAuth.delegationCid;
 			}

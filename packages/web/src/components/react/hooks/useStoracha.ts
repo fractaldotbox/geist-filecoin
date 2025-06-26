@@ -58,7 +58,7 @@ export const useDelegateAccount = (options: {
 			if (!client || !activeSpace) {
 				return;
 			}
-			console.log('request delegate for space', activeSpace);
+			console.log("request delegate for space", activeSpace);
 			const did = client.did();
 			console.log("did", did);
 

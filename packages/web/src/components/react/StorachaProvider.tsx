@@ -31,7 +31,11 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 		console.log("active space", activeSpace);
 
 		// Commit StorachaStorageAuthorized event when delegation becomes available
-		if (delegation && activeSpace && delegationCommittedRef.current !== delegation.root.cid.toString()) {
+		if (
+			delegation &&
+			activeSpace &&
+			delegationCommittedRef.current !== delegation.root.cid.toString()
+		) {
 			const authId = crypto.randomUUID();
 
 			createStorachaStorageAuthorization({
@@ -41,7 +45,9 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 				clientDid: delegation.audience.did(),
 				isActive: true,
 				authorizedAt: new Date(),
-				expiresAt: delegation.expiration ? new Date(delegation.expiration * 1000) : undefined,
+				expiresAt: delegation.expiration
+					? new Date(delegation.expiration * 1000)
+					: undefined,
 			});
 
 			// Mark this delegation as committed to avoid duplicate events

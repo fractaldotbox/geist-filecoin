@@ -1,3 +1,4 @@
+import { useStore } from "@livestore/react";
 import ky from "ky";
 import {
 	createContext,
@@ -7,7 +8,6 @@ import {
 	useState,
 } from "react";
 import type { ReactNode } from "react";
-import { useStore } from "@livestore/react";
 import { firstActiveSpace$ } from "../../livestore/queries";
 
 // Auth context types

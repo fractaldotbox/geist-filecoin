@@ -31,7 +31,8 @@ export const entryById$ = (id: string) =>
 
 // Query for all content types
 export const allContentTypes$ = queryDb(
-	(get) => tables.contentTypes.where({ deletedAt: null }).orderBy("createdAt", "desc"),
+	(get) =>
+		tables.contentTypes.where({ deletedAt: null }).orderBy("createdAt", "desc"),
 	{ label: "allContentTypes" },
 );
 
