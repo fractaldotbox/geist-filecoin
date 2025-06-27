@@ -1,4 +1,3 @@
-import { DemoModeProvider } from "@/components/react/DemoModeProvider";
 import { GlobalProgressProvider } from "@/components/react/GlobalProgressProvider";
 import Layout from "@/components/react/Layout";
 import { Navigation } from "@/components/react/Navigation";
@@ -12,6 +11,8 @@ import EntryEditorPage from "@/pages/editor/EntryEditorPage";
 import { THEME_STORAGE_KEY } from "@/stores/theme";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
+import { DemoModeBanner } from "./components/react/DemoModeBanner";
+import { useDemoMode } from "./components/react/hooks/useDemoMode";
 
 // Create context for spaces drawer
 const SpacesDrawerContext = createContext<{
@@ -29,6 +30,7 @@ export const useSpacesDrawer = () => {
 function App() {
 	const [isSpacesDrawerOpen, setIsSpacesDrawerOpen] = useState(false);
 
+	const { isDemoMode } = useDemoMode();
 	const openSpacesDrawer = () => setIsSpacesDrawerOpen(true);
 	useEffect(() => {
 		const applyTheme = () => {
@@ -45,32 +47,31 @@ function App() {
 
 	return (
 		<SpacesDrawerContext.Provider value={{ openSpacesDrawer }}>
-			<DemoModeProvider>
-				<div>
-					<GlobalProgressProvider />
-					<Navigation onSpacesClick={openSpacesDrawer} />
-					<Layout>
-						<Routes>
-							<Route path="/" element={<HomePage />} />
-							<Route path="/spaces" element={<SpacesPage />} />
-							<Route
-								path="/editor/content-type/select"
-								element={<ContentTypeSelectPage />}
-							/>
-							<Route
-								path="/editor/content-type/:id"
-								element={<ContentTypeEditorPage />}
-							/>
-							<Route path="/editor/entry/:id" element={<EntryEditorPage />} />
-							<Route path="/content-types" element={<ContentTypesPage />} />
-						</Routes>
-					</Layout>
-					<SpacesDrawer
-						open={isSpacesDrawerOpen}
-						onClose={() => setIsSpacesDrawerOpen(false)}
-					/>
-				</div>
-			</DemoModeProvider>
+			<div>
+				{isDemoMode && <DemoModeBanner />}
+				<GlobalProgressProvider />
+				<Navigation onSpacesClick={openSpacesDrawer} />
+				<Layout>
+					<Routes>
+						<Route path="/" element={<HomePage />} />
+						<Route path="/spaces" element={<SpacesPage />} />
+						<Route
+							path="/editor/content-type/select"
+							element={<ContentTypeSelectPage />}
+						/>
+						<Route
+							path="/editor/content-type/:id"
+							element={<ContentTypeEditorPage />}
+						/>
+						<Route path="/editor/entry/:id" element={<EntryEditorPage />} />
+						<Route path="/content-types" element={<ContentTypesPage />} />
+					</Routes>
+				</Layout>
+				<SpacesDrawer
+					open={isSpacesDrawerOpen}
+					onClose={() => setIsSpacesDrawerOpen(false)}
+				/>
+			</div>
 		</SpacesDrawerContext.Provider>
 	);
 }
