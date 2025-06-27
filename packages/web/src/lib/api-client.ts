@@ -7,11 +7,6 @@ const API_BASE_URL =
 export const apiClient: KyInstance = ky.create({
 	prefixUrl: API_BASE_URL,
 	timeout: 30000, // 30 seconds
-	retry: {
-		limit: 2,
-		methods: ["get", "post"],
-		statusCodes: [408, 413, 429, 500, 502, 503, 504],
-	},
 	headers: {
 		"Content-Type": "application/json",
 	},

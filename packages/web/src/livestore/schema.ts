@@ -360,8 +360,8 @@ const materializers = State.SQLite.materializers(events, {
 			isActive: isActive ? 1 : 0,
 			authorizedAt,
 			expiresAt,
-			createdAt: authorizedAt,
-			updatedAt: authorizedAt,
+			createdAt: new Date(),
+			updatedAt: new Date(),
 		}),
 });
 

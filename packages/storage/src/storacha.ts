@@ -208,8 +208,6 @@ export const createUserDelegation = async ({
 	});
 
 	console.log("init client", client.did(), client.currentSpace()?.did());
-	console.log("delegate to", userDid);
-	// Create delegation for the user
 	const delegation = await createDelegationWithCapabilities(
 		{
 			client,
