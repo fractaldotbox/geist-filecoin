@@ -6,13 +6,7 @@ import {
 	it,
 	vi,
 } from "vitest";
-import {
-	type DelegationFlowParams,
-	type StorachaConfig,
-	createDelegation,
-	createUserDelegation,
-	initStorachaClient,
-} from "./storacha";
+import { type DelegationFlowParams, createUserDelegation } from "./storacha";
 
 describe("createUserDelegation", () => {
 	const userDid =

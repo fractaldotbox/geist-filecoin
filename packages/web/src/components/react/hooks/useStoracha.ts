@@ -1,7 +1,7 @@
+import { auth } from "@/lib/api-client";
 import * as Client from "@web3-storage/w3up-client";
 import { extract } from "@web3-storage/w3up-client/delegation";
 import type { Capabilities, Delegation } from "@web3-storage/w3up-client/types";
-import ky from "ky";
 import { useEffect, useState } from "react";
 
 const requestDelegation = async ({
@@ -9,15 +9,9 @@ const requestDelegation = async ({
 }: {
 	did: string;
 }) => {
-	const authRes = await ky
-		.post("http://localhost:8787/api/auth", {
-			json: {
-				did,
-			},
-		})
-		.arrayBuffer();
+	const delegationArchive = await auth.requestDelegation(did);
 
-	const delegation = await extract(new Uint8Array(authRes));
+	const delegation = await extract(new Uint8Array(delegationArchive));
 	console.log(delegation.ok);
 	if (!delegation.ok) {
 		throw new Error("Failed to extract delegation");

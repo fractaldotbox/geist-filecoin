@@ -1,5 +1,5 @@
 import { useStore } from "@livestore/react";
-import { events } from "../../../livestore/schema.js";
+import { events } from "../../../livestore/schema";
 import type { EntryFormData, FileFieldValue } from "../fields/types";
 
 export const useLiveStore = () => {
@@ -124,6 +124,7 @@ export const useLiveStore = () => {
 		id: string;
 		spaceId: string;
 		delegationCid: string;
+		delegationData: string;
 		clientDid: string;
 		isActive: boolean;
 		authorizedAt: Date;
@@ -134,6 +135,7 @@ export const useLiveStore = () => {
 				id: authData.id,
 				spaceId: authData.spaceId,
 				delegationCid: authData.delegationCid,
+				delegationData: authData.delegationData,
 				clientDid: authData.clientDid,
 				isActive: authData.isActive,
 				authorizedAt: authData.authorizedAt,

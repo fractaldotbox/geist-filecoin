@@ -62,9 +62,9 @@ async function uploadFileToStoracha(
 			progressCallback(0.1);
 		}
 
-		// Create client with delegated token (assuming it's a base64 encoded delegation)
-		const store = new StoreMemory();
-		const client = await Client.create({ store });
+		// Create Storacha client
+		const storachaStore = new StoreMemory();
+		const client = await Client.create({ store: storachaStore });
 
 		if (progressCallback) {
 			progressCallback(0.2);

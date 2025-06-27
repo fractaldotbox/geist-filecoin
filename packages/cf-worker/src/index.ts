@@ -1,6 +1,5 @@
 import {
 	createClient,
-	createDelegation,
 	createUserDelegation,
 	initStorachaClient,
 } from "@geist-filecoin/storage";
@@ -13,6 +12,30 @@ const { preflight, corsify } = cors({
 	credentials: true,
 	allowMethods: ["GET", "POST", "OPTIONS"],
 });
+
+// Custom error handler that logs errors
+const errorHandler = (error: Error, request: Request) => {
+	console.error("Router error:", {
+		message: error.message,
+		stack: error.stack,
+		url: request.url,
+		method: request.method,
+		timestamp: new Date().toISOString(),
+	});
+
+	return new Response(
+		JSON.stringify({
+			error: "Internal Server Error",
+			message: error.message,
+		}),
+		{
+			status: 500,
+			headers: {
+				"Content-Type": "application/json",
+			},
+		},
+	);
+};
 
 export class WebSocketServer extends makeDurableObject({
 	onPush: async (message) => {
@@ -35,7 +58,7 @@ const worker = makeWorker({
 
 const router = Router({
 	before: [preflight],
-	catch: error,
+	catch: errorHandler,
 	finally: [corsify],
 });
 
@@ -49,18 +72,31 @@ router.post("/api/upload", async (request: Request) => {
 	});
 });
 
-router.post("/api/auth", async (request: Request) => {
+router.post("/api/auth", async (request: Request, env: any) => {
 	const { did } = await request.json();
-	// TODO remove hardcode and use secrets provider
+
+	console.log("auth for user", did);
 
 	// we could have 3 different agents (keys)
 	// space owner - delegated to server
 	// server agent - received delgation
 	// user agent requesting delegation to the space
 
-	// TODO provision from secrets
-	const agentKeyString = "";
-	const proofString = "";
+	// Read secrets from environment bindings and KV
+	const agentKeyString = await env.STORACHA_AGENT_KEY_STRING.get();
+	if (!agentKeyString) {
+		throw new Error("STORACHA_AGENT_KEY_STRING is not set");
+	}
+
+	const proofString = await env.GEIST.get("STORACHA_PROOF_STRING");
+
+	if (!proofString) {
+		throw new Error("STORACHA_PROOF_STRING is not set");
+	}
+
+	if (!did) {
+		throw new Error("did is not set");
+	}
 
 	try {
 		const { delegation } = await createUserDelegation({

@@ -209,6 +209,7 @@ export const events = {
 			id: Schema.String,
 			spaceId: Schema.String,
 			delegationCid: Schema.String,
+			delegationData: Schema.String,
 			clientDid: Schema.String,
 			isActive: Schema.Boolean,
 			authorizedAt: Schema.Date,
@@ -359,8 +360,8 @@ const materializers = State.SQLite.materializers(events, {
 			isActive: isActive ? 1 : 0,
 			authorizedAt,
 			expiresAt,
-			createdAt: new Date(),
-			updatedAt: new Date(),
+			createdAt: authorizedAt,
+			updatedAt: authorizedAt,
 		}),
 });
 

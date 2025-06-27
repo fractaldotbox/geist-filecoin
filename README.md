@@ -51,6 +51,12 @@ packages/web/
    - as local-first, client sync heavy app, merit of Astro island architecture is limited, unless flow of seeding data is made easy & performant from astro to client. [Related](https://github.com/livestorejs/livestore/issues/364)
    - Livestore/ Solid integration is not mature yet. Embeding React inside astro isn't feasiable as integratinos require a a global Provider
    
+# Cloudflare Worker setup
+
+- Refers to Docs for Local setup and provision values accordingly using `wrangler`
+ - DB
+ - KV
+ - [Secret Store](https://developers.cloudflare.com/secrets-store/integrations/workers/)
 
 ## License
 
