@@ -9,7 +9,6 @@ import {
 import { Link } from "react-router-dom";
 import { useSpacesDrawer } from "../../App";
 import { allContentTypes$, allSpaces$ } from "../../livestore/queries";
-import { useContentTypeSeeder } from "./hooks/useContentTypeSeeder";
 import { useLiveStore } from "./hooks/useLiveStore";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
@@ -17,7 +16,6 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 
 export function ContentTypeManager() {
-	const { seedContentTypes } = useContentTypeSeeder();
 	const { store } = useStore();
 	const { openSpacesDrawer } = useSpacesDrawer();
 
@@ -25,10 +23,6 @@ export function ContentTypeManager() {
 	const contentTypes = store.useQuery(allContentTypes$);
 	const spaces = store.useQuery(allSpaces$);
 	const hasSpaces = spaces.length > 0;
-
-	const handleSeedContentTypes = () => {
-		seedContentTypes();
-	};
 
 	if (!hasSpaces) {
 		return (
@@ -114,11 +108,9 @@ export function ContentTypeManager() {
 						No Content Types Available
 					</h3>
 					<p className="text-muted-foreground mb-4">
-						Get started by seeding content types from the available templates.
+						Get started by adding <code>?demo=1</code> to the URL to load demo
+						content types.
 					</p>
-					<Button onClick={handleSeedContentTypes}>
-						Seed Demo Content Types
-					</Button>
 				</Card>
 			)}
 		</div>

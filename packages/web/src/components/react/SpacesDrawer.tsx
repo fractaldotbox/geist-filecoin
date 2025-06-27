@@ -26,7 +26,7 @@ import {
 	StorageProvider,
 } from "../../constants/storage-providers";
 import { allSpaces$ } from "../../livestore/queries";
-import { useSpaceSeeder } from "./hooks/useSpaceSeeder";
+
 import { useSpaceStore } from "./hooks/useSpaceStore";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -85,7 +85,6 @@ interface SpacesDrawerProps {
 
 export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 	const { store } = useStore();
-	const { seedSpaces } = useSpaceSeeder();
 	const { createSpace, updateSpace, deleteSpace } = useSpaceStore();
 	const spaces = store.useQuery(allSpaces$);
 	const navigate = useNavigate();
@@ -293,13 +292,6 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 				</DrawerHeader>
 
 				<div className="flex-1 overflow-y-auto p-3 space-y-6">
-					<Button
-						onClick={() => {
-							seedSpaces();
-						}}
-					>
-						Seed Demo Spaces
-					</Button>
 					{/* Create Form */}
 					{showCreateForm && (
 						<Card className="p-3">

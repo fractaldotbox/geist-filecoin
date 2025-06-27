@@ -11,6 +11,8 @@ import EntryEditorPage from "@/pages/editor/EntryEditorPage";
 import { THEME_STORAGE_KEY } from "@/stores/theme";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
+import { DemoModeBanner } from "./components/react/DemoModeBanner";
+import { useDemoMode } from "./components/react/hooks/useDemoMode";
 
 // Create context for spaces drawer
 const SpacesDrawerContext = createContext<{
@@ -28,8 +30,8 @@ export const useSpacesDrawer = () => {
 function App() {
 	const [isSpacesDrawerOpen, setIsSpacesDrawerOpen] = useState(false);
 
+	const { isDemoMode } = useDemoMode();
 	const openSpacesDrawer = () => setIsSpacesDrawerOpen(true);
-
 	useEffect(() => {
 		const applyTheme = () => {
 			const theme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -46,6 +48,7 @@ function App() {
 	return (
 		<SpacesDrawerContext.Provider value={{ openSpacesDrawer }}>
 			<div>
+				{isDemoMode && <DemoModeBanner />}
 				<GlobalProgressProvider />
 				<Navigation onSpacesClick={openSpacesDrawer} />
 				<Layout>
