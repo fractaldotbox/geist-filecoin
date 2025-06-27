@@ -147,7 +147,7 @@ export const createDelegationWithCapabilities = async (
 	const delegation = await client.createDelegation(audience, capabilities, {
 		expiration,
 	});
-	console.log("create delegation success", delegation);
+	console.log("create delegation success");
 
 	const archive = await delegation.archive();
 	return archive.ok;
@@ -164,7 +164,6 @@ export const initStorachaClient = async ({
 	});
 
 	const proof = await Proof.parse(proofString);
-	// console.log('proof cab', proof.capabilities);
 	const space = await client.addSpace(proof);
 
 	await client.setCurrentSpace(space.did());
@@ -209,8 +208,6 @@ export const createUserDelegation = async ({
 	});
 
 	console.log("init client", client.did(), client.currentSpace()?.did());
-
-	// Create delegation for the user
 	const delegation = await createDelegationWithCapabilities(
 		{
 			client,

@@ -1,8 +1,15 @@
-name = "websocket-server"
+name = "geist-worker"
 main = "./src/index.ts"
 compatibility_date = "2025-05-08"
 # compatibility_flags = ["nodejs_compat"]
 
+secrets_store_secrets = [
+  { binding = "STORACHA_AGENT_KEY_STRING", store_id= "d2267c5ce2614745a2735d712daf194e", secret_name = "STORACHA_AGENT_KEY_STRING" },
+]
+
+kv_namespaces = [
+  { binding = "GEIST", id = "316261addb8c486c966b8a7913fce8ea", preview_id = "316261addb8c486c966b8a7913fce8ea" }
+]
 
 [vars]
 LIVESTORE_CF_SYNC_DATABASE_ID = "9b7a07d6-88d6-4663-9dae-a3b1de63450c"
@@ -18,5 +25,5 @@ new_classes = ["WebSocketServer"]
 
 [[d1_databases]]
 binding = "DB"
-database_name = "livestore-sync-cf-demo"
+database_name = "geist-demo"
 database_id = "${LIVESTORE_CF_SYNC_DATABASE_ID}"

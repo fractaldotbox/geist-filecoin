@@ -209,6 +209,7 @@ export const events = {
 			id: Schema.String,
 			spaceId: Schema.String,
 			delegationCid: Schema.String,
+			delegationData: Schema.String,
 			clientDid: Schema.String,
 			isActive: Schema.Boolean,
 			authorizedAt: Schema.Date,

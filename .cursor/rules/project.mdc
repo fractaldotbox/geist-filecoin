@@ -1,10 +1,12 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: true
 ---
 
 for boolean variables, use naming convention "is[Condition]"                                                                                                        
 extract constants into enum whenever possible.
+
+use ky over fetch at react or node.js
                                                                  use react router                                                                                                                                                                                                                                                                                                                                                  use shadcn components whenever possible.
 documentaitons are avilable on @https://ui.shadcn.com/                                                                                                                                                                                                                                                                                                            when it is necessary to create form, use react-hook-form 
