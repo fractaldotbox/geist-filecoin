@@ -7,6 +7,7 @@ const API_BASE_URL =
 export const apiClient: KyInstance = ky.create({
 	prefixUrl: API_BASE_URL,
 	timeout: 30000, // 30 seconds
+	retry: 0,
 	headers: {
 		"Content-Type": "application/json",
 	},
@@ -30,35 +31,23 @@ export const auth = {
 	/**
 	 * Request delegation for a DID
 	 */
-	requestDelegation: async (did: string): Promise<ArrayBuffer> => {
+	requestDelegation: async ({
+		spaceId,
+		did,
+	}: {
+		spaceId: string;
+		did: string;
+	}): Promise<ArrayBuffer> => {
 		return apiClient
 			.post("api/auth", {
-				json: { did },
+				json: { spaceId, did },
 			})
 			.arrayBuffer();
-	},
-} as const;
-
-// Upload endpoints
-export const upload = {
-	/**
-	 * Upload a file
-	 */
-	uploadFile: async (file: File): Promise<{ url: string; cid: string }> => {
-		const formData = new FormData();
-		formData.append("file", file);
-
-		return apiClient
-			.post("api/upload", {
-				body: formData,
-			})
-			.json();
 	},
 } as const;
 
 // Export the main client and organized endpoints
 export default {
 	auth,
-	upload,
 	client: apiClient,
 };

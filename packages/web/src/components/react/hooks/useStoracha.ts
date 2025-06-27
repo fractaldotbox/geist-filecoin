@@ -1,15 +1,20 @@
-import { auth } from "@/lib/api-client";
+import apiClient, { auth } from "@/lib/api-client";
 import * as Client from "@web3-storage/w3up-client";
 import { extract } from "@web3-storage/w3up-client/delegation";
 import type { Capabilities, Delegation } from "@web3-storage/w3up-client/types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const requestDelegation = async ({
 	did,
+	spaceId,
 }: {
 	did: string;
+	spaceId: string;
 }) => {
-	const delegationArchive = await auth.requestDelegation(did);
+	const delegationArchive = await apiClient.auth.requestDelegation({
+		spaceId: spaceId,
+		did,
+	});
 
 	const delegation = await extract(new Uint8Array(delegationArchive));
 	console.log(delegation.ok);
@@ -32,6 +37,8 @@ export const useDelegateAccount = (options: {
 		null,
 	);
 
+	const isDelegationRequestInProgress = useRef(false);
+
 	useEffect(() => {
 		if (client || !activeSpace) {
 			return;
@@ -52,25 +59,42 @@ export const useDelegateAccount = (options: {
 			if (!client || !activeSpace) {
 				return;
 			}
-			console.log("request delegate for space", activeSpace);
+
 			const did = client.did();
-			console.log("did", did);
 
-			// TODO request only if expired
+			if (!did) {
+				return;
+			}
 
-			const delegation = await requestDelegation({ did });
+			if (delegation || isDelegationRequestInProgress.current) {
+				console.log("delegation already exists or request in progress");
+				return;
+			}
 
-			console.log(
-				"requested delegation to",
-				did,
-				delegation.ok.root.cid.toString(),
-			);
-			setDelegation(delegation.ok);
+			isDelegationRequestInProgress.current = true;
 
-			const space = await client.addSpace(delegation.ok);
-			await client.setCurrentSpace(space.did());
+			try {
+				const delegationResults = await requestDelegation({
+					spaceId: activeSpace?.id || "",
+					did,
+				});
+
+				// TODO request only if expired
+
+				console.log(
+					"requested delegation to",
+					did,
+					delegationResults.ok.root.cid.toString(),
+				);
+				setDelegation(delegationResults.ok);
+
+				const space = await client.addSpace(delegationResults.ok);
+				await client.setCurrentSpace(space.did());
+			} finally {
+				isDelegationRequestInProgress.current = false;
+			}
 		})();
-	}, [client, activeSpace]);
+	}, [client, activeSpace, delegation]);
 
 	return {
 		delegation,

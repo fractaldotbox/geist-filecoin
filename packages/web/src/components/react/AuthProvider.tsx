@@ -1,3 +1,4 @@
+import apiClient from "@/lib/api-client";
 import { useStore } from "@livestore/react";
 import ky from "ky";
 import {
@@ -25,8 +26,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = "http://localhost:8787";
-
 // Auth provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const { store } = useStore();
@@ -37,43 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	// TODO decouple with storacha
-	const fetchAuth = useCallback(
-		async (clientId: string) => {
-			try {
-				setIsLoading(true);
-				setError(null);
-
-				const delegation = await ky
-					.post(`${API_URL}/api/auth`, {
-						json: {
-							did: clientId,
-							spaceId: activeSpace?.id || "",
-						},
-					})
-					.arrayBuffer();
-
-				const userData = {
-					delegation,
-				};
-				setUser(userData);
-			} catch (err) {
-				console.error(err);
-				setUser(null);
-			} finally {
-				setIsLoading(false);
-			}
-		},
-		[activeSpace?.id],
-	);
-
-	// Fetch auth on mount and when active space changes
-	useEffect(() => {
-		if (!clientId) {
-			return;
-		}
-		fetchAuth(clientId);
-	}, [clientId, fetchAuth]);
+	// TODO authentication
 
 	const value: AuthContextType = {
 		user,
