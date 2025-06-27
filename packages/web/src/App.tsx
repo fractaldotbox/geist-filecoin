@@ -1,3 +1,4 @@
+import { DemoModeProvider } from "@/components/react/DemoModeProvider";
 import { GlobalProgressProvider } from "@/components/react/GlobalProgressProvider";
 import Layout from "@/components/react/Layout";
 import { Navigation } from "@/components/react/Navigation";
@@ -29,7 +30,6 @@ function App() {
 	const [isSpacesDrawerOpen, setIsSpacesDrawerOpen] = useState(false);
 
 	const openSpacesDrawer = () => setIsSpacesDrawerOpen(true);
-
 	useEffect(() => {
 		const applyTheme = () => {
 			const theme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -45,30 +45,32 @@ function App() {
 
 	return (
 		<SpacesDrawerContext.Provider value={{ openSpacesDrawer }}>
-			<div>
-				<GlobalProgressProvider />
-				<Navigation onSpacesClick={openSpacesDrawer} />
-				<Layout>
-					<Routes>
-						<Route path="/" element={<HomePage />} />
-						<Route path="/spaces" element={<SpacesPage />} />
-						<Route
-							path="/editor/content-type/select"
-							element={<ContentTypeSelectPage />}
-						/>
-						<Route
-							path="/editor/content-type/:id"
-							element={<ContentTypeEditorPage />}
-						/>
-						<Route path="/editor/entry/:id" element={<EntryEditorPage />} />
-						<Route path="/content-types" element={<ContentTypesPage />} />
-					</Routes>
-				</Layout>
-				<SpacesDrawer
-					open={isSpacesDrawerOpen}
-					onClose={() => setIsSpacesDrawerOpen(false)}
-				/>
-			</div>
+			<DemoModeProvider>
+				<div>
+					<GlobalProgressProvider />
+					<Navigation onSpacesClick={openSpacesDrawer} />
+					<Layout>
+						<Routes>
+							<Route path="/" element={<HomePage />} />
+							<Route path="/spaces" element={<SpacesPage />} />
+							<Route
+								path="/editor/content-type/select"
+								element={<ContentTypeSelectPage />}
+							/>
+							<Route
+								path="/editor/content-type/:id"
+								element={<ContentTypeEditorPage />}
+							/>
+							<Route path="/editor/entry/:id" element={<EntryEditorPage />} />
+							<Route path="/content-types" element={<ContentTypesPage />} />
+						</Routes>
+					</Layout>
+					<SpacesDrawer
+						open={isSpacesDrawerOpen}
+						onClose={() => setIsSpacesDrawerOpen(false)}
+					/>
+				</div>
+			</DemoModeProvider>
 		</SpacesDrawerContext.Provider>
 	);
 }

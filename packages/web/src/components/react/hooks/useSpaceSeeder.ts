@@ -12,8 +12,7 @@ const SAMPLE_SPACES = [
 		description: "A demo space for blog content using Storacha storage",
 		storageProvider: StorageProvider.STORACHA,
 		spaceKey: "did:key:space",
-		spaceProof:
-			"proof-string",
+		spaceProof: "proof-string",
 		isActive: false,
 	},
 ] as const;
