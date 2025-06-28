@@ -6,7 +6,10 @@
 		"dev": "VITE_LIVESTORE_SYNC_URL=http://localhost:8787 vite --force",
 		"build": "vite build",
 		"preview": "vite preview",
-		"lint": "biome check --fix"
+		"lint": "biome check --fix",
+		"test": "vitest",
+		"test:ui": "vitest --ui",
+		"test:run": "vitest run"
 	},
 	"dependencies": {
 		"@geist-filecoin/storage": "workspace:*",
@@ -56,6 +59,7 @@
 		"@tailwindcss/vite": "^4.1.4",
 		"@types/node": "^22.15.17",
 		"@vitejs/plugin-react": "^4.3.4",
+		"@vitest/ui": "^2.1.8",
 		"autoprefixer": "^10.4.20",
 		"postcss": "^8.4.49",
 		"shadcn": "^2.5.0",
