@@ -1,3 +1,9 @@
+/**
+ * now sync from client side, after client receive delegations
+ * although possible to setup server side sync to livestore
+ * 
+ * TODO use https://effect.website/docs/getting-started/building-pipelines/
+ */
 import { useStore } from "@livestore/react";
 import type { Client } from "@web3-storage/w3up-client";
 import type { DID as W3DID } from "@web3-storage/w3up-client/principal/ed25519";
@@ -98,30 +104,31 @@ export const isRecentUpload = (uploadDate: Date, daysThreshold = 7): boolean => 
 	return (Date.now() - uploadDate.getTime()) < (daysThreshold * 24 * 60 * 60 * 1000);
 };
 
-// Pure function to create entry data from upload
-export const createEntryData = (space: Space, upload: StorachaUpload): EntryData => {
-	const entryId = `storacha-${upload.root}`;
-	const uploadDate = new Date(upload.inserted);
-	const isRecent = isRecentUpload(uploadDate);
-
-	return {
-		id: entryId,
-		spaceId: space.id,
-		contentTypeId: inferContentType(upload.root),
-		title: `Upload ${upload.root.substring(0, 8)}...`,
-		content: `Storacha upload from ${space.name}`,
-		mediaType: "application/octet-stream",
-		mediaUrl: `https://w3s.link/ipfs/${upload.root}`,
-		mediaCid: upload.root,
-		storageProviderKey: upload.root,
-		tags: JSON.stringify(["storacha", "sync", ...(isRecent ? ["recent"] : [])]),
-		publishedAt: uploadDate,
-	};
-};
-
 // Pure function to check if entry exists
 export const findExistingEntry = (entries: any[], entryId: string): any | undefined => {
 	return entries.find((entry: any) => entry.id === entryId);
+};
+
+// Pure function to create entry data from space and upload
+export const createEntryData = (space: Space, upload: StorachaUpload): EntryData => {
+	return {
+		id: upload.root, // Use the CID as the unique identifier
+		spaceId: space.id,
+		contentTypeId: inferContentType(upload.root),
+		title: `Upload ${upload.root}`, // Generate a title from the CID
+		content: `Storacha upload with CID: ${upload.root}`,
+		mediaType: "application/octet-stream", // Default media type
+		// mediaUrl: getGatewayUrl(upload.root),
+		mediaUrl: "",
+		mediaCid: upload.root,
+		storageProviderKey: StorageProvider.Storacha,
+		tags: JSON.stringify({ 
+			shards: upload.shards || [],
+			inserted: upload.inserted,
+			updated: upload.updated 
+		}),
+		publishedAt: new Date(upload.inserted),
+	};
 };
 
 // Commit function for creating new entries
@@ -153,34 +160,22 @@ export const syncSpace = async (config: SyncConfig, space: Space): Promise<void>
 		console.log(`Found ${uploads.length} uploads in space ${space.name}`);
 
 		// Get existing entries to determine create vs update
-		const existingEntries = store.read().entries || [];
+		// const existingEntries = store.read().entries || [];
 
-		// Process each upload
-		const processPromises = uploads.map(async (upload) => {
-			const entryData = createEntryData(space, upload);
-			const existingEntry = findExistingEntry(existingEntries, entryData.id);
+		// // Process each upload
+		// const processPromises = uploads.map(async (upload) => {
+		// 	const entryData = createEntryData(space, upload);
 
-			if (existingEntry) {
-				await commitEntryUpdated(store, entryData);
-			} else {
-				await commitEntryCreated(store, entryData);
-			}
-		});
+		// 	await commitEntryUpdated(store, entryData);
+		// });
 
-		// Process all uploads in parallel
-		await Promise.all(processPromises);
+		// // Process all uploads in parallel
+		// await Promise.all(processPromises);
 
 	} catch (error) {
 		console.error(`Error syncing space ${space.name}:`, error);
 		throw error; // Re-throw to allow caller to handle
 	}
-};
-
-
-
-// Utility function to get IPFS gateway URL
-export const getGatewayUrl = (cid: string): string => {
-	return `https://w3s.link/ipfs/${cid}`;
 };
 
 /**
@@ -197,15 +192,12 @@ export const useStorachaSync = (client: Client | null) => {
 			syncSpace: async () => {
 				console.warn("Storacha client not available");
 			},
-			getGatewayUrl,
 		};
 	}
 
 	const config: SyncConfig = { client, store };
 
 	return {
-		syncAllSpaces: () => syncAllSpaces(config),
-		syncSpace: (space: Space) => syncSpace(config, space),
-		getGatewayUrl,
+		syncSpace: (space: Space) => syncSpace(config, space)
 	};
 }; 

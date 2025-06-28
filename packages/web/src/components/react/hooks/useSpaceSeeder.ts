@@ -12,7 +12,7 @@ const SAMPLE_SPACES = [
 		name: "Demo Space",
 		description: "A demo space for blog content using Storacha storage",
 		storageProvider: StorageProvider.Storacha,
-		storageProviderId: "did:key:space",
+		storageProviderId: "did:key:z6Mkvu57pm2XaQYr28RAxRnMZmp8owcf2EtD7MT8FsMVxCnj",
 		storageProviderCredentials: [
 			{
 				type: "secret-ref",

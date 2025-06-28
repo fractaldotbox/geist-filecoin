@@ -3,7 +3,7 @@
 		"target": "ES2022",
 		"lib": ["ES2022", "DOM"],
 		"module": "ESNext",
-		"moduleResolution": "bundler",
+		"moduleResolution": "node",
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
 		"allowJs": true,
@@ -17,7 +17,8 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noUncheckedIndexedAccess": true,
-		"types": ["node"]
+		"types": ["node"],
+		"verbatimModuleSyntax": true
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist"]

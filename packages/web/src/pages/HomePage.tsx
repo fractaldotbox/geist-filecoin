@@ -11,8 +11,9 @@ import { useState, useMemo, useEffect } from "react";
 import { useSpacesDrawer } from "../App";
 import { allSpaces$, allEntries$ } from "../livestore/queries";
 import { StorageProvider } from "../constants/storage-providers";
-import { useStorachaClient } from "../components/react/StorachaProvider";
+import { useStorachaClient, useStorachaContext } from "../components/react/StorachaProvider";
 import { useStorachaSync } from "../services/storachaSync";
+import { useSpaceFiles } from "@/components/react/hooks/useStoracha";
 
 // Helper functions
 const getEntryStatus = (entry: any) => {
@@ -37,7 +38,8 @@ export default function HomePage() {
 	const { openSpacesDrawer } = useSpacesDrawer();
 
 	// Storacha integration
-	const storachaClient = useStorachaClient();
+	const { client: storachaClient, delegation } = useStorachaContext();
+
 	const { syncAllSpaces } = useStorachaSync(storachaClient);
 	const [isSyncing, setIsSyncing] = useState(false);
 
@@ -52,26 +54,31 @@ export default function HomePage() {
 	const hasStorachaSpace = storachaSpaces.length > 0;
 
 	// Auto-sync when Storacha client and spaces are available
+	const { loadFiles } = useSpaceFiles({
+		client: storachaClient,
+		isEnabled: true,
+	});
+
 	useEffect(() => {
-		if (storachaClient && hasStorachaSpace && !isSyncing) {
-			handleSync();
-		}
-	}, [storachaClient, hasStorachaSpace, isSyncing]);
+		(async () => {
+			if (!storachaClient || !delegation) {
+				return;
+			}
 
-	// Manual sync function
-	const handleSync = async () => {
-		if (!storachaClient || isSyncing) return;
+			const files = await loadFiles();
+			console.log("files", files);
+			// const proofs = storachaClient.proofs([
+			// 	{
+			// 		can: "*",
+			// 		with: "did:key:z6Mkvu57pm2XaQYr28RAxRnMZmp8owcf2EtD7MT8FsMVxCnj"
+			// 	}
+			// ])
+			// console.log("proofs", proofs);
+			// const files = await loadFiles();
 
-		setIsSyncing(true);
-		try {
-			await syncAllSpaces();
-			console.log("Storacha sync completed successfully");
-		} catch (error) {
-			console.error("Error syncing Storacha spaces:", error);
-		} finally {
-			setIsSyncing(false);
-		}
-	};
+			// console.log("files", files);
+		})();
+	}, [storachaClient, delegation, loadFiles]);
 
 	// Get unique content types
 	const contentTypes = useMemo(() => {
@@ -190,15 +197,6 @@ export default function HomePage() {
 									</p>
 								</div>
 								<div className="flex items-center gap-2">
-									<Button
-										variant="outline"
-										onClick={handleSync}
-										disabled={isSyncing}
-										className="flex items-center gap-2"
-									>
-										<RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-										{isSyncing ? 'Syncing...' : 'Sync Storacha'}
-									</Button>
 									<Link to="/editor/content-type/select">
 										<Button>
 											<FilePlus className="w-4 h-4 mr-2" />

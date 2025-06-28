@@ -1,5 +1,5 @@
 import { useStore } from "@livestore/react";
-import { Provider } from "@w3ui/react";
+import { Capabilities, Delegation, Provider } from "@w3ui/react";
 import * as Client from "@web3-storage/w3up-client";
 import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
 import {
@@ -19,6 +19,8 @@ export { useDelegateAccount } from "./hooks/useStoracha.js";
 interface StorachaContextValue {
 	clientId: string | null;
 	client: Client.Client | null;
+	setClient: (client: Client.Client | null) => void;
+	delegation: Delegation<Capabilities> | null;
 }
 
 const StorachaContext = createContext<StorachaContextValue | undefined>(
@@ -40,6 +42,11 @@ export const useStorachaClient = () => {
 	return client;
 };
 
+export const useSetStorachaClient = () => {
+	const { setClient } = useStorachaContext();
+	return setClient;
+};
+
 interface StorachaProviderProps {
 	children: ReactNode;
 }
@@ -50,7 +57,7 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 	const { store } = useStore();
 	const [clientId, setClientId] = useState<string | null>(null);
 	const [client, setClient] = useState<Client.Client | null>(null);
-
+	const [delegation, setDelegation] = useState<Delegation<Capabilities> | null>(null);
 	const { createStorachaStorageAuthorization } = useLiveStore();
 	const activeSpace = store.useQuery(firstActiveSpace$);
 	const delegationCommittedRef = useRef<string | null>(null);
@@ -74,46 +81,53 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 		initializeStorachaClient();
 	}, []);
 
-	const { delegation } = useDelegateAccount({
-		spaceDid: activeSpace?.spaceProof || "",
-		activeSpace,
+	const { delegation: delegationResults } = useDelegateAccount({
+		client,
+		spaceDid: activeSpace?.storageProviderId || "",
 	});
 
 	useEffect(() => {
-		console.log("delegation", delegation);
+		console.log("delegation", JSON.stringify(delegationResults?.toJSON(), null, 4),);
+
 		console.log("active space", activeSpace);
 		console.log("client ID", clientId);
 
+
+
 		// Commit StorachaStorageAuthorized event when delegation becomes available
 		if (
-			delegation &&
+			delegationResults &&
 			activeSpace &&
-			delegationCommittedRef.current !== delegation.root.cid.toString()
+			delegationCommittedRef.current !== delegationResults.root.cid.toString()
 		) {
 			const authId = crypto.randomUUID();
 
 			createStorachaStorageAuthorization({
 				id: authId,
 				spaceId: activeSpace.id,
-				delegationCid: delegation.root.cid.toString(),
+				delegationCid: delegationResults.root.cid.toString(),
 				// TODO consider store the original CAR array buffer
-				delegationData: JSON.stringify(delegation.toJSON()),
-				clientDid: delegation.audience.did(),
+				delegationData: JSON.stringify(delegationResults.toJSON()),
+				clientDid: delegationResults.audience.did(),
 				isActive: true,
 				authorizedAt: new Date(),
-				expiresAt: delegation.expiration
-					? new Date(delegation.expiration * 1000)
+				expiresAt: delegationResults.expiration
+					? new Date(delegationResults.expiration * 1000)
 					: undefined,
 			});
 
+			setDelegation(delegationResults);
+
 			// Mark this delegation as committed to avoid duplicate events
-			delegationCommittedRef.current = delegation.root.cid.toString();
+			delegationCommittedRef.current = delegationResults.root.cid.toString();
 		}
-	}, [delegation, activeSpace, createStorachaStorageAuthorization, clientId]);
+	}, [delegationResults, activeSpace, createStorachaStorageAuthorization, clientId]);
 
 	const contextValue: StorachaContextValue = {
 		clientId,
 		client,
+		setClient,
+		delegation,
 	};
 
 	return (
