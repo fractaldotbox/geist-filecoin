@@ -1,6 +1,7 @@
 import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import { useSpaceStore } from "@/components/react/hooks/useSpaceStore";
 import { StorageProvider } from "@/constants/storage-providers";
+import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
 import { allSpaces$ } from "@/livestore/queries";
 import { useStore } from "@livestore/react";
 
@@ -10,10 +11,21 @@ const SAMPLE_SPACES = [
 		id: "demo-space",
 		name: "Demo Space",
 		description: "A demo space for blog content using Storacha storage",
-		storageProvider: StorageProvider.STORACHA,
-		spaceKey: "did:key:space",
-		spaceProof: "proof-string",
-		isActive: false,
+		storageProvider: StorageProvider.Storacha,
+		storageProviderId: "did:key:space",
+		storageProviderCredentials: [
+			{
+				type: "secret-ref",
+				key: "serverAgentKey",
+				valueFrom: "agentKey",
+			},
+			{
+				type: "secret-ref",
+				key: "spaceProof",
+				valueFrom: "spaceProof",
+			}
+		] as StorageProviderCredentialConfig[],
+		isActive: true,
 	},
 ] as const;
 
@@ -33,23 +45,19 @@ export function useSpaceSeeder() {
 				name,
 				description,
 				storageProvider,
-				spaceKey,
-				spaceProof,
-				isActive,
+				storageProviderId,
+				storageProviderCredentials
 			}) => {
 				// Create storage provider credentials for Storacha
-				const storageProviderCredentials = JSON.stringify({
-					spaceKey,
-				});
 
 				createSpace({
 					id,
 					name,
 					description,
 					storageProvider,
+					storageProviderId,
 					storageProviderCredentials,
-					spaceProof,
-					isActive,
+					isActive: true,
 				});
 			},
 		);

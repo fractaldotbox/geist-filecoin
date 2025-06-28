@@ -13,7 +13,6 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"dev": "tsc --watch",
 		"lint": "biome check --fix",
 		"test": "vitest",
 		"test:ui": "vitest --ui"

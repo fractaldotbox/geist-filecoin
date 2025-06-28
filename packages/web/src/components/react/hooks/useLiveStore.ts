@@ -17,12 +17,14 @@ export const useLiveStore = () => {
 		return store.commit(
 			events.entryCreated({
 				id,
+				spaceId: (entryData.spaceId as string) || "",
 				contentTypeId: entryData.contentTypeId,
 				title: (entryData.title as string) || "",
 				content: (entryData.content as string) || "",
 				mediaType: media?.mediaType || "",
 				mediaUrl: media?.url || "",
 				mediaCid: media?.cid || "",
+				storageProviderKey: media?.cid || "", // Add missing storageProviderKey field
 				tags: entryData.tags ? JSON.stringify(entryData.tags) : "",
 				publishedAt: entryData.publishedAt
 					? new Date(entryData.publishedAt as string)
@@ -61,6 +63,7 @@ export const useLiveStore = () => {
 	};
 
 	const createContentType = (contentTypeData: {
+		spaceId: string;
 		name: string;
 		description: string;
 		properties: Record<string, any>;
@@ -70,6 +73,7 @@ export const useLiveStore = () => {
 		return store.commit(
 			events.contentTypeCreated({
 				id,
+				spaceId: (contentTypeData.spaceId as string) || "",
 				name: contentTypeData.name,
 				description: contentTypeData.description,
 				properties: JSON.stringify(contentTypeData.properties),

@@ -1,5 +1,6 @@
 import { useStore } from "@livestore/react";
 import { events } from "../../../livestore/schema";
+import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
 
 export const useSpaceStore = () => {
 	const { store } = useStore();
@@ -9,8 +10,8 @@ export const useSpaceStore = () => {
 		name: string;
 		description: string;
 		storageProvider: string;
-		storageProviderCredentials: string;
-		spaceProof: string;
+		storageProviderId: string;
+		storageProviderCredentials: StorageProviderCredentialConfig[];
 		isActive: boolean;
 	}) => {
 		return store.commit(
@@ -19,8 +20,8 @@ export const useSpaceStore = () => {
 				name: spaceData.name,
 				description: spaceData.description,
 				storageProvider: spaceData.storageProvider,
-				storageProviderCredentials: spaceData.storageProviderCredentials || "",
-				spaceProof: spaceData.spaceProof || "",
+				storageProviderId: spaceData.storageProviderId,
+				storageProviderCredentials: JSON.stringify(spaceData.storageProviderCredentials) || "",
 				isActive: spaceData.isActive,
 			}),
 		);
@@ -32,8 +33,8 @@ export const useSpaceStore = () => {
 			name: string;
 			description: string;
 			storageProvider: string;
-			storageProviderCredentials: string;
-			spaceProof: string;
+			storageProviderId: string;
+			storageProviderCredentials: StorageProviderCredentialConfig[];
 			isActive: boolean;
 		},
 	) => {
@@ -43,8 +44,8 @@ export const useSpaceStore = () => {
 				name: spaceData.name,
 				description: spaceData.description,
 				storageProvider: spaceData.storageProvider,
-				storageProviderCredentials: spaceData.storageProviderCredentials || "",
-				spaceProof: spaceData.spaceProof || "",
+				storageProviderId: spaceData.storageProviderId,
+				storageProviderCredentials: JSON.stringify(spaceData.storageProviderCredentials) || "",
 				isActive: spaceData.isActive,
 			}),
 		);

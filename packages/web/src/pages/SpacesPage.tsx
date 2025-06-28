@@ -73,7 +73,7 @@ export default function SpacesPage() {
 		defaultValues: {
 			name: "",
 			description: "",
-			storageProvider: StorageProvider.STORACHA,
+			storageProvider: StorageProvider.Storacha,
 			spaceProof: "",
 			spaceKey: "",
 			apiKey: "",

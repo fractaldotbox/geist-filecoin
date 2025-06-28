@@ -102,8 +102,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		defaultValues: {
 			name: "",
 			description: "",
-			storageProvider: StorageProvider.STORACHA,
-			spaceProof: "",
+			storageProvider: StorageProvider.Storacha,
 			spaceKey: "",
 			apiKey: "",
 		},
@@ -115,7 +114,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		// Validate required fields on submit
 		let validationError = "";
 
-		if (data.storageProvider === StorageProvider.STORACHA) {
+		if (data.storageProvider === StorageProvider.Storacha) {
 			if (!data.spaceKey?.trim()) {
 				validationError = "Space Key is required for Storacha";
 				form.setError("spaceKey", { message: validationError });
@@ -144,7 +143,6 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 					description: space.description || "",
 					storageProvider: space.storageProvider,
 					storageProviderCredentials: space.storageProviderCredentials || "",
-					spaceProof: space.spaceProof || "",
 					isActive: false,
 				});
 			}
@@ -152,11 +150,17 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 
 		// Create credentials based on storage provider
 		let storageProviderCredentials = "";
-		if (data.storageProvider === StorageProvider.STORACHA) {
+		if (data.storageProvider === StorageProvider.Storacha) {
 			// For storacha, combine spaceKey and email into credentials
-			storageProviderCredentials = JSON.stringify({
-				spaceKey: data.spaceKey?.trim() || "",
-			});
+			storageProviderCredentials = [{
+				type: "value",
+				key: "agentKey",
+				value: data.spaceKey?.trim() || "",
+			},
+			{
+				type: "value",
+				key: "spaceProof",
+			}]
 		} else if (data.storageProvider === StorageProvider.S3) {
 			// For S3, use the API key directly
 			storageProviderCredentials = data.apiKey?.trim() || "";
@@ -169,7 +173,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 			storageProvider: data.storageProvider,
 			storageProviderCredentials,
 			spaceProof:
-				data.storageProvider === StorageProvider.STORACHA
+				data.storageProvider === StorageProvider.Storacha
 					? data.spaceProof?.trim() || ""
 					: "",
 			isActive: true,
@@ -250,7 +254,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 	};
 
 	const parseStorageCredentials = (space: any) => {
-		if (space.storageProvider === StorageProvider.STORACHA) {
+		if (space.storageProvider === StorageProvider.Storacha) {
 			try {
 				const credentials = JSON.parse(
 					space.storageProviderCredentials || "{}",
@@ -365,7 +369,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 									/>
 
 									{/* Conditional fields based on storage provider */}
-									{watchedStorageProvider === StorageProvider.STORACHA ? (
+									{watchedStorageProvider === StorageProvider.Storacha ? (
 										<>
 											<FormField
 												control={form.control}
@@ -477,7 +481,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 													<Badge variant="secondary">
 														{
 															STORAGE_PROVIDER_LABELS[
-																space.storageProvider as StorageProvider
+															space.storageProvider as StorageProvider
 															]
 														}
 													</Badge>
@@ -568,28 +572,95 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 
 															<div className="space-y-2 text-xs">
 																{space.storageProvider ===
-																	StorageProvider.STORACHA && (
-																	<>
+																	StorageProvider.Storacha && (
+																		<>
+																			<div className="flex items-center justify-between">
+																				<span className="text-muted-foreground">
+																					Space Key:
+																				</span>
+																				<div className="flex items-center gap-1">
+																					<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
+																						{isRevealed
+																							? credentials.spaceKey
+																							: maskCredential(
+																								credentials.spaceKey,
+																							)}
+																					</code>
+																					{isRevealed && credentials.spaceKey && (
+																						<Button
+																							variant="ghost"
+																							size="sm"
+																							onClick={() =>
+																								copyToClipboard(
+																									credentials.spaceKey,
+																								)
+																							}
+																							className="h-5 w-5 p-0"
+																						>
+																							<Copy className="w-3 h-3" />
+																						</Button>
+																					)}
+																				</div>
+																			</div>
+																			<div className="flex items-center justify-between">
+																				<span className="text-muted-foreground">
+																					Space Proof:
+																				</span>
+																				<div className="flex items-center gap-1">
+																					<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono max-w-20 truncate">
+																						{isRevealed ? (
+																							<span
+																								title={credentials.spaceProof}
+																							>
+																								{credentials.spaceProof.length >
+																									20
+																									? `${credentials.spaceProof.slice(0, 20)}...`
+																									: credentials.spaceProof}
+																							</span>
+																						) : (
+																							maskCredential(
+																								credentials.spaceProof,
+																							)
+																						)}
+																					</code>
+																					{isRevealed &&
+																						credentials.spaceProof && (
+																							<Button
+																								variant="ghost"
+																								size="sm"
+																								onClick={() =>
+																									copyToClipboard(
+																										credentials.spaceProof,
+																									)
+																								}
+																								className="h-5 w-5 p-0"
+																							>
+																								<Copy className="w-3 h-3" />
+																							</Button>
+																						)}
+																				</div>
+																			</div>
+																		</>
+																	)}
+
+																{space.storageProvider ===
+																	StorageProvider.S3 && (
 																		<div className="flex items-center justify-between">
 																			<span className="text-muted-foreground">
-																				Space Key:
+																				API Key:
 																			</span>
 																			<div className="flex items-center gap-1">
 																				<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
 																					{isRevealed
-																						? credentials.spaceKey
-																						: maskCredential(
-																								credentials.spaceKey,
-																							)}
+																						? credentials.apiKey
+																						: maskCredential(credentials.apiKey)}
 																				</code>
-																				{isRevealed && credentials.spaceKey && (
+																				{isRevealed && credentials.apiKey && (
 																					<Button
 																						variant="ghost"
 																						size="sm"
 																						onClick={() =>
-																							copyToClipboard(
-																								credentials.spaceKey,
-																							)
+																							copyToClipboard(credentials.apiKey)
 																						}
 																						className="h-5 w-5 p-0"
 																					>
@@ -598,74 +669,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 																				)}
 																			</div>
 																		</div>
-																		<div className="flex items-center justify-between">
-																			<span className="text-muted-foreground">
-																				Space Proof:
-																			</span>
-																			<div className="flex items-center gap-1">
-																				<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono max-w-20 truncate">
-																					{isRevealed ? (
-																						<span
-																							title={credentials.spaceProof}
-																						>
-																							{credentials.spaceProof.length >
-																							20
-																								? `${credentials.spaceProof.slice(0, 20)}...`
-																								: credentials.spaceProof}
-																						</span>
-																					) : (
-																						maskCredential(
-																							credentials.spaceProof,
-																						)
-																					)}
-																				</code>
-																				{isRevealed &&
-																					credentials.spaceProof && (
-																						<Button
-																							variant="ghost"
-																							size="sm"
-																							onClick={() =>
-																								copyToClipboard(
-																									credentials.spaceProof,
-																								)
-																							}
-																							className="h-5 w-5 p-0"
-																						>
-																							<Copy className="w-3 h-3" />
-																						</Button>
-																					)}
-																			</div>
-																		</div>
-																	</>
-																)}
-
-																{space.storageProvider ===
-																	StorageProvider.S3 && (
-																	<div className="flex items-center justify-between">
-																		<span className="text-muted-foreground">
-																			API Key:
-																		</span>
-																		<div className="flex items-center gap-1">
-																			<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
-																				{isRevealed
-																					? credentials.apiKey
-																					: maskCredential(credentials.apiKey)}
-																			</code>
-																			{isRevealed && credentials.apiKey && (
-																				<Button
-																					variant="ghost"
-																					size="sm"
-																					onClick={() =>
-																						copyToClipboard(credentials.apiKey)
-																					}
-																					className="h-5 w-5 p-0"
-																				>
-																					<Copy className="w-3 h-3" />
-																				</Button>
-																			)}
-																		</div>
-																	</div>
-																)}
+																	)}
 															</div>
 														</div>
 													</div>

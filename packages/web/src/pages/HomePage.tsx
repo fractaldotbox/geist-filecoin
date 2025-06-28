@@ -1,16 +1,145 @@
 import { Button } from "@/components/react/ui/button";
 import { Card } from "@/components/react/ui/card";
+import { Badge } from "@/components/react/ui/badge";
+import { Input } from "@/components/react/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/react/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/react/ui/table";
 import { useStore } from "@livestore/react";
-import { AlertCircle, FilePlus, Folder } from "lucide-react";
+import { AlertCircle, FilePlus, Folder, Calendar, FileText, ExternalLink, Filter, Search, MoreHorizontal, Eye, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
 import { useSpacesDrawer } from "../App";
-import { allSpaces$ } from "../livestore/queries";
+import { allSpaces$, allEntries$ } from "../livestore/queries";
+import { StorageProvider } from "../constants/storage-providers";
+import { useStorachaClient } from "../components/react/StorachaProvider";
+import { useStorachaSync } from "../services/storachaSync";
+
+// Helper functions
+const getEntryStatus = (entry: any) => {
+	const daysSinceCreated = (Date.now() - entry.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+	if (entry.publishedAt) return 'published';
+	if (daysSinceCreated > 30) return 'archived';
+	return 'draft';
+};
+
+const getEntryPriority = (entry: any) => {
+	const daysSinceCreated = (Date.now() - entry.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+	if (daysSinceCreated <= 1) return 'high';
+	if (daysSinceCreated <= 7) return 'medium';
+	return 'low';
+};
 
 export default function HomePage() {
 	const { store } = useStore();
 	const spaces = store.useQuery(allSpaces$);
+	const entries = store.useQuery(allEntries$);
 	const hasSpaces = spaces.length > 0;
 	const { openSpacesDrawer } = useSpacesDrawer();
+
+	// Storacha integration
+	const storachaClient = useStorachaClient();
+	const { syncAllSpaces } = useStorachaSync(storachaClient);
+	const [isSyncing, setIsSyncing] = useState(false);
+
+	// Filter and search state
+	const [selectedFilter, setSelectedFilter] = useState<'all' | 'recent'>('all');
+	const [selectedStatus, setSelectedStatus] = useState<'all' | 'published' | 'draft' | 'archived'>('all');
+	const [selectedContentType, setSelectedContentType] = useState<string>('all');
+	const [searchQuery, setSearchQuery] = useState('');
+
+	// Find spaces using storacha provider
+	const storachaSpaces = spaces.filter(space => space.storageProvider === StorageProvider.Storacha);
+	const hasStorachaSpace = storachaSpaces.length > 0;
+
+	// Auto-sync when Storacha client and spaces are available
+	useEffect(() => {
+		if (storachaClient && hasStorachaSpace && !isSyncing) {
+			handleSync();
+		}
+	}, [storachaClient, hasStorachaSpace, isSyncing]);
+
+	// Manual sync function
+	const handleSync = async () => {
+		if (!storachaClient || isSyncing) return;
+
+		setIsSyncing(true);
+		try {
+			await syncAllSpaces();
+			console.log("Storacha sync completed successfully");
+		} catch (error) {
+			console.error("Error syncing Storacha spaces:", error);
+		} finally {
+			setIsSyncing(false);
+		}
+	};
+
+	// Get unique content types
+	const contentTypes = useMemo(() => {
+		const types = new Set(entries.map(entry => entry.contentTypeId));
+		return Array.from(types);
+	}, [entries]);
+
+	// Get Storacha space IDs for filtering
+	const storachaSpaceIds = useMemo(() => {
+		return storachaSpaces.map(space => space.id);
+	}, [storachaSpaces]);
+
+	// Filter entries based on all filters
+	const filteredEntries = useMemo(() => {
+		// Start with entries from Storacha spaces only
+		let filtered = entries.filter(entry => storachaSpaceIds.includes(entry.spaceId));
+
+		// Filter by time range
+		if (selectedFilter === 'recent') {
+			filtered = filtered.filter(entry => {
+				const daysDiff = (Date.now() - entry.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+				return daysDiff <= 7;
+			});
+		}
+
+		// Filter by status
+		if (selectedStatus !== 'all') {
+			filtered = filtered.filter(entry => getEntryStatus(entry) === selectedStatus);
+		}
+
+		// Filter by content type
+		if (selectedContentType !== 'all') {
+			filtered = filtered.filter(entry => entry.contentTypeId === selectedContentType);
+		}
+
+		// Filter by search query
+		if (searchQuery) {
+			const query = searchQuery.toLowerCase();
+			filtered = filtered.filter(entry =>
+				entry.title?.toLowerCase().includes(query) ||
+				entry.content?.toLowerCase().includes(query) ||
+				entry.contentTypeId?.toLowerCase().includes(query)
+			);
+		}
+
+		return filtered;
+	}, [entries, storachaSpaceIds, selectedFilter, selectedStatus, selectedContentType, searchQuery]);
+
+	// Format date for display
+	const formatDate = (date: Date) => {
+		return new Intl.DateTimeFormat('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		}).format(date);
+	};
+
+	// Parse tags safely
+	const parseTags = (tagsJson: string | null) => {
+		if (!tagsJson) return [];
+		try {
+			return JSON.parse(tagsJson);
+		} catch {
+			return [];
+		}
+	};
 
 	return (
 		<div id="container">
@@ -49,24 +178,248 @@ export default function HomePage() {
 								</div>
 							</div>
 						</Card>
-					) : (
-						// Has spaces - show available actions
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div className="p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-								<div className="flex flex-col items-center text-center">
-									<div className="mb-4 text-4xl">
-										<FilePlus className="w-10 h-10" />
-									</div>
-									<h3 className="text-xl font-semibold mb-2">Create Entry</h3>
-									<p className="text-gray-600 dark:text-gray-300 mb-4">
-										Add new content to your existing types
+					) : hasStorachaSpace ? (
+						// Has Storacha spaces - show table interface
+						<div className="space-y-6">
+							{/* Header */}
+							<div className="flex items-center justify-between">
+								<div>
+									<h3 className="text-2xl font-bold">Content Entries</h3>
+									<p className="text-muted-foreground">
+										Manage and organize your content from Storacha spaces
 									</p>
+								</div>
+								<div className="flex items-center gap-2">
+									<Button
+										variant="outline"
+										onClick={handleSync}
+										disabled={isSyncing}
+										className="flex items-center gap-2"
+									>
+										<RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+										{isSyncing ? 'Syncing...' : 'Sync Storacha'}
+									</Button>
 									<Link to="/editor/content-type/select">
-										<Button>Create Entry</Button>
+										<Button>
+											<FilePlus className="w-4 h-4 mr-2" />
+											Create Entry
+										</Button>
 									</Link>
 								</div>
 							</div>
+
+							{/* Filters */}
+							<div className="flex items-center gap-4 flex-wrap">
+								<div className="flex items-center gap-2">
+									<Search className="w-4 h-4 text-muted-foreground" />
+									<Input
+										placeholder="Search entries..."
+										value={searchQuery}
+										onChange={(e) => setSearchQuery(e.target.value)}
+										className="w-64"
+									/>
+								</div>
+
+								<Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value as 'all' | 'published' | 'draft' | 'archived')}>
+									<SelectTrigger className="w-32">
+										<SelectValue placeholder="Status" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">All Status</SelectItem>
+										<SelectItem value="published">Published</SelectItem>
+										<SelectItem value="draft">Draft</SelectItem>
+										<SelectItem value="archived">Archived</SelectItem>
+									</SelectContent>
+								</Select>
+
+								<Select value={selectedContentType} onValueChange={setSelectedContentType}>
+									<SelectTrigger className="w-40">
+										<SelectValue placeholder="Content Type" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">All Types</SelectItem>
+										{contentTypes.map((type) => (
+											<SelectItem key={type} value={type}>
+												{type.charAt(0).toUpperCase() + type.slice(1)}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+
+								<Select value={selectedFilter} onValueChange={(value) => setSelectedFilter(value as 'all' | 'recent')}>
+									<SelectTrigger className="w-32">
+										<SelectValue placeholder="Time" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">All Time</SelectItem>
+										<SelectItem value="recent">Recent</SelectItem>
+									</SelectContent>
+								</Select>
+
+								<Badge variant="secondary" className="flex items-center gap-1">
+									<div className="w-2 h-2 bg-green-500 rounded-full" />
+									Storacha ({storachaSpaces.length} space{storachaSpaces.length > 1 ? 's' : ''})
+
+								</Badge>
+							</div>
+
+							{/* Table */}
+							{filteredEntries.length > 0 ? (
+								<div className="border rounded-lg">
+									<Table>
+										<TableHeader>
+											<TableRow>
+												<TableHead className="w-[100px]">Entry</TableHead>
+												<TableHead>Title</TableHead>
+												<TableHead>Status</TableHead>
+												<TableHead>Priority</TableHead>
+												<TableHead>Content Type</TableHead>
+												<TableHead>Created</TableHead>
+												<TableHead className="w-[70px]" />
+											</TableRow>
+										</TableHeader>
+										<TableBody>
+											{filteredEntries.map((entry) => {
+												const status = getEntryStatus(entry);
+												const priority = getEntryPriority(entry);
+
+												return (
+													<TableRow key={entry.id}>
+														<TableCell className="font-mono text-xs">
+															{entry.id.substring(0, 8)}...
+														</TableCell>
+														<TableCell>
+															<div className="space-y-1">
+																<div className="font-medium">
+																	{entry.title || 'Untitled'}
+																</div>
+																{entry.content && (
+																	<div className="text-sm text-muted-foreground line-clamp-1">
+																		{entry.content.substring(0, 60)}...
+																	</div>
+																)}
+																{entry.tags && parseTags(entry.tags).length > 0 && (
+																	<div className="flex gap-1">
+																		{parseTags(entry.tags).slice(0, 2).map((tag: string) => (
+																			<Badge key={`${entry.id}-${tag}`} variant="outline" className="text-xs px-1 py-0">
+																				{tag}
+																			</Badge>
+																		))}
+																		{parseTags(entry.tags).length > 2 && (
+																			<Badge variant="outline" className="text-xs px-1 py-0">
+																				+{parseTags(entry.tags).length - 2}
+																			</Badge>
+																		)}
+																	</div>
+																)}
+															</div>
+														</TableCell>
+														<TableCell>
+															<Badge
+																variant={status === 'published' ? 'default' : status === 'draft' ? 'secondary' : 'outline'}
+																className="capitalize"
+															>
+																{status}
+															</Badge>
+														</TableCell>
+														<TableCell>
+															<Badge
+																variant={priority === 'high' ? 'destructive' : priority === 'medium' ? 'default' : 'secondary'}
+																className="capitalize"
+															>
+																{priority}
+															</Badge>
+														</TableCell>
+														<TableCell className="capitalize">
+															{entry.contentTypeId}
+														</TableCell>
+														<TableCell>
+															<div className="text-sm">
+																{formatDate(entry.createdAt)}
+															</div>
+															{entry.storageProviderKey && (
+																<div className="text-xs text-muted-foreground">
+																	Storacha: {entry.storageProviderKey.substring(0, 8)}...
+																</div>
+															)}
+															{entry.spaceId && (
+																<div className="text-xs text-muted-foreground">
+																	Space: {storachaSpaces.find(s => s.id === entry.spaceId)?.name || entry.spaceId.substring(0, 8)}
+																</div>
+															)}
+														</TableCell>
+														<TableCell>
+															<div className="flex items-center gap-1">
+																{entry.mediaUrl && (
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		className="h-8 w-8"
+																		asChild
+																	>
+																		<a href={entry.mediaUrl} target="_blank" rel="noopener noreferrer">
+																			<Eye className="w-4 h-4" />
+																		</a>
+																	</Button>
+																)}
+																<Button variant="ghost" size="icon" className="h-8 w-8">
+																	<MoreHorizontal className="w-4 h-4" />
+																</Button>
+															</div>
+														</TableCell>
+													</TableRow>
+												);
+											})}
+										</TableBody>
+									</Table>
+								</div>
+							) : (
+								<Card className="p-8 text-center">
+									<div className="flex flex-col items-center">
+										<FileText className="w-12 h-12 text-muted-foreground mb-4" />
+										<h4 className="text-lg font-semibold mb-2">No Content Found</h4>
+										<p className="text-muted-foreground mb-4">
+											{searchQuery || selectedStatus !== 'all' || selectedContentType !== 'all' || selectedFilter === 'recent'
+												? 'No content matches your current filters. Try adjusting your search criteria.'
+												: 'Your Storacha space is ready but doesn\'t have any content entries yet.'
+											}
+										</p>
+										<Link to="/editor/content-type/select">
+											<Button>Create Your First Entry</Button>
+										</Link>
+									</div>
+								</Card>
+							)}
+
+							{/* Footer info */}
+							<div className="flex items-center justify-between text-sm text-muted-foreground">
+								<div>
+									Showing {filteredEntries.length} of {entries.filter(entry => storachaSpaceIds.includes(entry.spaceId)).length} Storacha entries
+									{entries.length > entries.filter(entry => storachaSpaceIds.includes(entry.spaceId)).length && (
+										<span className="ml-2">({entries.length} total entries)</span>
+									)}
+								</div>
+								<div className="flex items-center gap-4">
+									<span>Connected to {storachaSpaces.map(s => s.name).join(', ')}</span>
+									{isSyncing && <span className="text-primary">Syncing...</span>}
+								</div>
+							</div>
 						</div>
+					) : (
+						// No Storacha spaces
+						<Card className="p-8 text-center">
+							<div className="flex flex-col items-center">
+								<AlertCircle className="w-12 h-12 text-orange-500 mb-4" />
+								<h4 className="text-lg font-semibold mb-2">No Storacha Spaces</h4>
+								<p className="text-muted-foreground mb-4">
+									You need to create a space with Storacha provider to view content.
+								</p>
+								<Button onClick={openSpacesDrawer}>
+									<Folder className="w-4 h-4 mr-2" />
+									Create Storacha Space
+								</Button>
+							</div>
+						</Card>
 					)}
 				</section>
 			</main>

@@ -23,6 +23,18 @@ export const entriesByContentType$ = (contentTypeId: string) =>
 		{ label: `entriesByContentType-${contentTypeId}` },
 	);
 
+// Query for entries by space
+export const entriesBySpace$ = (spaceId: string) =>
+	queryDb(
+		(get) =>
+			tables.entries
+				.where({ spaceId, deletedAt: null })
+				.orderBy("createdAt", "desc"),
+		{ label: `entriesBySpace-${spaceId}` },
+	);
+
+
+
 // Query for a specific entry
 export const entryById$ = (id: string) =>
 	queryDb((get) => tables.entries.where({ id, deletedAt: null }).first(), {
