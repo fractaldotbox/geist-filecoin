@@ -18,7 +18,7 @@ export default defineConfig({
 		},
 	},
 	server: {
-		port: process.env.PORT ? Number(process.env.PORT) : 60_001,
+		port: process.env.PORT ? Number(process.env.PORT) : 3000,
 	},
 	worker: { format: "es" },
 });
