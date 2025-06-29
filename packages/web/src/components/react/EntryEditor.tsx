@@ -15,7 +15,7 @@ import { Form, FormField } from "@/components/react/ui/form";
 import { simulateProgress } from "@/components/react/ui/global-progress";
 import {
 	allEntries$,
-	firstActiveSpace$,
+	firstSpace$,
 	latestStorageAuthorizationForSpace$,
 } from "@/livestore/queries";
 import {
@@ -207,7 +207,7 @@ export function EntryEditor({
 	const { store, createEntry } = useLiveStore();
 
 	// Get active space and its storage authorization
-	const activeSpace = store.useQuery(firstActiveSpace$);
+	const activeSpace = store.useQuery(firstSpace$);
 	const storageAuth = activeSpace
 		? store.useQuery(latestStorageAuthorizationForSpace$(activeSpace.id))
 		: null;
@@ -222,14 +222,14 @@ export function EntryEditor({
 
 	const contentType = contentTypeData
 		? {
-				type: "object" as const,
-				...contentTypeData,
-				properties: JSON.parse(contentTypeData.properties) as Record<
-					string,
-					ContentTypeField
-				>,
-				required: JSON.parse(contentTypeData.required) as string[],
-			}
+			type: "object" as const,
+			...contentTypeData,
+			properties: JSON.parse(contentTypeData.properties) as Record<
+				string,
+				ContentTypeField
+			>,
+			required: JSON.parse(contentTypeData.required) as string[],
+		}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);

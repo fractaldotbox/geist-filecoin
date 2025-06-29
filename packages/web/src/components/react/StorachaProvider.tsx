@@ -10,7 +10,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { firstActiveSpace$ } from "../../livestore/queries.js";
+import { firstSpace$ } from "../../livestore/queries.js";
 import { useLiveStore } from "./hooks/useLiveStore.js";
 import { useDelegateAccount } from "./hooks/useStoracha.js";
 
@@ -59,7 +59,7 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 	const [client, setClient] = useState<Client.Client | null>(null);
 	const [delegation, setDelegation] = useState<Delegation<Capabilities> | null>(null);
 	const { createStorachaStorageAuthorization } = useLiveStore();
-	const activeSpace = store.useQuery(firstActiveSpace$);
+	const activeSpace = store.useQuery(firstSpace$);
 	const delegationCommittedRef = useRef<string | null>(null);
 
 	// Only request delegation if there's an active space with Storacha provider
@@ -87,12 +87,8 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 	});
 
 	useEffect(() => {
-		console.log("delegation", JSON.stringify(delegationResults?.toJSON(), null, 4),);
-
 		console.log("active space", activeSpace);
 		console.log("client ID", clientId);
-
-
 
 		// Commit StorachaStorageAuthorized event when delegation becomes available
 		if (

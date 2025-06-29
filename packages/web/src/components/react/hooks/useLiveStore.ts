@@ -117,6 +117,7 @@ export const useLiveStore = () => {
 
 	const setUiState = (uiState: {
 		currentContentTypeId?: string;
+		currentSpaceId?: string;
 		formData?: string;
 		isSubmitting?: boolean;
 		uploadProgress?: number;

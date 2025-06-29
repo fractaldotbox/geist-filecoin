@@ -62,7 +62,6 @@ export const tables = {
 			storageProviderCredentials: State.SQLite.text({ default: "" }), // Storage provider credentials
 			storageProviderId: State.SQLite.text({ default: "" }), // Storage provider ID
 			spaceProof: State.SQLite.text({ default: "" }), // Space proof for verification
-			isActive: State.SQLite.integer({ default: 1 }), // 1 for true, 0 for false
 			createdAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
 			updatedAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
 			deletedAt: State.SQLite.integer({
@@ -191,7 +190,6 @@ export const events = {
 			storageProvider: Schema.String,
 			storageProviderCredentials: Schema.String,
 			storageProviderId: Schema.String,
-			isActive: Schema.Boolean,
 		}),
 	}),
 
@@ -204,7 +202,6 @@ export const events = {
 			storageProvider: Schema.String,
 			storageProviderCredentials: Schema.String,
 			storageProviderId: Schema.String,
-			isActive: Schema.Boolean,
 		}),
 	}),
 
@@ -306,7 +303,6 @@ const materializers = State.SQLite.materializers(events, {
 		storageProvider,
 		storageProviderCredentials,
 		storageProviderId,
-		isActive,
 	}) =>
 		tables.spaces.insert({
 			id,
@@ -315,7 +311,6 @@ const materializers = State.SQLite.materializers(events, {
 			storageProvider,
 			storageProviderCredentials,
 			storageProviderId,
-			isActive: isActive ? 1 : 0,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		}),
@@ -327,7 +322,6 @@ const materializers = State.SQLite.materializers(events, {
 		storageProvider,
 		storageProviderCredentials,
 		storageProviderId,
-		isActive,
 	}) =>
 		tables.spaces
 			.update({
@@ -336,7 +330,6 @@ const materializers = State.SQLite.materializers(events, {
 				storageProvider,
 				storageProviderCredentials,
 				storageProviderId,
-				isActive: isActive ? 1 : 0,
 				updatedAt: new Date(),
 			})
 			.where({ id }),

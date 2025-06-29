@@ -33,7 +33,6 @@ interface Space {
 	name: string;
 	spaceProof: W3DID;
 	storageProvider: StorageProvider;
-	isActive: number;
 	deletedAt?: string | null;
 }
 

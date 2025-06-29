@@ -25,7 +25,6 @@ const SAMPLE_SPACES = [
 				valueFrom: "spaceProof",
 			}
 		] as StorageProviderCredentialConfig[],
-		isActive: true,
 	},
 ] as const;
 
@@ -57,7 +56,6 @@ export function useSpaceSeeder() {
 					storageProvider,
 					storageProviderId,
 					storageProviderCredentials,
-					isActive: true,
 				});
 			},
 		);

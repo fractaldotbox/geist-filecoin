@@ -12,7 +12,6 @@ export const useSpaceStore = () => {
 		storageProvider: string;
 		storageProviderId: string;
 		storageProviderCredentials: StorageProviderCredentialConfig[];
-		isActive: boolean;
 	}) => {
 		return store.commit(
 			events.spaceCreated({
@@ -22,7 +21,6 @@ export const useSpaceStore = () => {
 				storageProvider: spaceData.storageProvider,
 				storageProviderId: spaceData.storageProviderId,
 				storageProviderCredentials: JSON.stringify(spaceData.storageProviderCredentials) || "",
-				isActive: spaceData.isActive,
 			}),
 		);
 	};
@@ -35,7 +33,6 @@ export const useSpaceStore = () => {
 			storageProvider: string;
 			storageProviderId: string;
 			storageProviderCredentials: StorageProviderCredentialConfig[];
-			isActive: boolean;
 		},
 	) => {
 		return store.commit(
@@ -46,7 +43,6 @@ export const useSpaceStore = () => {
 				storageProvider: spaceData.storageProvider,
 				storageProviderId: spaceData.storageProviderId,
 				storageProviderCredentials: JSON.stringify(spaceData.storageProviderCredentials) || "",
-				isActive: spaceData.isActive,
 			}),
 		);
 	};

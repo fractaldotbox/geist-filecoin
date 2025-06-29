@@ -25,9 +25,10 @@ import {
 	STORAGE_PROVIDER_LABELS,
 	StorageProvider,
 } from "../../constants/storage-providers";
-import { allSpaces$ } from "../../livestore/queries";
+import { allSpaces$, uiState$ } from "../../livestore/queries";
 
 import { useSpaceStore } from "./hooks/useSpaceStore";
+import { useLiveStore } from "./hooks/useLiveStore";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -57,6 +58,7 @@ import {
 	SelectValue,
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
+import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
 
 const spaceFormSchema = z.object({
 	name: z
@@ -70,7 +72,6 @@ const spaceFormSchema = z.object({
 	storageProvider: z.nativeEnum(StorageProvider, {
 		required_error: "Please select a storage provider",
 	}),
-	spaceProof: z.string().max(10000, "Delegation Proof").optional(),
 	// Conditional fields based on storage provider
 	spaceKey: z.string().optional(),
 	apiKey: z.string().optional(),
@@ -86,7 +87,10 @@ interface SpacesDrawerProps {
 export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 	const { store } = useStore();
 	const { createSpace, updateSpace, deleteSpace } = useSpaceStore();
+	const { setUiState } = useLiveStore();
 	const spaces = store.useQuery(allSpaces$);
+	const uiState = store.useQuery(uiState$);
+	const currentSpaceId = uiState?.currentSpaceId || "";
 	const navigate = useNavigate();
 
 	const [showCreateForm, setShowCreateForm] = useState(false);
@@ -136,20 +140,10 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		const id = `space-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 		// Deactivate all existing spaces before creating the new active space
-		for (const space of spaces) {
-			if (space.isActive) {
-				await updateSpace(space.id, {
-					name: space.name,
-					description: space.description || "",
-					storageProvider: space.storageProvider,
-					storageProviderCredentials: space.storageProviderCredentials || "",
-					isActive: false,
-				});
-			}
-		}
+		await setUiState({ currentSpaceId: id });
 
 		// Create credentials based on storage provider
-		let storageProviderCredentials = "";
+		let storageProviderCredentials: StorageProviderCredentialConfig[] = [];
 		if (data.storageProvider === StorageProvider.Storacha) {
 			// For storacha, combine spaceKey and email into credentials
 			storageProviderCredentials = [{
@@ -160,10 +154,15 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 			{
 				type: "value",
 				key: "spaceProof",
+				value: ""
 			}]
 		} else if (data.storageProvider === StorageProvider.S3) {
 			// For S3, use the API key directly
-			storageProviderCredentials = data.apiKey?.trim() || "";
+			storageProviderCredentials = [{
+				type: "value",
+				key: "apiKey",
+				value: data.apiKey?.trim() || "",
+			}]
 		}
 
 		await createSpace({
@@ -171,12 +170,10 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 			name: data.name.trim(),
 			description: data.description?.trim() || "",
 			storageProvider: data.storageProvider,
+			storageProviderId: "",
 			storageProviderCredentials,
-			spaceProof:
-				data.storageProvider === StorageProvider.Storacha
-					? data.spaceProof?.trim() || ""
-					: "",
-			isActive: true,
+
+
 		});
 
 		// Reset form and close
@@ -195,37 +192,12 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 	};
 
 	const handleSetActiveSpace = async (targetSpaceId: string) => {
-		// First, deactivate all spaces
-		for (const space of spaces) {
-			if (space.id !== targetSpaceId && space.isActive) {
-				await updateSpace(space.id, {
-					name: space.name,
-					description: space.description || "",
-					storageProvider: space.storageProvider,
-					storageProviderCredentials: space.storageProviderCredentials || "",
-					spaceProof: space.spaceProof || "",
-					isActive: false,
-				});
-			}
-		}
+		// Set the target space as active
+		await setUiState({ currentSpaceId: targetSpaceId });
 
-		// Then activate the target space
-		const targetSpace = spaces.find((space) => space.id === targetSpaceId);
-		if (targetSpace) {
-			await updateSpace(targetSpaceId, {
-				name: targetSpace.name,
-				description: targetSpace.description || "",
-				storageProvider: targetSpace.storageProvider,
-				storageProviderCredentials:
-					targetSpace.storageProviderCredentials || "",
-				spaceProof: targetSpace.spaceProof || "",
-				isActive: true,
-			});
-
-			// Close the drawer and redirect to content-types page
-			onClose();
-			navigate("/content-types");
-		}
+		// Close the drawer and redirect to content-types page
+		onClose();
+		navigate("/content-types");
 	};
 
 	const toggleCredentialVisibility = (spaceId: string) => {
@@ -253,6 +225,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		);
 	};
 
+	// TO
 	const parseStorageCredentials = (space: any) => {
 		if (space.storageProvider === StorageProvider.Storacha) {
 			try {
@@ -260,8 +233,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 					space.storageProviderCredentials || "{}",
 				);
 				return {
-					spaceKey: credentials.spaceKey || "",
-					spaceProof: space.spaceProof || "",
+					...credentials
 				};
 			} catch {
 				return { spaceKey: "", spaceProof: space.spaceProof || "" };
@@ -371,33 +343,16 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 									{/* Conditional fields based on storage provider */}
 									{watchedStorageProvider === StorageProvider.Storacha ? (
 										<>
-											<FormField
-												control={form.control}
-												name="spaceProof"
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel>Space Proof</FormLabel>
-														<FormControl>
-															<Textarea
-																placeholder="Enter space proof"
-																rows={3}
-																{...field}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-
+											{/* TODO provider specific labels */}
 											<FormField
 												control={form.control}
 												name="spaceKey"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>Space Key</FormLabel>
+														<FormLabel>Storage Provider ID</FormLabel>
 														<FormControl>
 															<Input
-																placeholder="Enter your Storacha space key"
+																placeholder="For Storacha, enter the space key"
 																{...field}
 															/>
 														</FormControl>
@@ -461,16 +416,17 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 								const credentials = parseStorageCredentials(space);
 								const isRevealed = revealedCredentials[space.id] || false;
 								const isDetailsExpanded = expandedDetails[space.id] || false;
+								const isActive = space.id === currentSpaceId;
 
 								return (
 									<Card
 										key={space.id}
-										className={`p-6 ${space.isActive ? "border-green-500 border-2" : ""}`}
+										className={`p-6 ${isActive ? "border-green-500 border-2" : ""}`}
 									>
 										<div className="flex items-start justify-between mb-2">
 											<div className="flex-1">
 												<h3 className="text-xl font-semibold mb-1 flex flex-row align-center items-center gap-2">
-													{space.isActive ? (
+													{isActive ? (
 														<div className="w-3 h-3 bg-green-500 rounded-full" />
 													) : (
 														<></>
@@ -488,7 +444,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 												</div>
 											</div>
 											<div className="flex gap-2">
-												{!space.isActive && (
+												{!isActive && (
 													<Button
 														variant="outline"
 														size="sm"
@@ -600,44 +556,6 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 																							<Copy className="w-3 h-3" />
 																						</Button>
 																					)}
-																				</div>
-																			</div>
-																			<div className="flex items-center justify-between">
-																				<span className="text-muted-foreground">
-																					Space Proof:
-																				</span>
-																				<div className="flex items-center gap-1">
-																					<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono max-w-20 truncate">
-																						{isRevealed ? (
-																							<span
-																								title={credentials.spaceProof}
-																							>
-																								{credentials.spaceProof.length >
-																									20
-																									? `${credentials.spaceProof.slice(0, 20)}...`
-																									: credentials.spaceProof}
-																							</span>
-																						) : (
-																							maskCredential(
-																								credentials.spaceProof,
-																							)
-																						)}
-																					</code>
-																					{isRevealed &&
-																						credentials.spaceProof && (
-																							<Button
-																								variant="ghost"
-																								size="sm"
-																								onClick={() =>
-																									copyToClipboard(
-																										credentials.spaceProof,
-																									)
-																								}
-																								className="h-5 w-5 p-0"
-																							>
-																								<Copy className="w-3 h-3" />
-																							</Button>
-																						)}
 																				</div>
 																			</div>
 																		</>
