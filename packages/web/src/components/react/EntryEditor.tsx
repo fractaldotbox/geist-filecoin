@@ -15,6 +15,7 @@ import { Form, FormField } from "@/components/react/ui/form";
 import { simulateProgress } from "@/components/react/ui/global-progress";
 import {
 	allEntries$,
+	entryById$,
 	firstSpace$,
 	latestStorageAuthorizationForSpace$,
 } from "@/livestore/queries";
@@ -37,6 +38,7 @@ import * as Client from "@web3-storage/w3up-client";
 import { Signer } from "@web3-storage/w3up-client/principal/ed25519";
 import * as Proof from "@web3-storage/w3up-client/proof";
 import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
+import { useParams } from "react-router-dom";
 
 // Upload mode enum
 export enum UploadMode {
@@ -200,9 +202,17 @@ export function EntryEditor({
 	const contentTypeIdFromUrl =
 		contentTypeId || params.get("contentType") || "blog";
 
-	// Use LiveStore-based content type hooks and entry creation
-	const contentTypeData = useContentType(contentTypeIdFromUrl);
+	const { spaceId, entryId } = useParams();
+
+	// parse contentype id from entryId
+
 	const { store, createEntry } = useLiveStore();
+	const entry = store.useQuery(entryById$(entryId || ""));
+
+	console.log("entryId", entryId);
+
+	// Use LiveStore-based content type hooks and entry creation
+	const contentTypeData = useContentType(entry.contentTypeId);
 
 	// Get active space and its storage authorization
 	const activeSpace = store.useQuery(firstSpace$);
@@ -220,14 +230,14 @@ export function EntryEditor({
 
 	const contentType = contentTypeData
 		? {
-			type: "object" as const,
-			...contentTypeData,
-			properties: JSON.parse(contentTypeData.properties) as Record<
-				string,
-				ContentTypeField
-			>,
-			required: JSON.parse(contentTypeData.required) as string[],
-		}
+				type: "object" as const,
+				...contentTypeData,
+				properties: JSON.parse(contentTypeData.properties) as Record<
+					string,
+					ContentTypeField
+				>,
+				required: JSON.parse(contentTypeData.required) as string[],
+			}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);

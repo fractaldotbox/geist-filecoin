@@ -1,7 +1,7 @@
 import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import type { Space } from "@/domain/space";
 import { allEntries$ } from "@/livestore/queries";
-import { listFiles, createEntryDataFromIPFS } from "@geist-filecoin/storage";
+import { createEntryDataFromIPFS, listFiles } from "@geist-filecoin/storage";
 /**
  * now sync from client side, after client receive delegations
  * although possible to setup server side sync to livestore
@@ -131,14 +131,12 @@ export const useSync = (spaceId: string) => {
 			return;
 		}
 
-		console.log('syncing', spaceId, 'storacha files',uploads.length)
+		console.log("syncing", spaceId, "storacha files", uploads.length);
 
 		// Use the entries from the hook call at the top level
 		// const entries = uploads.map((upload) => createEntryData(spaceId, upload));
 
 		for await (const upload of uploads) {
-
-
 			const entry = await createEntryDataFromIPFS(spaceId, upload);
 
 			// Check if entry already exists

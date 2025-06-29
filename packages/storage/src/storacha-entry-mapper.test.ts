@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { UploadListItem } from "@web3-storage/w3up-client/dist/src/types";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+	type EntryData,
 	createEntryData,
 	createEntryDataFromIPFS,
 	fetchIPFSMetadata,
-	type EntryData,
 } from "./storacha-entry-mapper";
-import type { UploadListItem } from "@web3-storage/w3up-client/dist/src/types";
 
 // Mock ky
 vi.mock("ky", () => ({
@@ -24,7 +24,8 @@ describe("storacha-entry-mapper", () => {
 			const mockMetadata: any = {
 				name: "Test NFT",
 				description: "A test NFT with metadata",
-				image: "ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu/fuji1.jpg",
+				image:
+					"ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu/fuji1.jpg",
 				attributes: [
 					{ trait_type: "Color", value: "Blue" },
 					{ trait_type: "Size", value: "Large" },
@@ -37,7 +38,8 @@ describe("storacha-entry-mapper", () => {
 				json: vi.fn().mockResolvedValue(mockMetadata),
 			} as any);
 
-			const gatewayUrl = "https://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu.ipfs.w3s.link";
+			const gatewayUrl =
+				"https://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu.ipfs.w3s.link";
 			const result = await fetchIPFSMetadata(gatewayUrl);
 
 			expect(mockKyGet).toHaveBeenCalledWith(`${gatewayUrl}/entry.json`);
@@ -53,7 +55,7 @@ describe("storacha-entry-mapper", () => {
 			const cidRootWithGatewayUrl = "https://invalid-gateway.ipfs.w3s.link";
 
 			await expect(fetchIPFSMetadata(cidRootWithGatewayUrl)).rejects.toThrow(
-				"Failed to fetch metadata"
+				"Failed to fetch metadata",
 			);
 		});
 	});
@@ -63,7 +65,8 @@ describe("storacha-entry-mapper", () => {
 			const mockMetadata: any = {
 				name: "Mountain View",
 				description: "Beautiful mountain landscape",
-				image: "ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu/fuji1.jpg",
+				image:
+					"ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu/fuji1.jpg",
 			};
 
 			const { default: ky } = await import("ky");
@@ -80,9 +83,14 @@ describe("storacha-entry-mapper", () => {
 			} as unknown as UploadListItem;
 
 			const spaceId = "test-space-id";
-			const gatewayUrl = "https://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu.ipfs.w3s.link";
+			const gatewayUrl =
+				"https://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu.ipfs.w3s.link";
 
-			const result = await createEntryDataFromIPFS(spaceId, mockUpload, gatewayUrl);
+			const result = await createEntryDataFromIPFS(
+				spaceId,
+				mockUpload,
+				gatewayUrl,
+			);
 
 			expect(result).toEqual({
 				id: "bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
@@ -118,10 +126,18 @@ describe("storacha-entry-mapper", () => {
 			const spaceId = "test-space-id";
 			const gatewayUrl = "https://test-gateway.ipfs.w3s.link";
 
-			const result = await createEntryDataFromIPFS(spaceId, mockUpload, gatewayUrl);
+			const result = await createEntryDataFromIPFS(
+				spaceId,
+				mockUpload,
+				gatewayUrl,
+			);
 
-			expect(result.title).toContain("Upload bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu");
-			expect(result.content).toContain("Storacha upload with CID: bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu");
+			expect(result.title).toContain(
+				"Upload bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
+			);
+			expect(result.content).toContain(
+				"Storacha upload with CID: bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
+			);
 		});
 	});
 
@@ -142,8 +158,10 @@ describe("storacha-entry-mapper", () => {
 				id: "bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
 				spaceId: "test-space-id",
 				contentTypeId: "storacha-upload",
-				title: "Upload bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
-				content: "Storacha upload with CID: bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
+				title:
+					"Upload bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
+				content:
+					"Storacha upload with CID: bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
 				storageProviderKey: "test-space-id",
 				tags: JSON.stringify({
 					shards: ["shard1"],
@@ -152,4 +170,4 @@ describe("storacha-entry-mapper", () => {
 			});
 		});
 	});
-}); 
+});

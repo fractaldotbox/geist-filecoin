@@ -112,7 +112,6 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		},
 	});
 
-
 	useEffect(() => {
 		if (uiState?.currentSpaceId) {
 			return;
@@ -122,7 +121,6 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		if (targetSpaceId !== uiState?.currentSpaceId) {
 			setUiState({ currentSpaceId: targetSpaceId });
 		}
-
 	}, [uiState?.currentSpaceId, setUiState, spaces?.[0]?.id]);
 
 	const watchedStorageProvider = form.watch("storageProvider");
@@ -137,7 +135,6 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 				form.setError("spaceKey", { message: validationError });
 				return;
 			}
-
 		} else if (data.storageProvider === StorageProvider.S3) {
 			if (!data.apiKey?.trim()) {
 				validationError = "API Key is required for S3";
@@ -448,7 +445,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 													<Badge variant="secondary">
 														{
 															STORAGE_PROVIDER_LABELS[
-															space.storageProvider as StorageProvider
+																space.storageProvider as StorageProvider
 															]
 														}
 													</Badge>
@@ -540,52 +537,51 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 															<div className="space-y-2 text-xs">
 																{space.storageProvider ===
 																	StorageProvider.Storacha && (
-																		<>
-																			<div className="flex items-center justify-between">
-																				<span className="text-muted-foreground">
-																					Space Key:
-																				</span>
-																				<div className="flex items-center gap-1">
-																					{/* <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
+																	<>
+																		<div className="flex items-center justify-between">
+																			<span className="text-muted-foreground">
+																				Space Key:
+																			</span>
+																			<div className="flex items-center gap-1">
+																				{/* <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
 																						{isRevealed
 																							? credentials.spaceKey
 																							: maskCredential(
 																								credentials.spaceKey,
 																							)}
 																					</code> */}
-
-																				</div>
 																			</div>
-																		</>
-																	)}
+																		</div>
+																	</>
+																)}
 
 																{space.storageProvider ===
 																	StorageProvider.S3 && (
-																		<div className="flex items-center justify-between">
-																			<span className="text-muted-foreground">
-																				API Key:
-																			</span>
-																			<div className="flex items-center gap-1">
-																				<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
-																					{isRevealed
-																						? credentials.apiKey
-																						: maskCredential(credentials.apiKey)}
-																				</code>
-																				{isRevealed && credentials.apiKey && (
-																					<Button
-																						variant="ghost"
-																						size="sm"
-																						onClick={() =>
-																							copyToClipboard(credentials.apiKey)
-																						}
-																						className="h-5 w-5 p-0"
-																					>
-																						<Copy className="w-3 h-3" />
-																					</Button>
-																				)}
-																			</div>
+																	<div className="flex items-center justify-between">
+																		<span className="text-muted-foreground">
+																			API Key:
+																		</span>
+																		<div className="flex items-center gap-1">
+																			<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
+																				{isRevealed
+																					? credentials.apiKey
+																					: maskCredential(credentials.apiKey)}
+																			</code>
+																			{isRevealed && credentials.apiKey && (
+																				<Button
+																					variant="ghost"
+																					size="sm"
+																					onClick={() =>
+																						copyToClipboard(credentials.apiKey)
+																					}
+																					className="h-5 w-5 p-0"
+																				>
+																					<Copy className="w-3 h-3" />
+																				</Button>
+																			)}
 																		</div>
-																	)}
+																	</div>
+																)}
 															</div>
 														</div>
 													</div>

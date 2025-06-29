@@ -8,7 +8,11 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSpacesDrawer } from "../../App";
-import { allContentTypes$, allSpaces$ } from "../../livestore/queries";
+import {
+	allContentTypes$,
+	allSpaces$,
+	uiState$,
+} from "../../livestore/queries";
 import { useLiveStore } from "./hooks/useLiveStore";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
@@ -22,6 +26,8 @@ export function ContentTypeManager() {
 	// Query content types and spaces from LiveStore
 	const contentTypes = store.useQuery(allContentTypes$);
 	const spaces = store.useQuery(allSpaces$);
+
+	const uiState = store.useQuery(uiState$);
 	const hasSpaces = spaces.length > 0;
 
 	if (!hasSpaces) {
@@ -93,7 +99,10 @@ export function ContentTypeManager() {
 							</p>
 
 							<div className="flex gap-2">
-								<Link to={`/editor/entry/${contentType.id}`} className="flex-1">
+								<Link
+									to={`/editor/space/${uiState.currentSpaceId}/entry/${contentType.id}`}
+									className="flex-1"
+								>
 									<Button className="w-full">Use Content Type</Button>
 								</Link>
 							</div>

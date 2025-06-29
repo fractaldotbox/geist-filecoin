@@ -13,24 +13,26 @@ export interface EntryData {
 }
 
 export interface EntryMetadata {
-    name?: string;
-    spaceId?: string;
-    contentType?: string;
+	name?: string;
+	spaceId?: string;
+	contentType?: string;
 }
 
 export interface EntryIPFSData {
-    metadata: EntryMetadata;
-    data:{
-        [key: string]: unknown;
-    }
-
+	metadata: EntryMetadata;
+	data: {
+		[key: string]: unknown;
+	};
 }
 
-
 // Fetch metadata from IPFS gateway
-export const fetchIPFSMetadata = async (cidRootWithGatewayUrl: string): Promise<EntryIPFSData> => {
+export const fetchIPFSMetadata = async (
+	cidRootWithGatewayUrl: string,
+): Promise<EntryIPFSData> => {
 	try {
-		const response = await ky.get(`${cidRootWithGatewayUrl}/entry.json`).json<EntryIPFSData>();
+		const response = await ky
+			.get(`${cidRootWithGatewayUrl}/entry.json`)
+			.json<EntryIPFSData>();
 		return response;
 	} catch (error) {
 		console.error("Failed to fetch IPFS metadata:", error);
@@ -55,7 +57,7 @@ export const createEntryDataFromIPFS = async (
 ): Promise<EntryData> => {
 	const cid = upload.root.toString();
 
-	const cidRootWithGatewayUrl= createGatewayUrl(cid);
+	const cidRootWithGatewayUrl = createGatewayUrl(cid);
 	console.log("fetching metadata from", cidRootWithGatewayUrl);
 	const { metadata, data } = await fetchIPFSMetadata(cidRootWithGatewayUrl);
 	console.log("metadata", metadata);

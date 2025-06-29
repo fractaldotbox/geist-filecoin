@@ -1,12 +1,12 @@
 {
-  "data": {
-    "title": "abc",
-    "description": "defgh"
-  },
-  "metadata": {
-    "contentType": "text/plain",
-    "spaceId": "demo-space",
-    "createdAt": "2025-06-28T00:00:00.000Z",
-    "updatedAt": "2025-06-29T00:00:00.000Z"
-  }
+	"data": {
+		"title": "abc",
+		"description": "defgh"
+	},
+	"metadata": {
+		"contentType": "text/plain",
+		"spaceId": "demo-space",
+		"createdAt": "2025-06-28T00:00:00.000Z",
+		"updatedAt": "2025-06-29T00:00:00.000Z"
+	}
 }
