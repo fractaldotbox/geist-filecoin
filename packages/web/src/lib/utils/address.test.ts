@@ -40,19 +40,27 @@ describe("getShortAddress", () => {
 
 	describe("with invalid addresses", () => {
 		it("should throw error for non-hex string", () => {
-			expect(() => getShortAddress("not-a-hex-string" as any)).toThrow("Invalid Address");
+			expect(() => getShortAddress("not-a-hex-string" as any)).toThrow(
+				"Invalid Address",
+			);
 		});
 
 		it("should throw error for hex string with wrong length (too short)", () => {
-			expect(() => getShortAddress("0x742d35Cc" as any)).toThrow("Invalid Address");
+			expect(() => getShortAddress("0x742d35Cc" as any)).toThrow(
+				"Invalid Address",
+			);
 		});
 
 		it("should throw error for hex string with wrong length (too long)", () => {
-			expect(() => getShortAddress("0x742d35Cc6634C0532925a3b8D6A521D2C0C5C0F6FF" as any)).toThrow("Invalid Address");
+			expect(() =>
+				getShortAddress("0x742d35Cc6634C0532925a3b8D6A521D2C0C5C0F6FF" as any),
+			).toThrow("Invalid Address");
 		});
 
 		it("should throw error for missing 0x prefix", () => {
-			expect(() => getShortAddress("742d35Cc6634C0532925a3b8D6A521D2C0C5C0F6" as any)).toThrow("Invalid Address");
+			expect(() =>
+				getShortAddress("742d35Cc6634C0532925a3b8D6A521D2C0C5C0F6" as any),
+			).toThrow("Invalid Address");
 		});
 
 		it("should throw error for empty string", () => {
@@ -60,7 +68,9 @@ describe("getShortAddress", () => {
 		});
 
 		it("should throw error for hex string with invalid characters", () => {
-			expect(() => getShortAddress("0x742d35Gc6634C0532925a3b8D6A521D2C0C5C0F6" as any)).toThrow("Invalid Address");
+			expect(() =>
+				getShortAddress("0x742d35Gc6634C0532925a3b8D6A521D2C0C5C0F6" as any),
+			).toThrow("Invalid Address");
 		});
 	});
 
@@ -101,4 +111,4 @@ describe("getShortAddress", () => {
 			expect(result).toMatch(/^0x[0-9a-fA-F]+\.\.\.[0-9a-fA-F]+$/);
 		});
 	});
-}); 
+});
