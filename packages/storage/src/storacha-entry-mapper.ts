@@ -7,9 +7,6 @@ export interface EntryData {
 	contentTypeId: string;
 	title: string;
 	content: string;
-	mediaType: string;
-	mediaUrl: string;
-	mediaCid: string;
 	storageProviderKey: string;
 	tags: string;
 	publishedAt: Date;
@@ -17,66 +14,58 @@ export interface EntryData {
 
 export interface EntryMetadata {
     name?: string;
-    description?: string;
-    image?: string;
-    attributes?: Array<{
-        trait_type: string;
-        value: string | number;
-    }>;
+    spaceId?: string;
+    contentType?: string;
 }
 
-export interface IPFSMetadata {
-	name?: string;
-	description?: string;
-	image?: string;
-	attributes?: Array<{
-		trait_type: string;
-		value: string | number;
-	}>;
+export interface EntryIPFSData {
+    metadata: EntryMetadata;
     data:{
         [key: string]: unknown;
     }
 
 }
 
-// Infer content type based on CID or file extension
-const inferContentType = (cid: string): string => {
-	// This is a simple implementation - in a real scenario, you might want to
-	// inspect the actual content or use a more sophisticated method
-	return "ipfs-upload";
-};
 
 // Fetch metadata from IPFS gateway
-export const fetchIPFSMetadata = async (cidRootWithGatewayUrl: string): Promise<IPFSMetadata> => {
+export const fetchIPFSMetadata = async (cidRootWithGatewayUrl: string): Promise<EntryIPFSData> => {
 	try {
-		const response = await ky.get(`${cidRootWithGatewayUrl}/metadata.json`).json<IPFSMetadata>();
+		const response = await ky.get(`${cidRootWithGatewayUrl}/entry.json`).json<EntryIPFSData>();
 		return response;
 	} catch (error) {
 		console.error("Failed to fetch IPFS metadata:", error);
-		throw new Error(`Failed to fetch metadata from ${cidRootWithGatewayUrl}/metadata.json`);
+		throw new Error(`Failed to fetch metadata from ${cidRootWithGatewayUrl}`);
 	}
+};
+
+// We don't have information to infer content type from CID
+// decrypt & indexing from data will be necessary
+export const inferContentType = (cid: string): string => {
+	return "storacha-upload";
+};
+
+export const createGatewayUrl = (cid: string): string => {
+	return `https://${cid}.ipfs.w3s.link/`;
 };
 
 // Create EntryData from IPFS metadata
 export const createEntryDataFromIPFS = async (
 	spaceId: string,
 	upload: UploadListItem,
-	gatewayUrl: string,
 ): Promise<EntryData> => {
 	const cid = upload.root.toString();
-	const data = await fetchIPFSMetadata(gatewayUrl);
 
-    const { name, description, image, attributes } = data;
-
+	const cidRootWithGatewayUrl= createGatewayUrl(cid);
+	console.log("fetching metadata from", cidRootWithGatewayUrl);
+	const { metadata, data } = await fetchIPFSMetadata(cidRootWithGatewayUrl);
+	console.log("metadata", metadata);
+	console.log("data", data);
 	return {
 		id: cid,
 		spaceId,
-		contentTypeId: inferContentType(cid),
-		title: metadata.name || `Upload ${cid}`,
-		content: metadata.description || `Storacha upload with CID: ${cid}`,
-		mediaType: metadata.image ? "image/*" : "application/octet-stream",
-		mediaUrl: metadata.image || "",
-		mediaCid: cid,
+		contentTypeId: metadata.contentType || "",
+		title: (data as any).name || `Upload ${cid}`,
+		content: JSON.stringify(data),
 		storageProviderKey: spaceId,
 		tags: JSON.stringify({
 			shards: upload.shards || [],
@@ -99,10 +88,6 @@ export const createEntryData = (
 		contentTypeId: inferContentType(cid),
 		title: `Upload ${upload.root}`, // Generate a title from the CID
 		content: `Storacha upload with CID: ${cid}`,
-		mediaType: "application/octet-stream", // Default media type
-		// mediaUrl: getGatewayUrl(upload.root),
-		mediaUrl: "",
-		mediaCid: cid, // Use the CID as mediaCid
 		storageProviderKey: spaceId,
 		tags: JSON.stringify({
 			shards: upload.shards || [],

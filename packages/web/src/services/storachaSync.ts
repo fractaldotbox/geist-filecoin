@@ -1,7 +1,7 @@
 import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import type { Space } from "@/domain/space";
 import { allEntries$ } from "@/livestore/queries";
-import { listFiles } from "@geist-filecoin/storage";
+import { listFiles, createEntryDataFromIPFS } from "@geist-filecoin/storage";
 /**
  * now sync from client side, after client receive delegations
  * although possible to setup server side sync to livestore
@@ -38,9 +38,6 @@ interface EntryData {
 	contentTypeId: string;
 	title: string;
 	content: string;
-	mediaType: string;
-	mediaUrl: string;
-	mediaCid: string;
 	storageProviderKey: string;
 	tags: string;
 	publishedAt: Date;
@@ -98,32 +95,28 @@ export const findExistingEntry = <T extends { id: string }>(
 	return entries.find((entry) => entry.id === entryId);
 };
 
-// with content addressing nature, entry id will change per content
-export const createEntryData = (
-	spaceId: string,
-	upload: UploadListItem,
-): EntryData => {
-	const cid = upload.root.toString();
+// // with content addressing nature, entry id will change per content
+// export const createEntryData = (
+// 	spaceId: string,
+// 	upload: UploadListItem,
+// ): EntryData => {
+// 	const cid = upload.root.toString();
 
-	return {
-		id: cid, // Use the CID as the unique identifier
-		spaceId,
-		contentTypeId: inferContentType(cid),
-		title: `Upload ${upload.root}`, // Generate a title from the CID
-		content: `Storacha upload with CID: ${cid}`,
-		mediaType: "application/octet-stream", // Default media type
-		// mediaUrl: getGatewayUrl(upload.root),
-		mediaUrl: "",
-		mediaCid: cid, // Use the CID as mediaCid
-		storageProviderKey: spaceId,
-		tags: JSON.stringify({
-			shards: upload.shards || [],
-			// inserted: upload.inserted,
-			// updated: upload.updated
-		}),
-		publishedAt: new Date(upload.insertedAt),
-	};
-};
+// 	return {
+// 		id: cid, // Use the CID as the unique identifier
+// 		spaceId,
+// 		contentTypeId: inferContentType(cid),
+// 		title: `Upload ${upload.root}`, // Generate a title from the CID
+// 		content: `Storacha upload with CID: ${cid}`,
+// 		storageProviderKey: spaceId,
+// 		tags: JSON.stringify({
+// 			shards: upload.shards || [],
+// 			// inserted: upload.inserted,
+// 			// updated: upload.updated
+// 		}),
+// 		publishedAt: new Date(upload.insertedAt),
+// 	};
+// };
 
 // either query data cut off or just always try to create new entries
 export const useSync = (spaceId: string) => {
@@ -141,9 +134,13 @@ export const useSync = (spaceId: string) => {
 		console.log('syncing', spaceId, 'storacha files',uploads.length)
 
 		// Use the entries from the hook call at the top level
-		const entries = uploads.map((upload) => createEntryData(spaceId, upload));
+		// const entries = uploads.map((upload) => createEntryData(spaceId, upload));
 
-		for await (const entry of entries) {
+		for await (const upload of uploads) {
+
+
+			const entry = await createEntryDataFromIPFS(spaceId, upload);
+
 			// Check if entry already exists
 			const existingEntry = findExistingEntry(allEntries, entry.id);
 
@@ -155,11 +152,6 @@ export const useSync = (spaceId: string) => {
 			console.log("creating entry", entry.id);
 			await createEntry({
 				...entry,
-				media: {
-					mediaType: entry.mediaType,
-					url: entry.mediaUrl,
-					cid: entry.mediaCid,
-				},
 				tags: JSON.parse(entry.tags),
 				publishedAt: entry.publishedAt.toISOString(),
 			});

@@ -1,8 +1,7 @@
 {
   "data": {
     "title": "abc",
-    "description": "defgh",
-    "mediaUrl": "/a.jpg"
+    "description": "defgh"
   },
   "metadata": {
     "contentType": "text/plain",

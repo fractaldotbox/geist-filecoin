@@ -148,14 +148,13 @@ async function uploadFile(
 	uploadMode: UploadMode = UploadMode.StorachaDelegated,
 	progressCallback?: (progress: number) => void,
 	delegatedToken?: string,
-): Promise<{ mediaType: string; mediaUrl: string; mediaCid: string }> {
+): Promise<{ url: string; cid: string }> {
 	console.log("uploadFile", media, uploadMode);
 	// If no media or media doesn't have a file, return empty values
 	if (!media || !media.file) {
 		return {
-			mediaType: media?.mediaType || "",
-			mediaUrl: media?.url || "",
-			mediaCid: media?.cid || "",
+			url: media?.url || "",
+			cid: media?.cid || "",
 		};
 	}
 
@@ -182,9 +181,8 @@ async function uploadFile(
 		}
 
 		return {
-			mediaType: media.mediaType,
-			mediaUrl: uploadResult.url,
-			mediaCid: uploadResult.cid,
+			url: uploadResult.url,
+			cid: uploadResult.cid,
 		};
 	} catch (error) {
 		console.error("Upload error:", error);
@@ -222,14 +220,14 @@ export function EntryEditor({
 
 	const contentType = contentTypeData
 		? {
-				type: "object" as const,
-				...contentTypeData,
-				properties: JSON.parse(contentTypeData.properties) as Record<
-					string,
-					ContentTypeField
-				>,
-				required: JSON.parse(contentTypeData.required) as string[],
-			}
+			type: "object" as const,
+			...contentTypeData,
+			properties: JSON.parse(contentTypeData.properties) as Record<
+				string,
+				ContentTypeField
+			>,
+			required: JSON.parse(contentTypeData.required) as string[],
+		}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -246,9 +244,8 @@ export function EntryEditor({
 		for (const [key, field] of Object.entries(contentType.properties)) {
 			const isRequired = contentType.required.includes(key);
 
-			if (field.type === "object" && field.properties?.mediaType) {
+			if (field.type === "object" && field.properties?.url) {
 				schemaShape.media = z.object({
-					mediaType: z.string().optional(),
 					url: z.string().optional(),
 					file: z.instanceof(File).optional(),
 					cid: z.string().optional(), // Add the cid property to fix the linter error
@@ -283,8 +280,8 @@ export function EntryEditor({
 
 			if (field.type === "array") {
 				defaultValues[key] = [];
-			} else if (field.type === "object" && field.properties?.mediaType) {
-				defaultValues[key] = { mediaType: "", url: "" };
+			} else if (field.type === "object" && field.properties?.url) {
+				defaultValues[key] = { url: "" };
 			} else if (field.type === "string" && field.format === "date") {
 				defaultValues[key] = "";
 			} else {
@@ -341,7 +338,7 @@ export function EntryEditor({
 
 			// Handle file upload if needed with specified upload mode
 			const media = values?.media as FileFieldValue | undefined;
-			const { mediaType, mediaUrl, mediaCid } = await uploadFile(
+			const { url, cid } = await uploadFile(
 				media,
 				uploadMode,
 				(progress: number) => {
@@ -354,15 +351,15 @@ export function EntryEditor({
 			await createEntry({
 				...values,
 				contentTypeId: contentTypeIdFromUrl,
-				media: { mediaType, url: mediaUrl, cid: mediaCid },
+				media: { url: url, cid: cid },
 			});
 
 			console.log("Entry created successfully");
 
 			// Set the submission result for the sidebar
 			setSubmissionResult({
-				cid: mediaCid || "local",
-				url: mediaUrl || "local",
+				cid: cid || "local",
+				url: url || "local",
 			});
 		} catch (error) {
 			console.error("Error creating entry:", error);
@@ -395,7 +392,7 @@ export function EntryEditor({
 		const delayClass = isAnimated ? `delay-${Math.min(index * 100, 500)}` : "";
 		const animationClass = isAnimated ? "field-slide-up" : "opacity-0";
 
-		if (field.type === "object" && field.properties?.mediaType) {
+		if (field.type === "object" && field.properties?.url) {
 			// use separate field
 			return (
 				<FormField

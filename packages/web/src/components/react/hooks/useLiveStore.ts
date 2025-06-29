@@ -22,9 +22,6 @@ export const useLiveStore = () => {
 				contentTypeId: entryData.contentTypeId,
 				title: (entryData.title as string) || "",
 				content: (entryData.content as string) || "",
-				mediaType: media?.mediaType || "",
-				mediaUrl: media?.url || "",
-				mediaCid: media?.cid || "",
 				storageProviderKey: media?.cid || "", // Add missing storageProviderKey field
 				tags: entryData.tags ? JSON.stringify(entryData.tags) : "",
 				publishedAt: entryData.publishedAt

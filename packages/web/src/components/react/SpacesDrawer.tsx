@@ -114,15 +114,16 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 
 
 	useEffect(() => {
-		if (uiState.currentSpaceId) {
+		if (uiState?.currentSpaceId) {
 			return;
 		}
 
 		const targetSpaceId = spaces?.[0]?.id;
+		if (targetSpaceId !== uiState?.currentSpaceId) {
+			setUiState({ currentSpaceId: targetSpaceId });
+		}
 
-		setUiState({ currentSpaceId: targetSpaceId });
-
-	}, [uiState.currentSpaceId, setUiState, spaces]);
+	}, [uiState?.currentSpaceId, setUiState, spaces?.[0]?.id]);
 
 	const watchedStorageProvider = form.watch("storageProvider");
 
@@ -136,11 +137,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 				form.setError("spaceKey", { message: validationError });
 				return;
 			}
-			if (!data.spaceProof?.trim()) {
-				validationError = "Space Proof is required for Storacha";
-				form.setError("spaceProof", { message: validationError });
-				return;
-			}
+
 		} else if (data.storageProvider === StorageProvider.S3) {
 			if (!data.apiKey?.trim()) {
 				validationError = "API Key is required for S3";
@@ -549,27 +546,14 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 																					Space Key:
 																				</span>
 																				<div className="flex items-center gap-1">
-																					<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
+																					{/* <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
 																						{isRevealed
 																							? credentials.spaceKey
 																							: maskCredential(
 																								credentials.spaceKey,
 																							)}
-																					</code>
-																					{isRevealed && credentials.spaceKey && (
-																						<Button
-																							variant="ghost"
-																							size="sm"
-																							onClick={() =>
-																								copyToClipboard(
-																									credentials.spaceKey,
-																								)
-																							}
-																							className="h-5 w-5 p-0"
-																						>
-																							<Copy className="w-3 h-3" />
-																						</Button>
-																					)}
+																					</code> */}
+
 																				</div>
 																			</div>
 																		</>

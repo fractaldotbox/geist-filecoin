@@ -49,8 +49,7 @@ import {
 import { StorageProvider } from "../constants/storage-providers";
 import { allEntries$, allSpaces$, uiState$ } from "../livestore/queries";
 import {
-	createEntryData,
-	useStorachaSync,
+
 	useSync,
 } from "../services/storachaSync";
 
@@ -73,8 +72,6 @@ export default function HomePage() {
 	const uiState = store.useQuery(uiState$);
 	const { client: storachaClient, delegation } = useStorachaContext();
 	const { sync } = useSync(uiState.currentSpaceId);
-	// Storacha integration
-	const { syncAllSpaces } = useStorachaSync(storachaClient);
 	const [isInitialSyncing, setisInitialSyncing] = useState(true);
 
 	// Filter and search state
@@ -205,8 +202,8 @@ export default function HomePage() {
 
 	return (
 		<div id="container">
-			<main className="p-10 m-auto">
-				<section className="mt-8">
+			<main className="p-6 m-auto">
+				<section className="mt-2">
 					{!hasSpaces ? (
 						// No spaces - encourage user to create one first
 						<Card className="p-8 text-center">

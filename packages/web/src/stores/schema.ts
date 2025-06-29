@@ -14,10 +14,6 @@ export interface ContentTypeField {
 		type: string;
 	};
 	properties?: {
-		mediaType?: {
-			type: string;
-			description: string;
-		};
 		url?: {
 			type: string;
 			description: string;
