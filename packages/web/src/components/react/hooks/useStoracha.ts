@@ -122,23 +122,16 @@ export const useSpaceFiles = (options: {
 		console.log("loading files from space", currentSpace?.did());
 		console.log("by ", storachaClient.did())
 
-		let files = [];
-		try {
-			 files =  await storachaClient.capability.upload.list({
-				cursor: "",
-				// cursor: searchParams.cursor,
-				pre: true,
-				// pre: searchParams.pre === 'true',
-				size: 10
-			  });
-	
-			  console.log('files', files);
-		} catch (error) {
+		return  await storachaClient.capability.upload.list({
+			cursor: "",
+			// cursor: searchParams.cursor,
+			pre: true,
+			// pre: searchParams.pre === 'true',
+			size: 10
+		  }).catch((error)=> {
 			console.error('error loading files', error.cause)
-		}
+		});
 
-
-		  return files;
 	}, [storachaClient, delegation]);
 
 

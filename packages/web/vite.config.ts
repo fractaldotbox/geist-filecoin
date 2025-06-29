@@ -21,4 +21,9 @@ export default defineConfig({
 		port: process.env.PORT ? Number(process.env.PORT) : 3000,
 	},
 	worker: { format: "es" },
+	test: {
+		environment: "jsdom",
+		globals: true,
+		setupFiles: ["./src/test/setup.ts"],
+	},
 });

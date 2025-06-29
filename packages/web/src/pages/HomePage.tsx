@@ -9,10 +9,10 @@ import { AlertCircle, FilePlus, Folder, Calendar, FileText, ExternalLink, Filter
 import { Link } from "react-router-dom";
 import { useState, useMemo, useEffect } from "react";
 import { useSpacesDrawer } from "../App";
-import { allSpaces$, allEntries$ } from "../livestore/queries";
+import { allSpaces$, allEntries$, uiState$ } from "../livestore/queries";
 import { StorageProvider } from "../constants/storage-providers";
 import { useStorachaClient, useStorachaContext } from "../components/react/StorachaProvider";
-import { useStorachaSync } from "../services/storachaSync";
+import { createEntryData, useStorachaSync, useSync } from "../services/storachaSync";
 import { useSpaceFiles } from "@/components/react/hooks/useStoracha";
 
 // Helper functions
@@ -37,11 +37,12 @@ export default function HomePage() {
 	const hasSpaces = spaces.length > 0;
 	const { openSpacesDrawer } = useSpacesDrawer();
 
-	// Storacha integration
+	const uiState = store.useQuery(uiState$);
 	const { client: storachaClient, delegation } = useStorachaContext();
-
+	const { sync } = useSync(uiState.currentSpaceId);
+	// Storacha integration
 	const { syncAllSpaces } = useStorachaSync(storachaClient);
-	const [isSyncing, setIsSyncing] = useState(false);
+	const [isSyncing, setIsSyncing] = useState(true);
 
 	// Filter and search state
 	const [selectedFilter, setSelectedFilter] = useState<'all' | 'recent'>('all');
@@ -64,21 +65,21 @@ export default function HomePage() {
 			if (!storachaClient || !delegation) {
 				return;
 			}
+			if (!isSyncing) {
+				return;
+			}
 
 			const files = await loadFiles();
-			console.log("files", files);
-			// const proofs = storachaClient.proofs([
-			// 	{
-			// 		can: "*",
-			// 		with: "did:key:z6Mkvu57pm2XaQYr28RAxRnMZmp8owcf2EtD7MT8FsMVxCnj"
-			// 	}
-			// ])
-			// console.log("proofs", proofs);
-			// const files = await loadFiles();
+			console.log("sync files", files);
 
+			const uploads = files?.results || [];
+
+
+			await sync(uploads);
+			setIsSyncing(false);
 			// console.log("files", files);
 		})();
-	}, [storachaClient, delegation, loadFiles]);
+	}, [storachaClient, delegation, loadFiles, sync, isSyncing]);
 
 	// Get unique content types
 	const contentTypes = useMemo(() => {
@@ -86,16 +87,16 @@ export default function HomePage() {
 		return Array.from(types);
 	}, [entries]);
 
-	// Get Storacha space IDs for filtering
-	const storachaSpaceIds = useMemo(() => {
-		return storachaSpaces.map(space => space.id);
-	}, [storachaSpaces]);
+
 
 	// Filter entries based on all filters
 	const filteredEntries = useMemo(() => {
+		// let filtered = entries;
 		// Start with entries from Storacha spaces only
-		let filtered = entries.filter(entry => storachaSpaceIds.includes(entry.spaceId));
+		let filtered = entries.filter(entry => entry.spaceId === uiState.currentSpaceId);
 
+		console.log('uiState', uiState.currentSpaceId)
+		console.log('entries', filtered.length, entries.length)
 		// Filter by time range
 		if (selectedFilter === 'recent') {
 			filtered = filtered.filter(entry => {
@@ -125,7 +126,7 @@ export default function HomePage() {
 		}
 
 		return filtered;
-	}, [entries, storachaSpaceIds, selectedFilter, selectedStatus, selectedContentType, searchQuery]);
+	}, [entries, uiState.currentSpaceId, selectedFilter, selectedStatus, selectedContentType, searchQuery]);
 
 	// Format date for display
 	const formatDate = (date: Date) => {
@@ -375,7 +376,7 @@ export default function HomePage() {
 								<Card className="p-8 text-center">
 									<div className="flex flex-col items-center">
 										<FileText className="w-12 h-12 text-muted-foreground mb-4" />
-										<h4 className="text-lg font-semibold mb-2">No Content Found</h4>
+										<h4 className="text-lg font-semibold mb-2">No Content Found {filteredEntries.length}</h4>
 										<p className="text-muted-foreground mb-4">
 											{searchQuery || selectedStatus !== 'all' || selectedContentType !== 'all' || selectedFilter === 'recent'
 												? 'No content matches your current filters. Try adjusting your search criteria.'
@@ -392,10 +393,7 @@ export default function HomePage() {
 							{/* Footer info */}
 							<div className="flex items-center justify-between text-sm text-muted-foreground">
 								<div>
-									Showing {filteredEntries.length} of {entries.filter(entry => storachaSpaceIds.includes(entry.spaceId)).length} Storacha entries
-									{entries.length > entries.filter(entry => storachaSpaceIds.includes(entry.spaceId)).length && (
-										<span className="ml-2">({entries.length} total entries)</span>
-									)}
+									Showing {filteredEntries.length} Storacha entries
 								</div>
 								<div className="flex items-center gap-4">
 									<span>Connected to {storachaSpaces.map(s => s.name).join(', ')}</span>

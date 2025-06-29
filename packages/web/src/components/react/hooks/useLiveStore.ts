@@ -14,6 +14,7 @@ export const useLiveStore = () => {
 		// Handle media field properly
 		const media = entryData.media as FileFieldValue | undefined;
 
+		console.log('commit entry', entryData)
 		return store.commit(
 			events.entryCreated({
 				id,
@@ -34,21 +35,11 @@ export const useLiveStore = () => {
 	};
 
 	const updateEntry = (id: string, entryData: Partial<EntryFormData>) => {
-		// Handle media field properly
-		const media = entryData.media as FileFieldValue | undefined;
 
 		return store.commit(
 			events.entryUpdated({
 				id,
-				title: (entryData.title as string) || "",
-				content: (entryData.content as string) || "",
-				mediaType: media?.mediaType || "",
-				mediaUrl: media?.url || "",
-				mediaCid: media?.cid || "",
-				tags: entryData.tags ? JSON.stringify(entryData.tags) : "",
-				publishedAt: entryData.publishedAt
-					? new Date(entryData.publishedAt as string)
-					: new Date(),
+				...entryData,
 			}),
 		);
 	};
