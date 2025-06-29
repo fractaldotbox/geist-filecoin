@@ -34,7 +34,6 @@ export const FileInput = ({
 
 				if (file) {
 					field.onChange({
-						mediaType: file.type,
 						url: URL.createObjectURL(file),
 						file,
 					});

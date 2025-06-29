@@ -9,7 +9,7 @@ import {
 	useState,
 } from "react";
 import type { ReactNode } from "react";
-import { firstActiveSpace$ } from "../../livestore/queries";
+import { firstSpace$ } from "../../livestore/queries";
 import { useStorachaContext } from "./StorachaProvider";
 
 // Auth context types
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const { store } = useStore();
 	const { client, clientId } = useStorachaContext();
 
-	const activeSpace = store.useQuery(firstActiveSpace$);
+	const activeSpace = store.useQuery(firstSpace$);
 	const [user, setUser] = useState<AuthUser | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);

@@ -23,6 +23,16 @@ export const entriesByContentType$ = (contentTypeId: string) =>
 		{ label: `entriesByContentType-${contentTypeId}` },
 	);
 
+// Query for entries by space
+export const entriesBySpace$ = (spaceId: string) =>
+	queryDb(
+		(get) =>
+			tables.entries
+				.where({ spaceId, deletedAt: null })
+				.orderBy("createdAt", "desc"),
+		{ label: `entriesBySpace-${spaceId}` },
+	);
+
 // Query for a specific entry
 export const entryById$ = (id: string) =>
 	queryDb((get) => tables.entries.where({ id, deletedAt: null }).first(), {
@@ -50,13 +60,13 @@ export const allSpaces$ = queryDb(
 );
 
 // Query for the first active space (used as current space for now)
-export const firstActiveSpace$ = queryDb(
+export const firstSpace$ = queryDb(
 	(get) =>
 		tables.spaces
-			.where({ deletedAt: null, isActive: 1 })
+			.where({ deletedAt: null })
 			.orderBy("createdAt", "desc")
 			.first({ fallback: () => null }),
-	{ label: "firstActiveSpace" },
+	{ label: "firstSpace" },
 );
 
 // Query for a specific space

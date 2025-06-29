@@ -63,12 +63,14 @@
 		"@vitejs/plugin-react": "^4.3.4",
 		"@vitest/ui": "^2.1.8",
 		"autoprefixer": "^10.4.20",
+		"jsdom": "^26.0.0",
 		"postcss": "^8.4.49",
 		"shadcn": "^2.5.0",
 		"tailwindcss": "^4.1.4",
 		"tsx": "^4.19.2",
 		"tw-animate-css": "^1.2.8",
 		"typescript": "^5.8.3",
-		"vite": "^6.3.4"
+		"vite": "^6.3.4",
+		"vitest": "^2.1.8"
 	}
 }

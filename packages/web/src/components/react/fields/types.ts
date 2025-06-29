@@ -5,12 +5,11 @@ export type EntryFormData = {
 	[key: string]:
 		| string
 		| string[]
-		| { mediaType: string; url: string; cid?: string; file?: File }
+		| { url: string; cid?: string; file?: File }
 		| undefined;
 };
 
 export type FileFieldValue = {
-	mediaType: string;
 	file?: File;
 	url: string;
 	cid?: string;

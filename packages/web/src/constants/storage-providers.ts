@@ -1,5 +1,5 @@
 export enum StorageProvider {
-	STORACHA = "storacha",
+	Storacha = "storacha",
 	S3 = "s3",
 }
 
@@ -12,7 +12,7 @@ export interface StorageProviderConfig {
 
 export const STORAGE_PROVIDERS: StorageProviderConfig[] = [
 	{
-		value: StorageProvider.STORACHA,
+		value: StorageProvider.Storacha,
 		label: "Storacha",
 		description: "Web3 storage powered by IPFS",
 		instructions:
@@ -27,6 +27,6 @@ export const STORAGE_PROVIDERS: StorageProviderConfig[] = [
 ];
 
 export const STORAGE_PROVIDER_LABELS: Record<StorageProvider, string> = {
-	[StorageProvider.STORACHA]: "Storacha",
+	[StorageProvider.Storacha]: "Storacha",
 	[StorageProvider.S3]: "Amazon S3",
 };

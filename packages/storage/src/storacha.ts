@@ -132,7 +132,7 @@ export const createDelegationWithCapabilities = async (
 	config: StorachaConfig,
 	{
 		userDid,
-		capabilities = ["space/info", "upload/add"],
+		capabilities = ["space/info", "upload/list", "upload/add"],
 	}: {
 		userDid: string;
 		capabilities: ServiceAbility[];
@@ -213,11 +213,21 @@ export const createUserDelegation = async ({
 			client,
 			spaceDid: space.did(),
 		},
-		{ userDid, capabilities: ["space/info", "upload/add"] },
+		{
+			userDid,
+			capabilities: ["space/info", "upload/list", "upload/add"],
+		},
 	);
 
-	console.log("delegation created successfully", delegation);
-
+	console.log(
+		"delegation created successfully",
+		"by",
+		client.did(),
+		"for",
+		userDid,
+		"with",
+		space.did(),
+	);
 	return {
 		delegation,
 		client,
