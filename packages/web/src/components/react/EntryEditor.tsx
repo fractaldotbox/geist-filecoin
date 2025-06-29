@@ -222,14 +222,14 @@ export function EntryEditor({
 
 	const contentType = contentTypeData
 		? {
-			type: "object" as const,
-			...contentTypeData,
-			properties: JSON.parse(contentTypeData.properties) as Record<
-				string,
-				ContentTypeField
-			>,
-			required: JSON.parse(contentTypeData.required) as string[],
-		}
+				type: "object" as const,
+				...contentTypeData,
+				properties: JSON.parse(contentTypeData.properties) as Record<
+					string,
+					ContentTypeField
+				>,
+				required: JSON.parse(contentTypeData.required) as string[],
+			}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);

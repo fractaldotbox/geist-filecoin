@@ -1,6 +1,6 @@
+import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
 import { useStore } from "@livestore/react";
 import { events } from "../../../livestore/schema";
-import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
 
 export const useSpaceStore = () => {
 	const { store } = useStore();
@@ -20,7 +20,8 @@ export const useSpaceStore = () => {
 				description: spaceData.description,
 				storageProvider: spaceData.storageProvider,
 				storageProviderId: spaceData.storageProviderId,
-				storageProviderCredentials: JSON.stringify(spaceData.storageProviderCredentials) || "",
+				storageProviderCredentials:
+					JSON.stringify(spaceData.storageProviderCredentials) || "",
 			}),
 		);
 	};
@@ -42,7 +43,8 @@ export const useSpaceStore = () => {
 				description: spaceData.description,
 				storageProvider: spaceData.storageProvider,
 				storageProviderId: spaceData.storageProviderId,
-				storageProviderCredentials: JSON.stringify(spaceData.storageProviderCredentials) || "",
+				storageProviderCredentials:
+					JSON.stringify(spaceData.storageProviderCredentials) || "",
 			}),
 		);
 	};

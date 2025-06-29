@@ -2,7 +2,7 @@ import apiClient, { auth } from "@/lib/api-client";
 import type { Client } from "@web3-storage/w3up-client";
 import { extract } from "@web3-storage/w3up-client/delegation";
 import type { Capabilities, Delegation } from "@web3-storage/w3up-client/types";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useStorachaContext } from "../StorachaProvider";
 
 const requestDelegation = async ({
@@ -18,7 +18,7 @@ const requestDelegation = async ({
 	});
 
 	const delegation = await extract(new Uint8Array(delegationArchive));
-	console.log('request delegation', did, 'space:', spaceId);
+	console.log("request delegation", did, "space:", spaceId);
 	console.log(delegation.ok);
 	if (!delegation.ok) {
 		throw new Error("Failed to extract delegation");
@@ -79,7 +79,6 @@ export const useDelegateAccount = (options: {
 
 				const space = await client.addSpace(delegationResults.ok);
 				await client.setCurrentSpace(space.did());
-
 			} finally {
 				isDelegationRequestInProgress.current = false;
 			}
@@ -92,48 +91,49 @@ export const useDelegateAccount = (options: {
 	};
 };
 
-
 // https://github.com/storacha/w3ui/blob/main/examples/react/uploads-list/src/App.tsx#L27
 // Client with delegation setup
 export const useSpaceFiles = (options: {
 	client: Client | null;
 	isEnabled?: boolean;
 }) => {
-	const { client,  isEnabled = true } = options;
-
+	const { client, isEnabled = true } = options;
 
 	const [isLoading, setIsLoading] = useState(false);
 	const [files, setFiles] = useState<StorachaUpload[]>([]);
 	const [error, setError] = useState<string | null>(null);
 
-
 	const { client: storachaClient, delegation } = useStorachaContext();
-	
+
 	const loadFiles = useCallback(async () => {
-		if(!storachaClient) {
+		if (!storachaClient) {
 			return;
 		}
 
-		console.log('load files client ready',  delegation?.audience.did(), storachaClient.did())
+		console.log(
+			"load files client ready",
+			delegation?.audience.did(),
+			storachaClient.did(),
+		);
 		const currentSpace = await storachaClient.currentSpace();
 		await storachaClient.addSpace(delegation!);
 		await storachaClient.addProof(delegation!);
 
 		console.log("loading files from space", currentSpace?.did());
-		console.log("by ", storachaClient.did())
+		console.log("by ", storachaClient.did());
 
-		return  await storachaClient.capability.upload.list({
-			cursor: "",
-			// cursor: searchParams.cursor,
-			pre: true,
-			// pre: searchParams.pre === 'true',
-			size: 10
-		  }).catch((error)=> {
-			console.error('error loading files', error.cause)
-		});
-
+		return await storachaClient.capability.upload
+			.list({
+				cursor: "",
+				// cursor: searchParams.cursor,
+				pre: true,
+				// pre: searchParams.pre === 'true',
+				size: 10,
+			})
+			.catch((error) => {
+				console.error("error loading files", error.cause);
+			});
 	}, [storachaClient, delegation]);
-
 
 	return {
 		files,

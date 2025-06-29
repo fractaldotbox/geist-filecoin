@@ -1,11 +1,10 @@
 import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import { useSpaceStore } from "@/components/react/hooks/useSpaceStore";
 import { StorageProvider } from "@/constants/storage-providers";
+import { SAMPLE_SPACES } from "@/fixture/space";
 import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
 import { allSpaces$ } from "@/livestore/queries";
 import { useStore } from "@livestore/react";
-import { SAMPLE_SPACES } from "@/fixture/space";
-
 
 export function useSpaceSeeder() {
 	const { store } = useStore();
@@ -24,7 +23,7 @@ export function useSpaceSeeder() {
 				description,
 				storageProvider,
 				storageProviderId,
-				storageProviderCredentials
+				storageProviderCredentials,
 			}) => {
 				// Create storage provider credentials for Storacha
 

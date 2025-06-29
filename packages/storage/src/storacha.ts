@@ -215,7 +215,7 @@ export const createUserDelegation = async ({
 		},
 		{
 			userDid,
-			capabilities: ["space/info", "upload/list", "upload/add"]
+			capabilities: ["space/info", "upload/list", "upload/add"],
 		},
 	);
 

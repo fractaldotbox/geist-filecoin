@@ -8,7 +8,8 @@ export const SAMPLE_SPACES = [
 		name: "Demo Space",
 		description: "A demo space for blog content using Storacha storage",
 		storageProvider: StorageProvider.Storacha,
-		storageProviderId: "did:key:z6Mkvu57pm2XaQYr28RAxRnMZmp8owcf2EtD7MT8FsMVxCnj",
+		storageProviderId:
+			"did:key:z6Mkvu57pm2XaQYr28RAxRnMZmp8owcf2EtD7MT8FsMVxCnj",
 		storageProviderCredentials: [
 			{
 				type: "secret-ref",
@@ -19,7 +20,7 @@ export const SAMPLE_SPACES = [
 				type: "secret-ref",
 				key: "spaceProof",
 				valueFrom: "spaceProof",
-			}
+			},
 		] as StorageProviderCredentialConfig[],
 	},
 ] as const;

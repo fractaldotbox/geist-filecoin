@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { createEntryData } from "./storachaSync";
-import { StorageProvider } from "../constants/storage-providers";
-import type { DID as W3DID } from "@web3-storage/w3up-client/principal/ed25519";
 import { SAMPLE_SPACES } from "@/fixture/space";
+import type { DID as W3DID } from "@web3-storage/w3up-client/principal/ed25519";
+import { describe, expect, it } from "vitest";
+import { StorageProvider } from "../constants/storage-providers";
+import { createEntryData } from "./storachaSync";
 
 const mockSpace = SAMPLE_SPACES[0];
 
@@ -54,12 +54,15 @@ describe("createEntryData", () => {
 		});
 
 		it("should handle upload without shards", () => {
-			const result = createEntryData(mockSpace, mockStorachaUploadWithoutShards);
+			const result = createEntryData(
+				mockSpace,
+				mockStorachaUploadWithoutShards,
+			);
 
 			expect(result.id).toBe(mockStorachaUploadWithoutShards.root);
 			expect(result.mediaCid).toBe(mockStorachaUploadWithoutShards.root);
 			expect(result.storageProviderKey).toBe(StorageProvider.Storacha);
-			
+
 			const tags = JSON.parse(result.tags);
 			expect(tags.shards).toEqual([]);
 			expect(tags.inserted).toBe(mockStorachaUploadWithoutShards.inserted);
@@ -67,7 +70,10 @@ describe("createEntryData", () => {
 		});
 
 		it("should use space storage provider regardless of space provider", () => {
-			const result = createEntryData(mockSpaceWithDifferentProvider, mockStorachaUpload);
+			const result = createEntryData(
+				mockSpaceWithDifferentProvider,
+				mockStorachaUpload,
+			);
 
 			expect(result.storageProviderKey).toBe(StorageProvider.Storacha);
 			expect(result.spaceId).toBe(mockSpaceWithDifferentProvider.id);
@@ -82,7 +88,9 @@ describe("createEntryData", () => {
 		it("should generate correct content from CID", () => {
 			const result = createEntryData(mockSpace, mockStorachaUpload);
 
-			expect(result.content).toBe(`Storacha upload with CID: ${mockStorachaUpload.root}`);
+			expect(result.content).toBe(
+				`Storacha upload with CID: ${mockStorachaUpload.root}`,
+			);
 		});
 
 		it("should set correct media type", () => {
@@ -126,7 +134,9 @@ describe("createEntryData", () => {
 
 			expect(result.id).toBe(shortUpload.root);
 			expect(result.title).toBe(`Upload ${shortUpload.root}`);
-			expect(result.content).toBe(`Storacha upload with CID: ${shortUpload.root}`);
+			expect(result.content).toBe(
+				`Storacha upload with CID: ${shortUpload.root}`,
+			);
 		});
 
 		it("should handle long CID", () => {
@@ -139,7 +149,9 @@ describe("createEntryData", () => {
 
 			expect(result.id).toBe(longUpload.root);
 			expect(result.title).toBe(`Upload ${longUpload.root}`);
-			expect(result.content).toBe(`Storacha upload with CID: ${longUpload.root}`);
+			expect(result.content).toBe(
+				`Storacha upload with CID: ${longUpload.root}`,
+			);
 		});
 	});
 
@@ -208,5 +220,4 @@ describe("createEntryData", () => {
 			}
 		});
 	});
-
-}); 
+});

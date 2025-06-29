@@ -1,5 +1,5 @@
 import { useStore } from "@livestore/react";
-import { Capabilities, Delegation, Provider } from "@w3ui/react";
+import { type Capabilities, type Delegation, Provider } from "@w3ui/react";
 import * as Client from "@web3-storage/w3up-client";
 import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
 import {
@@ -57,7 +57,9 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 	const { store } = useStore();
 	const [clientId, setClientId] = useState<string | null>(null);
 	const [client, setClient] = useState<Client.Client | null>(null);
-	const [delegation, setDelegation] = useState<Delegation<Capabilities> | null>(null);
+	const [delegation, setDelegation] = useState<Delegation<Capabilities> | null>(
+		null,
+	);
 	const { createStorachaStorageAuthorization } = useLiveStore();
 	const activeSpace = store.useQuery(firstSpace$);
 	const delegationCommittedRef = useRef<string | null>(null);
@@ -117,7 +119,12 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 			// Mark this delegation as committed to avoid duplicate events
 			delegationCommittedRef.current = delegationResults.root.cid.toString();
 		}
-	}, [delegationResults, activeSpace, createStorachaStorageAuthorization, clientId]);
+	}, [
+		delegationResults,
+		activeSpace,
+		createStorachaStorageAuthorization,
+		clientId,
+	]);
 
 	const contextValue: StorachaContextValue = {
 		clientId,

@@ -33,8 +33,6 @@ export const entriesBySpace$ = (spaceId: string) =>
 		{ label: `entriesBySpace-${spaceId}` },
 	);
 
-
-
 // Query for a specific entry
 export const entryById$ = (id: string) =>
 	queryDb((get) => tables.entries.where({ id, deletedAt: null }).first(), {

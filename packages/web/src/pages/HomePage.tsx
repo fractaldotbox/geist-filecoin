@@ -1,33 +1,67 @@
+import { useSpaceFiles } from "@/components/react/hooks/useStoracha";
+import { Badge } from "@/components/react/ui/badge";
 import { Button } from "@/components/react/ui/button";
 import { Card } from "@/components/react/ui/card";
-import { Badge } from "@/components/react/ui/badge";
 import { Input } from "@/components/react/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/react/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/react/ui/table";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/react/ui/select";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/react/ui/table";
 import { useStore } from "@livestore/react";
-import { AlertCircle, FilePlus, Folder, Calendar, FileText, ExternalLink, Filter, Search, MoreHorizontal, Eye, RefreshCw } from "lucide-react";
+import {
+	AlertCircle,
+	Calendar,
+	ExternalLink,
+	Eye,
+	FilePlus,
+	FileText,
+	Filter,
+	Folder,
+	MoreHorizontal,
+	RefreshCw,
+	Search,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useState, useMemo, useEffect } from "react";
 import { useSpacesDrawer } from "../App";
-import { allSpaces$, allEntries$, uiState$ } from "../livestore/queries";
+import {
+	useStorachaClient,
+	useStorachaContext,
+} from "../components/react/StorachaProvider";
 import { StorageProvider } from "../constants/storage-providers";
-import { useStorachaClient, useStorachaContext } from "../components/react/StorachaProvider";
-import { createEntryData, useStorachaSync, useSync } from "../services/storachaSync";
-import { useSpaceFiles } from "@/components/react/hooks/useStoracha";
+import { allEntries$, allSpaces$, uiState$ } from "../livestore/queries";
+import {
+	createEntryData,
+	useStorachaSync,
+	useSync,
+} from "../services/storachaSync";
 
 // Helper functions
 const getEntryStatus = (entry: any) => {
-	const daysSinceCreated = (Date.now() - entry.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-	if (entry.publishedAt) return 'published';
-	if (daysSinceCreated > 30) return 'archived';
-	return 'draft';
+	const daysSinceCreated =
+		(Date.now() - entry.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+	if (entry.publishedAt) return "published";
+	if (daysSinceCreated > 30) return "archived";
+	return "draft";
 };
 
 const getEntryPriority = (entry: any) => {
-	const daysSinceCreated = (Date.now() - entry.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-	if (daysSinceCreated <= 1) return 'high';
-	if (daysSinceCreated <= 7) return 'medium';
-	return 'low';
+	const daysSinceCreated =
+		(Date.now() - entry.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+	if (daysSinceCreated <= 1) return "high";
+	if (daysSinceCreated <= 7) return "medium";
+	return "low";
 };
 
 export default function HomePage() {
@@ -45,13 +79,17 @@ export default function HomePage() {
 	const [isSyncing, setIsSyncing] = useState(true);
 
 	// Filter and search state
-	const [selectedFilter, setSelectedFilter] = useState<'all' | 'recent'>('all');
-	const [selectedStatus, setSelectedStatus] = useState<'all' | 'published' | 'draft' | 'archived'>('all');
-	const [selectedContentType, setSelectedContentType] = useState<string>('all');
-	const [searchQuery, setSearchQuery] = useState('');
+	const [selectedFilter, setSelectedFilter] = useState<"all" | "recent">("all");
+	const [selectedStatus, setSelectedStatus] = useState<
+		"all" | "published" | "draft" | "archived"
+	>("all");
+	const [selectedContentType, setSelectedContentType] = useState<string>("all");
+	const [searchQuery, setSearchQuery] = useState("");
 
 	// Find spaces using storacha provider
-	const storachaSpaces = spaces.filter(space => space.storageProvider === StorageProvider.Storacha);
+	const storachaSpaces = spaces.filter(
+		(space) => space.storageProvider === StorageProvider.Storacha,
+	);
 	const hasStorachaSpace = storachaSpaces.length > 0;
 
 	// Auto-sync when Storacha client and spaces are available
@@ -74,7 +112,6 @@ export default function HomePage() {
 
 			const uploads = files?.results || [];
 
-
 			await sync(uploads);
 			setIsSyncing(false);
 			// console.log("files", files);
@@ -83,59 +120,72 @@ export default function HomePage() {
 
 	// Get unique content types
 	const contentTypes = useMemo(() => {
-		const types = new Set(entries.map(entry => entry.contentTypeId));
+		const types = new Set(entries.map((entry) => entry.contentTypeId));
 		return Array.from(types);
 	}, [entries]);
-
-
 
 	// Filter entries based on all filters
 	const filteredEntries = useMemo(() => {
 		// let filtered = entries;
 		// Start with entries from Storacha spaces only
-		let filtered = entries.filter(entry => entry.spaceId === uiState.currentSpaceId);
+		let filtered = entries.filter(
+			(entry) => entry.spaceId === uiState.currentSpaceId,
+		);
 
-		console.log('uiState', uiState.currentSpaceId)
-		console.log('entries', filtered.length, entries.length)
+		console.log("uiState", uiState.currentSpaceId);
+		console.log("entries", filtered.length, entries.length);
 		// Filter by time range
-		if (selectedFilter === 'recent') {
-			filtered = filtered.filter(entry => {
-				const daysDiff = (Date.now() - entry.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+		if (selectedFilter === "recent") {
+			filtered = filtered.filter((entry) => {
+				const daysDiff =
+					(Date.now() - entry.createdAt.getTime()) / (1000 * 60 * 60 * 24);
 				return daysDiff <= 7;
 			});
 		}
 
 		// Filter by status
-		if (selectedStatus !== 'all') {
-			filtered = filtered.filter(entry => getEntryStatus(entry) === selectedStatus);
+		if (selectedStatus !== "all") {
+			filtered = filtered.filter(
+				(entry) => getEntryStatus(entry) === selectedStatus,
+			);
 		}
 
 		// Filter by content type
-		if (selectedContentType !== 'all') {
-			filtered = filtered.filter(entry => entry.contentTypeId === selectedContentType);
+		if (selectedContentType !== "all") {
+			filtered = filtered.filter(
+				(entry) => entry.contentTypeId === selectedContentType,
+			);
 		}
 
 		// Filter by search query
 		if (searchQuery) {
 			const query = searchQuery.toLowerCase();
-			filtered = filtered.filter(entry =>
-				entry.title?.toLowerCase().includes(query) ||
-				entry.content?.toLowerCase().includes(query) ||
-				entry.contentTypeId?.toLowerCase().includes(query)
+			filtered = filtered.filter(
+				(entry) =>
+					entry.title?.toLowerCase().includes(query) ||
+					entry.content?.toLowerCase().includes(query) ||
+					entry.contentTypeId?.toLowerCase().includes(query),
 			);
 		}
 
 		return filtered;
-	}, [entries, uiState.currentSpaceId, selectedFilter, selectedStatus, selectedContentType, searchQuery]);
+	}, [
+		entries,
+		uiState.currentSpaceId,
+		selectedFilter,
+		selectedStatus,
+		selectedContentType,
+		searchQuery,
+	]);
 
 	// Format date for display
 	const formatDate = (date: Date) => {
-		return new Intl.DateTimeFormat('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
+		return new Intl.DateTimeFormat("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
 		}).format(date);
 	};
 
@@ -219,7 +269,14 @@ export default function HomePage() {
 									/>
 								</div>
 
-								<Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value as 'all' | 'published' | 'draft' | 'archived')}>
+								<Select
+									value={selectedStatus}
+									onValueChange={(value) =>
+										setSelectedStatus(
+											value as "all" | "published" | "draft" | "archived",
+										)
+									}
+								>
 									<SelectTrigger className="w-32">
 										<SelectValue placeholder="Status" />
 									</SelectTrigger>
@@ -231,7 +288,10 @@ export default function HomePage() {
 									</SelectContent>
 								</Select>
 
-								<Select value={selectedContentType} onValueChange={setSelectedContentType}>
+								<Select
+									value={selectedContentType}
+									onValueChange={setSelectedContentType}
+								>
 									<SelectTrigger className="w-40">
 										<SelectValue placeholder="Content Type" />
 									</SelectTrigger>
@@ -245,7 +305,12 @@ export default function HomePage() {
 									</SelectContent>
 								</Select>
 
-								<Select value={selectedFilter} onValueChange={(value) => setSelectedFilter(value as 'all' | 'recent')}>
+								<Select
+									value={selectedFilter}
+									onValueChange={(value) =>
+										setSelectedFilter(value as "all" | "recent")
+									}
+								>
 									<SelectTrigger className="w-32">
 										<SelectValue placeholder="Time" />
 									</SelectTrigger>
@@ -257,8 +322,8 @@ export default function HomePage() {
 
 								<Badge variant="secondary" className="flex items-center gap-1">
 									<div className="w-2 h-2 bg-green-500 rounded-full" />
-									Storacha ({storachaSpaces.length} space{storachaSpaces.length > 1 ? 's' : ''})
-
+									Storacha ({storachaSpaces.length} space
+									{storachaSpaces.length > 1 ? "s" : ""})
 								</Badge>
 							</div>
 
@@ -290,32 +355,48 @@ export default function HomePage() {
 														<TableCell>
 															<div className="space-y-1">
 																<div className="font-medium">
-																	{entry.title || 'Untitled'}
+																	{entry.title || "Untitled"}
 																</div>
 																{entry.content && (
 																	<div className="text-sm text-muted-foreground line-clamp-1">
 																		{entry.content.substring(0, 60)}...
 																	</div>
 																)}
-																{entry.tags && parseTags(entry.tags).length > 0 && (
-																	<div className="flex gap-1">
-																		{parseTags(entry.tags).slice(0, 2).map((tag: string) => (
-																			<Badge key={`${entry.id}-${tag}`} variant="outline" className="text-xs px-1 py-0">
-																				{tag}
-																			</Badge>
-																		))}
-																		{parseTags(entry.tags).length > 2 && (
-																			<Badge variant="outline" className="text-xs px-1 py-0">
-																				+{parseTags(entry.tags).length - 2}
-																			</Badge>
-																		)}
-																	</div>
-																)}
+																{entry.tags &&
+																	parseTags(entry.tags).length > 0 && (
+																		<div className="flex gap-1">
+																			{parseTags(entry.tags)
+																				.slice(0, 2)
+																				.map((tag: string) => (
+																					<Badge
+																						key={`${entry.id}-${tag}`}
+																						variant="outline"
+																						className="text-xs px-1 py-0"
+																					>
+																						{tag}
+																					</Badge>
+																				))}
+																			{parseTags(entry.tags).length > 2 && (
+																				<Badge
+																					variant="outline"
+																					className="text-xs px-1 py-0"
+																				>
+																					+{parseTags(entry.tags).length - 2}
+																				</Badge>
+																			)}
+																		</div>
+																	)}
 															</div>
 														</TableCell>
 														<TableCell>
 															<Badge
-																variant={status === 'published' ? 'default' : status === 'draft' ? 'secondary' : 'outline'}
+																variant={
+																	status === "published"
+																		? "default"
+																		: status === "draft"
+																			? "secondary"
+																			: "outline"
+																}
 																className="capitalize"
 															>
 																{status}
@@ -323,7 +404,13 @@ export default function HomePage() {
 														</TableCell>
 														<TableCell>
 															<Badge
-																variant={priority === 'high' ? 'destructive' : priority === 'medium' ? 'default' : 'secondary'}
+																variant={
+																	priority === "high"
+																		? "destructive"
+																		: priority === "medium"
+																			? "default"
+																			: "secondary"
+																}
 																className="capitalize"
 															>
 																{priority}
@@ -338,12 +425,16 @@ export default function HomePage() {
 															</div>
 															{entry.storageProviderKey && (
 																<div className="text-xs text-muted-foreground">
-																	Storacha: {entry.storageProviderKey.substring(0, 8)}...
+																	Storacha:{" "}
+																	{entry.storageProviderKey.substring(0, 8)}...
 																</div>
 															)}
 															{entry.spaceId && (
 																<div className="text-xs text-muted-foreground">
-																	Space: {storachaSpaces.find(s => s.id === entry.spaceId)?.name || entry.spaceId.substring(0, 8)}
+																	Space:{" "}
+																	{storachaSpaces.find(
+																		(s) => s.id === entry.spaceId,
+																	)?.name || entry.spaceId.substring(0, 8)}
 																</div>
 															)}
 														</TableCell>
@@ -356,12 +447,20 @@ export default function HomePage() {
 																		className="h-8 w-8"
 																		asChild
 																	>
-																		<a href={entry.mediaUrl} target="_blank" rel="noopener noreferrer">
+																		<a
+																			href={entry.mediaUrl}
+																			target="_blank"
+																			rel="noopener noreferrer"
+																		>
 																			<Eye className="w-4 h-4" />
 																		</a>
 																	</Button>
 																)}
-																<Button variant="ghost" size="icon" className="h-8 w-8">
+																<Button
+																	variant="ghost"
+																	size="icon"
+																	className="h-8 w-8"
+																>
 																	<MoreHorizontal className="w-4 h-4" />
 																</Button>
 															</div>
@@ -376,12 +475,16 @@ export default function HomePage() {
 								<Card className="p-8 text-center">
 									<div className="flex flex-col items-center">
 										<FileText className="w-12 h-12 text-muted-foreground mb-4" />
-										<h4 className="text-lg font-semibold mb-2">No Content Found {filteredEntries.length}</h4>
+										<h4 className="text-lg font-semibold mb-2">
+											No Content Found {filteredEntries.length}
+										</h4>
 										<p className="text-muted-foreground mb-4">
-											{searchQuery || selectedStatus !== 'all' || selectedContentType !== 'all' || selectedFilter === 'recent'
-												? 'No content matches your current filters. Try adjusting your search criteria.'
-												: 'Your Storacha space is ready but doesn\'t have any content entries yet.'
-											}
+											{searchQuery ||
+											selectedStatus !== "all" ||
+											selectedContentType !== "all" ||
+											selectedFilter === "recent"
+												? "No content matches your current filters. Try adjusting your search criteria."
+												: "Your Storacha space is ready but doesn't have any content entries yet."}
 										</p>
 										<Link to="/editor/content-type/select">
 											<Button>Create Your First Entry</Button>
@@ -392,12 +495,14 @@ export default function HomePage() {
 
 							{/* Footer info */}
 							<div className="flex items-center justify-between text-sm text-muted-foreground">
-								<div>
-									Showing {filteredEntries.length} Storacha entries
-								</div>
+								<div>Showing {filteredEntries.length} Storacha entries</div>
 								<div className="flex items-center gap-4">
-									<span>Connected to {storachaSpaces.map(s => s.name).join(', ')}</span>
-									{isSyncing && <span className="text-primary">Syncing...</span>}
+									<span>
+										Connected to {storachaSpaces.map((s) => s.name).join(", ")}
+									</span>
+									{isSyncing && (
+										<span className="text-primary">Syncing...</span>
+									)}
 								</div>
 							</div>
 						</div>
@@ -406,9 +511,12 @@ export default function HomePage() {
 						<Card className="p-8 text-center">
 							<div className="flex flex-col items-center">
 								<AlertCircle className="w-12 h-12 text-orange-500 mb-4" />
-								<h4 className="text-lg font-semibold mb-2">No Storacha Spaces</h4>
+								<h4 className="text-lg font-semibold mb-2">
+									No Storacha Spaces
+								</h4>
 								<p className="text-muted-foreground mb-4">
-									You need to create a space with Storacha provider to view content.
+									You need to create a space with Storacha provider to view
+									content.
 								</p>
 								<Button onClick={openSpacesDrawer}>
 									<Folder className="w-4 h-4 mr-2" />

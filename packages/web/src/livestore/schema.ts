@@ -261,17 +261,25 @@ const materializers = State.SQLite.materializers(events, {
 	"v1.EntryUpdated": ({ id, ...data }) => {
 		// Filter out undefined values and add updatedAt
 		const updateData = Object.fromEntries(
-			Object.entries({ ...data, updatedAt: new Date() })
-				.filter(([_, value]) => value !== undefined)
+			Object.entries({ ...data, updatedAt: new Date() }).filter(
+				([_, value]) => value !== undefined,
+			),
 		);
-		
+
 		return tables.entries.update(updateData).where({ id });
 	},
 
 	"v1.EntryDeleted": ({ id, deletedAt }) =>
 		tables.entries.update({ deletedAt }).where({ id }),
 
-	"v1.ContentTypeCreated": ({ id, spaceId, name, description, properties, required }) =>
+	"v1.ContentTypeCreated": ({
+		id,
+		spaceId,
+		name,
+		description,
+		properties,
+		required,
+	}) =>
 		tables.contentTypes.insert({
 			id,
 			spaceId,
@@ -286,10 +294,11 @@ const materializers = State.SQLite.materializers(events, {
 	"v1.ContentTypeUpdated": ({ id, ...data }) => {
 		// Filter out undefined values and add updatedAt
 		const updateData = Object.fromEntries(
-			Object.entries({ ...data, updatedAt: new Date() })
-				.filter(([_, value]) => value !== undefined)
+			Object.entries({ ...data, updatedAt: new Date() }).filter(
+				([_, value]) => value !== undefined,
+			),
 		);
-		
+
 		return tables.contentTypes.update(updateData).where({ id });
 	},
 

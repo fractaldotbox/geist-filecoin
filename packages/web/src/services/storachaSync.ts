@@ -1,18 +1,18 @@
+import { useLiveStore } from "@/components/react/hooks/useLiveStore";
+import type { Space } from "@/domain/space";
+import { allEntries$ } from "@/livestore/queries";
+import { listFiles } from "@geist-filecoin/storage";
 /**
  * now sync from client side, after client receive delegations
  * although possible to setup server side sync to livestore
- * 
+ *
  * TODO use https://effect.website/docs/getting-started/building-pipelines/
  */
 import { useStore } from "@livestore/react";
+import type { UploadListItem } from "@w3ui/react";
 import type { Client } from "@web3-storage/w3up-client";
 import type { DID as W3DID } from "@web3-storage/w3up-client/principal/ed25519";
-import { listFiles } from "@geist-filecoin/storage";
 import { StorageProvider } from "../constants/storage-providers";
-import { useLiveStore } from "@/components/react/hooks/useLiveStore";
-import type { UploadListItem } from "@w3ui/react";
-import { allEntries$ } from "@/livestore/queries";
-import type { Space } from "@/domain/space";
 
 interface StorachaUpload {
 	root: string; // CID of the upload
@@ -46,11 +46,10 @@ interface EntryData {
 	publishedAt: Date;
 }
 
-
 // Pure function to fetch all uploads from a space
 export const fetchSpaceUploads = async (
-	client: Client, 
-	spaceDid: W3DID
+	client: Client,
+	spaceDid: W3DID,
 ): Promise<StorachaUpload[]> => {
 	const config = {
 		client,
@@ -64,7 +63,7 @@ export const fetchSpaceUploads = async (
 	while (hasMore) {
 		const result: StorachaListResult = await listFiles(config);
 		allUploads = allUploads.concat(result.results);
-		
+
 		if (result.cursor && result.results.length === result.size) {
 			cursor = result.cursor;
 		} else {
@@ -86,18 +85,28 @@ export const inferContentType = (cid: string): string => {
 };
 
 // Pure function to determine if upload is recent
-export const isRecentUpload = (uploadDate: Date, daysThreshold = 7): boolean => {
-	return (Date.now() - uploadDate.getTime()) < (daysThreshold * 24 * 60 * 60 * 1000);
+export const isRecentUpload = (
+	uploadDate: Date,
+	daysThreshold = 7,
+): boolean => {
+	return (
+		Date.now() - uploadDate.getTime() < daysThreshold * 24 * 60 * 60 * 1000
+	);
 };
 
 // Pure function to check if entry exists
-export const findExistingEntry = <T extends { id: string }>(entries: readonly T[], entryId: string): T | undefined => {
+export const findExistingEntry = <T extends { id: string }>(
+	entries: readonly T[],
+	entryId: string,
+): T | undefined => {
 	return entries.find((entry) => entry.id === entryId);
 };
 
-
 // with content addressing nature, entry id will change per content
-export const createEntryData = (spaceId: string, upload: UploadListItem): EntryData => {
+export const createEntryData = (
+	spaceId: string,
+	upload: UploadListItem,
+): EntryData => {
 	const cid = upload.root.toString();
 
 	return {
@@ -111,71 +120,68 @@ export const createEntryData = (spaceId: string, upload: UploadListItem): EntryD
 		mediaUrl: "",
 		mediaCid: cid, // Use the CID as mediaCid
 		storageProviderKey: spaceId,
-		tags: JSON.stringify({ 
+		tags: JSON.stringify({
 			shards: upload.shards || [],
 			// inserted: upload.inserted,
-			// updated: upload.updated 
+			// updated: upload.updated
 		}),
 		publishedAt: new Date(upload.insertedAt),
 	};
 };
 
 // either query data cut off or just always try to create new entries
-export const useSync = (spaceId: string)=>{
+export const useSync = (spaceId: string) => {
 	const { createEntry, updateEntry } = useLiveStore();
 	const { store } = useStore();
-	
+
 	// Move the hook call to the top level
 	const allEntries = store.useQuery(allEntries$);
 
-	const sync = async (uploads: UploadListItem[])=>{
-		if(!spaceId) {
+	const sync = async (uploads: UploadListItem[]) => {
+		if (!spaceId) {
 			return;
 		}
-		
+
 		// Use the entries from the hook call at the top level
-		const entries = uploads.map(
-			(upload)=> createEntryData(spaceId, upload)
-		);
+		const entries = uploads.map((upload) => createEntryData(spaceId, upload));
 
 		for await (const entry of entries) {
 			// Check if entry already exists
 			const existingEntry = findExistingEntry(allEntries, entry.id);
-			
+
 			if (existingEntry) {
-				console.log('entry already exists, skipping', entry.id);
+				console.log("entry already exists, skipping", entry.id);
 				continue;
 			}
-			
-			console.log('creating entry', entry.id)
+
+			console.log("creating entry", entry.id);
 			await createEntry({
 				...entry,
 				media: {
 					mediaType: entry.mediaType,
 					url: entry.mediaUrl,
-					cid: entry.mediaCid
+					cid: entry.mediaCid,
 				},
 				tags: JSON.parse(entry.tags),
-				publishedAt: entry.publishedAt.toISOString()
-			})
+				publishedAt: entry.publishedAt.toISOString(),
+			});
 		}
-	}
+	};
 
 	return {
-		sync
-	}
-	
-}
-
+		sync,
+	};
+};
 
 // Main sync function for a single space
-export const syncSpace = async (config: SyncConfig, space: Space): Promise<void> => {
+export const syncSpace = async (
+	config: SyncConfig,
+	space: Space,
+): Promise<void> => {
 	const { client, store } = config;
 
 	try {
 		console.log(`Syncing space: ${space.name} (${space.id})`);
-
-
 	} catch (error) {
 		console.error(`Error syncing space ${space.name}:`, error);
 		throw error; // Re-throw to allow caller to handle
@@ -202,6 +208,6 @@ export const useStorachaSync = (client: Client | null) => {
 	const config: SyncConfig = { client, store };
 
 	return {
-		syncSpace: (space: Space) => syncSpace(config, space)
+		syncSpace: (space: Space) => syncSpace(config, space),
 	};
-}; 
+};

@@ -27,8 +27,9 @@ import {
 } from "../../constants/storage-providers";
 import { allSpaces$, uiState$ } from "../../livestore/queries";
 
-import { useSpaceStore } from "./hooks/useSpaceStore";
+import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
 import { useLiveStore } from "./hooks/useLiveStore";
+import { useSpaceStore } from "./hooks/useSpaceStore";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -58,7 +59,6 @@ import {
 	SelectValue,
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
 
 const spaceFormSchema = z.object({
 	name: z
@@ -146,23 +146,27 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		let storageProviderCredentials: StorageProviderCredentialConfig[] = [];
 		if (data.storageProvider === StorageProvider.Storacha) {
 			// For storacha, combine spaceKey and email into credentials
-			storageProviderCredentials = [{
-				type: "value",
-				key: "agentKey",
-				value: data.spaceKey?.trim() || "",
-			},
-			{
-				type: "value",
-				key: "spaceProof",
-				value: ""
-			}]
+			storageProviderCredentials = [
+				{
+					type: "value",
+					key: "agentKey",
+					value: data.spaceKey?.trim() || "",
+				},
+				{
+					type: "value",
+					key: "spaceProof",
+					value: "",
+				},
+			];
 		} else if (data.storageProvider === StorageProvider.S3) {
 			// For S3, use the API key directly
-			storageProviderCredentials = [{
-				type: "value",
-				key: "apiKey",
-				value: data.apiKey?.trim() || "",
-			}]
+			storageProviderCredentials = [
+				{
+					type: "value",
+					key: "apiKey",
+					value: data.apiKey?.trim() || "",
+				},
+			];
 		}
 
 		await createSpace({
@@ -172,8 +176,6 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 			storageProvider: data.storageProvider,
 			storageProviderId: "",
 			storageProviderCredentials,
-
-
 		});
 
 		// Reset form and close
@@ -233,7 +235,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 					space.storageProviderCredentials || "{}",
 				);
 				return {
-					...credentials
+					...credentials,
 				};
 			} catch {
 				return { spaceKey: "", spaceProof: space.spaceProof || "" };
@@ -437,7 +439,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 													<Badge variant="secondary">
 														{
 															STORAGE_PROVIDER_LABELS[
-															space.storageProvider as StorageProvider
+																space.storageProvider as StorageProvider
 															]
 														}
 													</Badge>
@@ -529,56 +531,27 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 															<div className="space-y-2 text-xs">
 																{space.storageProvider ===
 																	StorageProvider.Storacha && (
-																		<>
-																			<div className="flex items-center justify-between">
-																				<span className="text-muted-foreground">
-																					Space Key:
-																				</span>
-																				<div className="flex items-center gap-1">
-																					<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
-																						{isRevealed
-																							? credentials.spaceKey
-																							: maskCredential(
-																								credentials.spaceKey,
-																							)}
-																					</code>
-																					{isRevealed && credentials.spaceKey && (
-																						<Button
-																							variant="ghost"
-																							size="sm"
-																							onClick={() =>
-																								copyToClipboard(
-																									credentials.spaceKey,
-																								)
-																							}
-																							className="h-5 w-5 p-0"
-																						>
-																							<Copy className="w-3 h-3" />
-																						</Button>
-																					)}
-																				</div>
-																			</div>
-																		</>
-																	)}
-
-																{space.storageProvider ===
-																	StorageProvider.S3 && (
+																	<>
 																		<div className="flex items-center justify-between">
 																			<span className="text-muted-foreground">
-																				API Key:
+																				Space Key:
 																			</span>
 																			<div className="flex items-center gap-1">
 																				<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
 																					{isRevealed
-																						? credentials.apiKey
-																						: maskCredential(credentials.apiKey)}
+																						? credentials.spaceKey
+																						: maskCredential(
+																								credentials.spaceKey,
+																							)}
 																				</code>
-																				{isRevealed && credentials.apiKey && (
+																				{isRevealed && credentials.spaceKey && (
 																					<Button
 																						variant="ghost"
 																						size="sm"
 																						onClick={() =>
-																							copyToClipboard(credentials.apiKey)
+																							copyToClipboard(
+																								credentials.spaceKey,
+																							)
 																						}
 																						className="h-5 w-5 p-0"
 																					>
@@ -587,7 +560,36 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 																				)}
 																			</div>
 																		</div>
-																	)}
+																	</>
+																)}
+
+																{space.storageProvider ===
+																	StorageProvider.S3 && (
+																	<div className="flex items-center justify-between">
+																		<span className="text-muted-foreground">
+																			API Key:
+																		</span>
+																		<div className="flex items-center gap-1">
+																			<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
+																				{isRevealed
+																					? credentials.apiKey
+																					: maskCredential(credentials.apiKey)}
+																			</code>
+																			{isRevealed && credentials.apiKey && (
+																				<Button
+																					variant="ghost"
+																					size="sm"
+																					onClick={() =>
+																						copyToClipboard(credentials.apiKey)
+																					}
+																					className="h-5 w-5 p-0"
+																				>
+																					<Copy className="w-3 h-3" />
+																				</Button>
+																			)}
+																		</div>
+																	</div>
+																)}
 															</div>
 														</div>
 													</div>
