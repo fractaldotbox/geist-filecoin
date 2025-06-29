@@ -74,13 +74,9 @@ export const fetchSpaceUploads = async (
 	return allUploads;
 };
 
-// Pure function to infer content type from CID
+// We don't have information to infer content type from CID
+// decrypt & indexing from data will be necessary
 export const inferContentType = (cid: string): string => {
-	// For now, return a generic type
-	// In the future, we could enhance this by:
-	// - Checking file extensions if available
-	// - Using IPFS metadata
-	// - Pattern matching on CID characteristics
 	return "storacha-upload";
 };
 
@@ -172,44 +168,5 @@ export const useSync = (spaceId: string) => {
 
 	return {
 		sync,
-	};
-};
-
-// Main sync function for a single space
-export const syncSpace = async (
-	config: SyncConfig,
-	space: Space,
-): Promise<void> => {
-	const { client, store } = config;
-
-	try {
-		console.log(`Syncing space: ${space.name} (${space.id})`);
-	} catch (error) {
-		console.error(`Error syncing space ${space.name}:`, error);
-		throw error; // Re-throw to allow caller to handle
-	}
-};
-
-/**
- * Hook to use functional storacha sync operations
- */
-export const useStorachaSync = (client: Client | null) => {
-	const { store } = useStore();
-
-	if (!client) {
-		return {
-			syncAllSpaces: async () => {
-				console.warn("Storacha client not available");
-			},
-			syncSpace: async () => {
-				console.warn("Storacha client not available");
-			},
-		};
-	}
-
-	const config: SyncConfig = { client, store };
-
-	return {
-		syncSpace: (space: Space) => syncSpace(config, space),
 	};
 };

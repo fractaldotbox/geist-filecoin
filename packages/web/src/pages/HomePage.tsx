@@ -85,12 +85,6 @@ export default function HomePage() {
 	const [selectedContentType, setSelectedContentType] = useState<string>("all");
 	const [searchQuery, setSearchQuery] = useState("");
 
-	// Find spaces using storacha provider
-	const storachaSpaces = spaces.filter(
-		(space) => space.storageProvider === StorageProvider.Storacha,
-	);
-	const hasStorachaSpace = storachaSpaces.length > 0;
-
 	// Auto-sync when Storacha client and spaces are available
 	const { loadFiles } = useSpaceFiles({
 		client: storachaClient,
@@ -126,8 +120,7 @@ export default function HomePage() {
 
 	// Filter entries based on all filters
 	const filteredEntries = useMemo(() => {
-		// let filtered = entries;
-		// Start with entries from Storacha spaces only
+		// Start with entries from current space
 		let filtered = entries.filter(
 			(entry) => entry.spaceId === uiState.currentSpaceId,
 		);
@@ -213,11 +206,6 @@ export default function HomePage() {
 	return (
 		<div id="container">
 			<main className="p-10 m-auto">
-				<section id="hero">
-					<h1 className="text-4xl font-bold pb-2">Geist</h1>
-					<h2>Content Management for decentralized team</h2>
-				</section>
-
 				<section className="mt-8">
 					{!hasSpaces ? (
 						// No spaces - encourage user to create one first
@@ -247,15 +235,15 @@ export default function HomePage() {
 								</div>
 							</div>
 						</Card>
-					) : hasStorachaSpace ? (
-						// Has Storacha spaces - show table interface
+					) : (
+						// Has spaces - show table interface
 						<div className="space-y-6">
 							{/* Header */}
 							<div className="flex items-center justify-between">
 								<div>
 									<h3 className="text-2xl font-bold">Content Entries</h3>
 									<p className="text-muted-foreground">
-										Manage and organize your content from Storacha spaces
+										Manage and organize your content
 									</p>
 								</div>
 								<div className="flex items-center gap-2">
@@ -333,8 +321,7 @@ export default function HomePage() {
 
 								<Badge variant="secondary" className="flex items-center gap-1">
 									<div className="w-2 h-2 bg-green-500 rounded-full" />
-									Storacha ({storachaSpaces.length} space
-									{storachaSpaces.length > 1 ? "s" : ""})
+									{spaces.length} space{spaces.length > 1 ? "s" : ""}
 								</Badge>
 							</div>
 
@@ -416,14 +403,14 @@ export default function HomePage() {
 															</div>
 															{entry.storageProviderKey && (
 																<div className="text-xs text-muted-foreground">
-																	Storacha:{" "}
+																	Provider:{" "}
 																	{entry.storageProviderKey.substring(0, 8)}...
 																</div>
 															)}
 															{entry.spaceId && (
 																<div className="text-xs text-muted-foreground">
 																	Space:{" "}
-																	{storachaSpaces.find(
+																	{spaces.find(
 																		(s) => s.id === entry.spaceId,
 																	)?.name || entry.spaceId.substring(0, 8)}
 																</div>
@@ -463,7 +450,7 @@ export default function HomePage() {
 									<div className="flex flex-col items-center">
 										<FileText className="w-12 h-12 text-muted-foreground mb-4" />
 										<h4 className="text-lg font-semibold mb-2">
-											No Content Found {filteredEntries.length}
+											No Content Found
 										</h4>
 										<p className="text-muted-foreground mb-4">
 											{searchQuery ||
@@ -471,7 +458,7 @@ export default function HomePage() {
 												selectedContentType !== "all" ||
 												selectedFilter === "recent"
 												? "No content matches your current filters. Try adjusting your search criteria."
-												: "Your Storacha space is ready but doesn't have any content entries yet."}
+												: "Your space is ready but doesn't have any content entries yet."}
 										</p>
 										<Link to="/editor/content-type/select">
 											<Button>Create Your First Entry</Button>
@@ -482,10 +469,10 @@ export default function HomePage() {
 
 							{/* Footer info */}
 							<div className="flex items-center justify-between text-sm text-muted-foreground">
-								<div>Showing {filteredEntries.length} Storacha entries</div>
+								<div>Showing {filteredEntries.length} entries</div>
 								<div className="flex items-center gap-4">
 									<span>
-										Connected to {storachaSpaces.map((s) => s.name).join(", ")}
+										Connected to {spaces.map((s) => s.name).join(", ")}
 									</span>
 									{isInitialSyncing && (
 										<span className="text-primary">Syncing...</span>
@@ -493,24 +480,6 @@ export default function HomePage() {
 								</div>
 							</div>
 						</div>
-					) : (
-						// No Storacha spaces
-						<Card className="p-8 text-center">
-							<div className="flex flex-col items-center">
-								<AlertCircle className="w-12 h-12 text-orange-500 mb-4" />
-								<h4 className="text-lg font-semibold mb-2">
-									No Storacha Spaces
-								</h4>
-								<p className="text-muted-foreground mb-4">
-									You need to create a space with Storacha provider to view
-									content.
-								</p>
-								<Button onClick={openSpacesDrawer}>
-									<Folder className="w-4 h-4 mr-2" />
-									Create Storacha Space
-								</Button>
-							</div>
-						</Card>
 					)}
 				</section>
 			</main>

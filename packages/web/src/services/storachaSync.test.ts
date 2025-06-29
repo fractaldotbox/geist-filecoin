@@ -32,7 +32,7 @@ const mockSpaceWithDifferentProvider = {
 describe("createEntryData", () => {
 	describe("with valid inputs", () => {
 		it("should create entry data with all required fields", () => {
-			const result = createEntryData(mockSpace, mockStorachaUpload);
+			const result = createEntryData(mockSpace.id, mockStorachaUpload);
 
 			expect(result).toEqual({
 				id: mockStorachaUpload.root,
@@ -80,13 +80,13 @@ describe("createEntryData", () => {
 		});
 
 		it("should generate correct title from CID", () => {
-			const result = createEntryData(mockSpace, mockStorachaUpload);
+			const result = createEntryData(mockSpace.id, mockStorachaUpload);
 
 			expect(result.title).toBe(`Upload ${mockStorachaUpload.root}`);
 		});
 
 		it("should generate correct content from CID", () => {
-			const result = createEntryData(mockSpace, mockStorachaUpload);
+			const result = createEntryData(mockSpace.id, mockStorachaUpload);
 
 			expect(result.content).toBe(
 				`Storacha upload with CID: ${mockStorachaUpload.root}`,
@@ -94,19 +94,19 @@ describe("createEntryData", () => {
 		});
 
 		it("should set correct media type", () => {
-			const result = createEntryData(mockSpace, mockStorachaUpload);
+			const result = createEntryData(mockSpace.id, mockStorachaUpload);
 
 			expect(result.mediaType).toBe("application/octet-stream");
 		});
 
 		it("should set empty media URL", () => {
-			const result = createEntryData(mockSpace, mockStorachaUpload);
+			const result = createEntryData(mockSpace.id, mockStorachaUpload);
 
 			expect(result.mediaUrl).toBe("");
 		});
 
 		it("should parse and stringify tags correctly", () => {
-			const result = createEntryData(mockSpace, mockStorachaUpload);
+			const result = createEntryData(mockSpace.id, mockStorachaUpload);
 
 			const parsedTags = JSON.parse(result.tags);
 			expect(parsedTags).toEqual({
@@ -117,7 +117,7 @@ describe("createEntryData", () => {
 		});
 
 		it("should create correct published date from inserted timestamp", () => {
-			const result = createEntryData(mockSpace, mockStorachaUpload);
+			const result = createEntryData(mockSpace.id, mockStorachaUpload);
 
 			expect(result.publishedAt).toEqual(new Date(mockStorachaUpload.inserted));
 		});
@@ -130,7 +130,7 @@ describe("createEntryData", () => {
 				root: "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
 			};
 
-			const result = createEntryData(mockSpace, shortUpload);
+			const result = createEntryData(mockSpace.id, shortUpload);
 
 			expect(result.id).toBe(shortUpload.root);
 			expect(result.title).toBe(`Upload ${shortUpload.root}`);
@@ -145,7 +145,7 @@ describe("createEntryData", () => {
 				root: "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi-very-long-cid-for-testing-purposes",
 			};
 
-			const result = createEntryData(mockSpace, longUpload);
+			const result = createEntryData(mockSpace.id, longUpload);
 
 			expect(result.id).toBe(longUpload.root);
 			expect(result.title).toBe(`Upload ${longUpload.root}`);
@@ -163,7 +163,7 @@ describe("createEntryData", () => {
 				updated: "2024-01-15T10:30:00.456Z",
 			};
 
-			const result = createEntryData(mockSpace, uploadWithMs);
+			const result = createEntryData(mockSpace.id, uploadWithMs);
 
 			expect(result.publishedAt).toEqual(new Date("2024-01-15T10:30:00.123Z"));
 		});
@@ -175,7 +175,7 @@ describe("createEntryData", () => {
 				updated: "2024-01-15T10:30:00",
 			};
 
-			const result = createEntryData(mockSpace, uploadWithoutTz);
+			const result = createEntryData(mockSpace.id, uploadWithoutTz);
 
 			expect(result.publishedAt).toEqual(new Date("2024-01-15T10:30:00"));
 		});
@@ -183,7 +183,7 @@ describe("createEntryData", () => {
 
 	describe("return type validation", () => {
 		it("should return object with correct structure", () => {
-			const result = createEntryData(mockSpace, mockStorachaUpload);
+			const result = createEntryData(mockSpace.id, mockStorachaUpload);
 
 			expect(typeof result.id).toBe("string");
 			expect(typeof result.spaceId).toBe("string");
@@ -199,7 +199,7 @@ describe("createEntryData", () => {
 		});
 
 		it("should have all required fields", () => {
-			const result = createEntryData(mockSpace, mockStorachaUpload);
+			const result = createEntryData(mockSpace.id, mockStorachaUpload);
 
 			const requiredFields = [
 				"id",
