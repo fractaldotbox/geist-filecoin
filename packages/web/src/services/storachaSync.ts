@@ -142,6 +142,8 @@ export const useSync = (spaceId: string) => {
 			return;
 		}
 
+		console.log('syncing', spaceId, 'storacha files',uploads.length)
+
 		// Use the entries from the hook call at the top level
 		const entries = uploads.map((upload) => createEntryData(spaceId, upload));
 

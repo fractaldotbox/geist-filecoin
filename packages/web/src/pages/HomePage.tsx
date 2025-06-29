@@ -18,10 +18,17 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/react/ui/table";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/react/ui/dropdown-menu";
 import { useStore } from "@livestore/react";
 import {
 	AlertCircle,
 	Calendar,
+	Copy,
 	ExternalLink,
 	Eye,
 	FilePlus,
@@ -56,14 +63,6 @@ const getEntryStatus = (entry: any) => {
 	return "draft";
 };
 
-const getEntryPriority = (entry: any) => {
-	const daysSinceCreated =
-		(Date.now() - entry.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-	if (daysSinceCreated <= 1) return "high";
-	if (daysSinceCreated <= 7) return "medium";
-	return "low";
-};
-
 export default function HomePage() {
 	const { store } = useStore();
 	const spaces = store.useQuery(allSpaces$);
@@ -76,7 +75,7 @@ export default function HomePage() {
 	const { sync } = useSync(uiState.currentSpaceId);
 	// Storacha integration
 	const { syncAllSpaces } = useStorachaSync(storachaClient);
-	const [isSyncing, setIsSyncing] = useState(true);
+	const [isInitialSyncing, setisInitialSyncing] = useState(true);
 
 	// Filter and search state
 	const [selectedFilter, setSelectedFilter] = useState<"all" | "recent">("all");
@@ -100,23 +99,24 @@ export default function HomePage() {
 
 	useEffect(() => {
 		(async () => {
-			if (!storachaClient || !delegation) {
+			if (!uiState.currentSpaceId || !storachaClient || !delegation) {
 				return;
 			}
-			if (!isSyncing) {
+			// TODO remove the hack to periodic sync storacha
+			if (!isInitialSyncing) {
 				return;
 			}
 
 			const files = await loadFiles();
-			console.log("sync files", files);
 
 			const uploads = files?.results || [];
 
+			// TODO check race condition on storacha spaceId 
 			await sync(uploads);
-			setIsSyncing(false);
+			setisInitialSyncing(false);
 			// console.log("files", files);
 		})();
-	}, [storachaClient, delegation, loadFiles, sync, isSyncing]);
+	}, [storachaClient, uiState.currentSpaceId, delegation, loadFiles, sync, isInitialSyncing]);
 
 	// Get unique content types
 	const contentTypes = useMemo(() => {
@@ -196,6 +196,17 @@ export default function HomePage() {
 			return JSON.parse(tagsJson);
 		} catch {
 			return [];
+		}
+	};
+
+	// Copy entry ID to clipboard
+	const copyEntryId = async (entryId: string) => {
+		try {
+			await navigator.clipboard.writeText(entryId);
+			// You could add a toast notification here if you have a toast system
+			console.log("Entry ID copied to clipboard:", entryId);
+		} catch (error) {
+			console.error("Failed to copy entry ID:", error);
 		}
 	};
 
@@ -333,10 +344,8 @@ export default function HomePage() {
 									<Table>
 										<TableHeader>
 											<TableRow>
-												<TableHead className="w-[100px]">Entry</TableHead>
 												<TableHead>Title</TableHead>
 												<TableHead>Status</TableHead>
-												<TableHead>Priority</TableHead>
 												<TableHead>Content Type</TableHead>
 												<TableHead>Created</TableHead>
 												<TableHead className="w-[70px]" />
@@ -345,13 +354,9 @@ export default function HomePage() {
 										<TableBody>
 											{filteredEntries.map((entry) => {
 												const status = getEntryStatus(entry);
-												const priority = getEntryPriority(entry);
 
 												return (
 													<TableRow key={entry.id}>
-														<TableCell className="font-mono text-xs">
-															{entry.id.substring(0, 8)}...
-														</TableCell>
 														<TableCell>
 															<div className="space-y-1">
 																<div className="font-medium">
@@ -402,20 +407,6 @@ export default function HomePage() {
 																{status}
 															</Badge>
 														</TableCell>
-														<TableCell>
-															<Badge
-																variant={
-																	priority === "high"
-																		? "destructive"
-																		: priority === "medium"
-																			? "default"
-																			: "secondary"
-																}
-																className="capitalize"
-															>
-																{priority}
-															</Badge>
-														</TableCell>
 														<TableCell className="capitalize">
 															{entry.contentTypeId}
 														</TableCell>
@@ -440,29 +431,25 @@ export default function HomePage() {
 														</TableCell>
 														<TableCell>
 															<div className="flex items-center gap-1">
-																{entry.mediaUrl && (
-																	<Button
-																		variant="ghost"
-																		size="icon"
-																		className="h-8 w-8"
-																		asChild
-																	>
-																		<a
-																			href={entry.mediaUrl}
-																			target="_blank"
-																			rel="noopener noreferrer"
+																<DropdownMenu>
+																	<DropdownMenuTrigger>
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="h-8 w-8"
 																		>
-																			<Eye className="w-4 h-4" />
-																		</a>
-																	</Button>
-																)}
-																<Button
-																	variant="ghost"
-																	size="icon"
-																	className="h-8 w-8"
-																>
-																	<MoreHorizontal className="w-4 h-4" />
-																</Button>
+																			<MoreHorizontal className="w-4 h-4" />
+																		</Button>
+																	</DropdownMenuTrigger>
+																	<DropdownMenuContent>
+																		<DropdownMenuItem
+																			onClick={() => copyEntryId(entry.id)}
+																		>
+																			<Copy className="w-4 h-4 mr-2" />
+																			Copy entry ID
+																		</DropdownMenuItem>
+																	</DropdownMenuContent>
+																</DropdownMenu>
 															</div>
 														</TableCell>
 													</TableRow>
@@ -480,9 +467,9 @@ export default function HomePage() {
 										</h4>
 										<p className="text-muted-foreground mb-4">
 											{searchQuery ||
-											selectedStatus !== "all" ||
-											selectedContentType !== "all" ||
-											selectedFilter === "recent"
+												selectedStatus !== "all" ||
+												selectedContentType !== "all" ||
+												selectedFilter === "recent"
 												? "No content matches your current filters. Try adjusting your search criteria."
 												: "Your Storacha space is ready but doesn't have any content entries yet."}
 										</p>
@@ -500,7 +487,7 @@ export default function HomePage() {
 									<span>
 										Connected to {storachaSpaces.map((s) => s.name).join(", ")}
 									</span>
-									{isSyncing && (
+									{isInitialSyncing && (
 										<span className="text-primary">Syncing...</span>
 									)}
 								</div>
