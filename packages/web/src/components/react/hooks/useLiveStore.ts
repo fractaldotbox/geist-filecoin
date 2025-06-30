@@ -8,13 +8,12 @@ export const useLiveStore = () => {
 	const createEntry = (
 		entryData: EntryFormData & { contentTypeId: string },
 	) => {
-		const id = crypto.randomUUID();
 		// Handle media field properly
 		const media = entryData.media as FileFieldValue | undefined;
 
 		return store.commit(
 			events.entryCreated({
-				id,
+				id: entryData.id,
 				name: (entryData.name as string) || "",
 				spaceId: (entryData.spaceId as string) || "",
 				contentTypeId: entryData.contentTypeId,
@@ -32,7 +31,7 @@ export const useLiveStore = () => {
 		return store.commit(
 			events.entryUpdated({
 				id,
-				name: entryData.name,
+				name: entryData.name as string,
 				...entryData,
 			}),
 		);

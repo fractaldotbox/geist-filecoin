@@ -74,25 +74,3 @@ export const createEntryDataFromIPFS = async (
 		publishedAt: new Date(upload.insertedAt),
 	};
 };
-
-// with content addressing nature, entry id will change per content
-export const createEntryData = (
-	spaceId: string,
-	upload: UploadListItem,
-): EntryData => {
-	const cid = upload.root.toString();
-
-	return {
-		id: cid, // Use the CID as the unique identifier
-		spaceId,
-		contentTypeId: inferContentType(cid),
-		data: `Storacha upload with CID: ${cid}`,
-		storageProviderKey: spaceId,
-		tags: JSON.stringify({
-			shards: upload.shards || [],
-			// inserted: upload.inserted,
-			// updated: upload.updated
-		}),
-		publishedAt: new Date(upload.insertedAt),
-	};
-};

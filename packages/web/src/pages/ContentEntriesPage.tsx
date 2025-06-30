@@ -317,7 +317,7 @@ export default function ContentEntriesPage() {
 								<Table>
 									<TableHeader>
 										<TableRow>
-											<TableHead>Title</TableHead>
+											<TableHead>Name</TableHead>
 											<TableHead>Status</TableHead>
 											<TableHead>Content Type</TableHead>
 											<TableHead>Created</TableHead>

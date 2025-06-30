@@ -423,7 +423,10 @@ export function EntryEditor({
 
 			// Create entry using LiveStore event
 			await createEntry({
+				id: cid,
 				...values,
+				// TODO allow configure per schema
+				name: values.title,
 				contentTypeId: entry.contentTypeId,
 				media: { url: url, cid: cid },
 			});

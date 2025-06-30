@@ -123,45 +123,14 @@ describe("storacha-entry-mapper", () => {
 			const result = await createEntryDataFromIPFS(
 				spaceId,
 				mockUpload,
-				gatewayUrl,
 			);
 
-			expect(result.title).toContain(
+			expect(result.name).toContain(
 				"Upload bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
 			);
-			expect(result.content).toContain(
 				"Storacha upload with CID: bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
 			);
 		});
 	});
 
-	describe("createEntryData", () => {
-		it("should create basic EntryData without IPFS metadata", () => {
-			const mockUpload = {
-				root: "bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
-				shards: ["shard1"],
-				insertedAt: "2024-01-01T00:00:00.000Z",
-				updatedAt: "2024-01-01T00:00:00.000Z",
-			} as unknown as UploadListItem;
-
-			const spaceId = "test-space-id";
-
-			const result = createEntryData(spaceId, mockUpload);
-
-			expect(result).toEqual({
-				id: "bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
-				spaceId: "test-space-id",
-				contentTypeId: "storacha-upload",
-				title:
-					"Upload bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
-				content:
-					"Storacha upload with CID: bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
-				storageProviderKey: "test-space-id",
-				tags: JSON.stringify({
-					shards: ["shard1"],
-				}),
-				publishedAt: new Date("2024-01-01T00:00:00.000Z"),
-			});
-		});
-	});
 });
