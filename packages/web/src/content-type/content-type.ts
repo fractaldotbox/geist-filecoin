@@ -16,17 +16,12 @@ const BLOG = {
 			heroImage: {
 				type: "object",
 				properties: {
-					mediaType: {
-						type: "string",
-						description:
-							"The MIME type of the uploaded image (e.g., image/jpeg, image/png)",
-					},
 					url: {
 						type: "string",
 						description: "The URL or path to the uploaded hero image",
 					},
 				},
-				required: ["mediaType", "url"],
+				required: ["url"],
 				description: "The hero image for the blog post, supporting file upload",
 			},
 			content: {

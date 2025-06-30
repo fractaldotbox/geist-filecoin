@@ -2,8 +2,7 @@ import { GlobalProgressProvider } from "@/components/react/GlobalProgressProvide
 import Layout from "@/components/react/Layout";
 import { Navigation } from "@/components/react/Navigation";
 import { SpacesDrawer } from "@/components/react/SpacesDrawer";
-import ContentTypesPage from "@/pages/ContentTypesPage";
-import HomePage from "@/pages/HomePage";
+import ContentEntriesPage from "@/pages/ContentEntriesPage";
 import SpacesPage from "@/pages/SpacesPage";
 import ContentTypeEditorPage from "@/pages/editor/ContentTypeEditorPage";
 import ContentTypeSelectPage from "@/pages/editor/ContentTypeSelectPage";
@@ -13,6 +12,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import { DemoModeBanner } from "./components/react/DemoModeBanner";
 import { useDemoMode } from "./components/react/hooks/useDemoMode";
+import HomePage from "./pages/HomePage";
 
 // Create context for spaces drawer
 const SpacesDrawerContext = createContext<{
@@ -54,17 +54,27 @@ function App() {
 				<Layout>
 					<Routes>
 						<Route path="/" element={<HomePage />} />
+						<Route
+							path="/space/:spaceId/entries"
+							element={<ContentEntriesPage />}
+						/>
 						<Route path="/spaces" element={<SpacesPage />} />
 						<Route
-							path="/editor/content-type/select"
+							path="/editor/space/:spaceId/content-type/select"
 							element={<ContentTypeSelectPage />}
 						/>
 						<Route
-							path="/editor/content-type/:id"
+							path="/editor/space/:spaceId/content-type/:id"
 							element={<ContentTypeEditorPage />}
 						/>
-						<Route path="/editor/entry/:id" element={<EntryEditorPage />} />
-						<Route path="/content-types" element={<ContentTypesPage />} />
+						<Route
+							path="/editor/space/:spaceId/content-type/:content-type-id/new"
+							element={<EntryEditorPage />}
+						/>
+						<Route
+							path="/editor/space/:spaceId/entry/:id"
+							element={<EntryEditorPage />}
+						/>
 					</Routes>
 				</Layout>
 				<SpacesDrawer

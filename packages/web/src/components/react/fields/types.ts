@@ -2,15 +2,15 @@ import type { ContentTypeField } from "@/stores/schema";
 import type { ControllerRenderProps } from "react-hook-form";
 
 export type EntryFormData = {
+	id: string;
 	[key: string]:
 		| string
 		| string[]
-		| { mediaType: string; url: string; cid?: string; file?: File }
+		| { url: string; cid?: string; file?: File }
 		| undefined;
 };
 
 export type FileFieldValue = {
-	mediaType: string;
 	file?: File;
 	url: string;
 	cid?: string;

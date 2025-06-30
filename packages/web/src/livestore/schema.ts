@@ -12,13 +12,12 @@ export const tables = {
 		name: "entries",
 		columns: {
 			id: State.SQLite.text({ primaryKey: true }),
+			spaceId: State.SQLite.text({ default: "" }), // Associate with space
 			contentTypeId: State.SQLite.text({ default: "" }),
-			title: State.SQLite.text({ default: "" }),
-			content: State.SQLite.text({ default: "" }),
-			mediaType: State.SQLite.text({ nullable: true }),
-			mediaUrl: State.SQLite.text({ nullable: true }),
-			mediaCid: State.SQLite.text({ nullable: true }),
-			tags: State.SQLite.text({ nullable: true }), // JSON string
+			name: State.SQLite.text({ default: "" }),
+			data: State.SQLite.text({ default: "" }),
+			storageProviderKey: State.SQLite.text({ default: "" }), // Storacha upload CID
+			tags: State.SQLite.text({ default: "[]" }), // JSON string
 			publishedAt: State.SQLite.integer({
 				nullable: true,
 				schema: Schema.DateFromNumber,
@@ -36,6 +35,7 @@ export const tables = {
 		name: "contentTypes",
 		columns: {
 			id: State.SQLite.text({ primaryKey: true }),
+			spaceId: State.SQLite.text({ default: "" }), // Associate with space
 			name: State.SQLite.text({ default: "" }),
 			description: State.SQLite.text({ default: "" }),
 			properties: State.SQLite.text({ default: "{}" }), // JSON string
@@ -56,9 +56,9 @@ export const tables = {
 			name: State.SQLite.text({ default: "" }),
 			description: State.SQLite.text({ default: "" }),
 			storageProvider: State.SQLite.text({ default: "storacha" }), // "s3" or "storacha"
-			storageProviderCredentials: State.SQLite.text({ nullable: true }), // Storage provider credentials
-			spaceProof: State.SQLite.text({ nullable: true }), // Space proof for verification
-			isActive: State.SQLite.integer({ default: 1 }), // 1 for true, 0 for false
+			storageProviderCredentials: State.SQLite.text({ default: "" }), // Storage provider credentials
+			storageProviderId: State.SQLite.text({ default: "" }), // Storage provider ID
+			spaceProof: State.SQLite.text({ default: "" }), // Space proof for verification
 			createdAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
 			updatedAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
 			deletedAt: State.SQLite.integer({
@@ -115,14 +115,13 @@ export const events = {
 		name: "v1.EntryCreated",
 		schema: Schema.Struct({
 			id: Schema.String,
+			name: Schema.String,
+			spaceId: Schema.String,
 			contentTypeId: Schema.String,
-			title: Schema.String,
-			content: Schema.String,
-			mediaType: Schema.String,
-			mediaUrl: Schema.String,
-			mediaCid: Schema.String,
+			data: Schema.String,
+			storageProviderKey: Schema.String,
 			tags: Schema.String,
-			publishedAt: Schema.Date,
+			publishedAt: Schema.optional(Schema.Date),
 		}),
 	}),
 
@@ -130,13 +129,12 @@ export const events = {
 		name: "v1.EntryUpdated",
 		schema: Schema.Struct({
 			id: Schema.String,
-			title: Schema.String,
-			content: Schema.String,
-			mediaType: Schema.String,
-			mediaUrl: Schema.String,
-			mediaCid: Schema.String,
-			tags: Schema.String,
-			publishedAt: Schema.Date,
+			name: Schema.String,
+			spaceId: Schema.optional(Schema.String),
+			data: Schema.optional(Schema.String),
+			storageProviderKey: Schema.optional(Schema.String),
+			tags: Schema.optional(Schema.String),
+			publishedAt: Schema.optional(Schema.Date),
 		}),
 	}),
 
@@ -149,6 +147,7 @@ export const events = {
 		name: "v1.ContentTypeCreated",
 		schema: Schema.Struct({
 			id: Schema.String,
+			spaceId: Schema.String,
 			name: Schema.String,
 			description: Schema.String,
 			properties: Schema.String, // JSON string
@@ -160,10 +159,11 @@ export const events = {
 		name: "v1.ContentTypeUpdated",
 		schema: Schema.Struct({
 			id: Schema.String,
-			name: Schema.String,
-			description: Schema.String,
-			properties: Schema.String, // JSON string
-			required: Schema.String, // JSON string
+			spaceId: Schema.optional(Schema.String),
+			name: Schema.optional(Schema.String),
+			description: Schema.optional(Schema.String),
+			properties: Schema.optional(Schema.String), // JSON string
+			required: Schema.optional(Schema.String), // JSON string
 		}),
 	}),
 
@@ -180,8 +180,7 @@ export const events = {
 			description: Schema.String,
 			storageProvider: Schema.String,
 			storageProviderCredentials: Schema.String,
-			spaceProof: Schema.String,
-			isActive: Schema.Boolean,
+			storageProviderId: Schema.String,
 		}),
 	}),
 
@@ -193,8 +192,7 @@ export const events = {
 			description: Schema.String,
 			storageProvider: Schema.String,
 			storageProviderCredentials: Schema.String,
-			spaceProof: Schema.String,
-			isActive: Schema.Boolean,
+			storageProviderId: Schema.String,
 		}),
 	}),
 
@@ -224,58 +222,52 @@ export const events = {
 const materializers = State.SQLite.materializers(events, {
 	"v1.EntryCreated": ({
 		id,
+		spaceId,
 		contentTypeId,
-		title,
-		content,
-		mediaType,
-		mediaUrl,
-		mediaCid,
+		name,
+		data,
+		storageProviderKey,
 		tags,
 		publishedAt,
 	}) =>
 		tables.entries.insert({
 			id,
+			spaceId,
 			contentTypeId,
-			title,
-			content,
-			mediaType,
-			mediaUrl,
-			mediaCid,
+			name,
+			data,
+			storageProviderKey,
 			tags,
 			publishedAt,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		}),
 
-	"v1.EntryUpdated": ({
-		id,
-		title,
-		content,
-		mediaType,
-		mediaUrl,
-		mediaCid,
-		tags,
-		publishedAt,
-	}) =>
-		tables.entries
-			.update({
-				title,
-				content,
-				mediaType,
-				mediaUrl,
-				mediaCid,
-				tags,
-				publishedAt,
-				updatedAt: new Date(),
-			})
-			.where({ id }),
+	"v1.EntryUpdated": ({ id, ...data }) => {
+		// Filter out undefined values and add updatedAt
+		const updateData = Object.fromEntries(
+			Object.entries({ ...data, updatedAt: new Date() }).filter(
+				([_, value]) => value !== undefined,
+			),
+		);
+
+		return tables.entries.update(updateData).where({ id });
+	},
 
 	"v1.EntryDeleted": ({ id, deletedAt }) =>
 		tables.entries.update({ deletedAt }).where({ id }),
 
-	"v1.ContentTypeCreated": ({ id, name, description, properties, required }) =>
+	"v1.ContentTypeCreated": ({
+		id,
+		spaceId,
+		name,
+		description,
+		properties,
+		required,
+	}) =>
 		tables.contentTypes.insert({
 			id,
+			spaceId,
 			name,
 			description,
 			properties,
@@ -284,16 +276,16 @@ const materializers = State.SQLite.materializers(events, {
 			updatedAt: new Date(),
 		}),
 
-	"v1.ContentTypeUpdated": ({ id, name, description, properties, required }) =>
-		tables.contentTypes
-			.update({
-				name,
-				description,
-				properties,
-				required,
-				updatedAt: new Date(),
-			})
-			.where({ id }),
+	"v1.ContentTypeUpdated": ({ id, ...data }) => {
+		// Filter out undefined values and add updatedAt
+		const updateData = Object.fromEntries(
+			Object.entries({ ...data, updatedAt: new Date() }).filter(
+				([_, value]) => value !== undefined,
+			),
+		);
+
+		return tables.contentTypes.update(updateData).where({ id });
+	},
 
 	"v1.ContentTypeDeleted": ({ id, deletedAt }) =>
 		tables.contentTypes.update({ deletedAt }).where({ id }),
@@ -304,8 +296,7 @@ const materializers = State.SQLite.materializers(events, {
 		description,
 		storageProvider,
 		storageProviderCredentials,
-		spaceProof,
-		isActive,
+		storageProviderId,
 	}) =>
 		tables.spaces.insert({
 			id,
@@ -313,8 +304,7 @@ const materializers = State.SQLite.materializers(events, {
 			description,
 			storageProvider,
 			storageProviderCredentials,
-			spaceProof,
-			isActive: isActive ? 1 : 0,
+			storageProviderId,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		}),
@@ -325,8 +315,7 @@ const materializers = State.SQLite.materializers(events, {
 		description,
 		storageProvider,
 		storageProviderCredentials,
-		spaceProof,
-		isActive,
+		storageProviderId,
 	}) =>
 		tables.spaces
 			.update({
@@ -334,8 +323,7 @@ const materializers = State.SQLite.materializers(events, {
 				description,
 				storageProvider,
 				storageProviderCredentials,
-				spaceProof,
-				isActive: isActive ? 1 : 0,
+				storageProviderId,
 				updatedAt: new Date(),
 			})
 			.where({ id }),

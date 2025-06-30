@@ -15,7 +15,8 @@ import { Form, FormField } from "@/components/react/ui/form";
 import { simulateProgress } from "@/components/react/ui/global-progress";
 import {
 	allEntries$,
-	firstActiveSpace$,
+	entryById$,
+	firstSpace$,
 	latestStorageAuthorizationForSpace$,
 } from "@/livestore/queries";
 import {
@@ -26,7 +27,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import ky from "ky";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
@@ -37,6 +38,7 @@ import * as Client from "@web3-storage/w3up-client";
 import { Signer } from "@web3-storage/w3up-client/principal/ed25519";
 import * as Proof from "@web3-storage/w3up-client/proof";
 import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
+import { useParams } from "react-router-dom";
 
 // Upload mode enum
 export enum UploadMode {
@@ -148,14 +150,13 @@ async function uploadFile(
 	uploadMode: UploadMode = UploadMode.StorachaDelegated,
 	progressCallback?: (progress: number) => void,
 	delegatedToken?: string,
-): Promise<{ mediaType: string; mediaUrl: string; mediaCid: string }> {
+): Promise<{ url: string; cid: string }> {
 	console.log("uploadFile", media, uploadMode);
 	// If no media or media doesn't have a file, return empty values
 	if (!media || !media.file) {
 		return {
-			mediaType: media?.mediaType || "",
-			mediaUrl: media?.url || "",
-			mediaCid: media?.cid || "",
+			url: media?.url || "",
+			cid: media?.cid || "",
 		};
 	}
 
@@ -182,9 +183,8 @@ async function uploadFile(
 		}
 
 		return {
-			mediaType: media.mediaType,
-			mediaUrl: uploadResult.url,
-			mediaCid: uploadResult.cid,
+			url: uploadResult.url,
+			cid: uploadResult.cid,
 		};
 	} catch (error) {
 		console.error("Upload error:", error);
@@ -193,21 +193,22 @@ async function uploadFile(
 }
 
 export function EntryEditor({
-	contentTypeId,
+	entryId,
 }: {
-	contentTypeId?: string;
+	entryId?: string;
 }) {
-	// Get template type from URL or use the contentTypeId passed from props
-	const params = new URLSearchParams(window.location.search);
-	const contentTypeIdFromUrl =
-		contentTypeId || params.get("contentType") || "blog";
+	console.log("EntryEditor", entryId);
+
+	const [isLoaded, setIsLoaded] = useState(false);
+
+	const { store, createEntry } = useLiveStore();
+	const entry = store.useQuery(entryById$(entryId || ""));
 
 	// Use LiveStore-based content type hooks and entry creation
-	const contentTypeData = useContentType(contentTypeIdFromUrl);
-	const { store, createEntry } = useLiveStore();
+	const contentTypeData = useContentType(entry.contentTypeId);
 
 	// Get active space and its storage authorization
-	const activeSpace = store.useQuery(firstActiveSpace$);
+	const activeSpace = store.useQuery(firstSpace$);
 	const storageAuth = activeSpace
 		? store.useQuery(latestStorageAuthorizationForSpace$(activeSpace.id))
 		: null;
@@ -246,9 +247,8 @@ export function EntryEditor({
 		for (const [key, field] of Object.entries(contentType.properties)) {
 			const isRequired = contentType.required.includes(key);
 
-			if (field.type === "object" && field.properties?.mediaType) {
+			if (field.type === "object" && field.properties?.url) {
 				schemaShape.media = z.object({
-					mediaType: z.string().optional(),
 					url: z.string().optional(),
 					file: z.instanceof(File).optional(),
 					cid: z.string().optional(), // Add the cid property to fix the linter error
@@ -274,34 +274,105 @@ export function EntryEditor({
 		return z.object(schemaShape);
 	};
 
-	// Create default values based on content type
-	const createDefaultValues = (contentType: ContentType): EntryFormData => {
-		const defaultValues: EntryFormData = {};
-		for (const key of Object.keys(contentType.properties)) {
-			const field = contentType.properties[key];
-			if (!field) continue;
+	// Create default values based on content type and entry data
+	const createDefaultValues = useCallback(
+		(
+			contentType: ContentType,
+			entryFormData?: EntryFormData,
+		): EntryFormData => {
+			const defaultValues: EntryFormData = {};
 
-			if (field.type === "array") {
-				defaultValues[key] = [];
-			} else if (field.type === "object" && field.properties?.mediaType) {
-				defaultValues[key] = { mediaType: "", url: "" };
-			} else if (field.type === "string" && field.format === "date") {
-				defaultValues[key] = "";
-			} else {
-				defaultValues[key] = "";
+			for (const key of Object.keys(contentType.properties)) {
+				const field = contentType.properties[key];
+				if (!field) continue;
+
+				if (entryFormData && entryFormData[key] !== undefined) {
+					let value = entryFormData[key];
+					// Convert Date/null to string for date fields
+					if (field.type === "string" && field.format === "date") {
+						if (value instanceof Date) {
+							value = value.toISOString().slice(0, 10);
+						} else if (value === null) {
+							value = "";
+						}
+					}
+					defaultValues[key] = value;
+				} else if (field.type === "array") {
+					defaultValues[key] = [];
+				} else if (field.type === "object" && field.properties?.url) {
+					defaultValues[key] = { url: "" };
+				} else if (field.type === "string" && field.format === "date") {
+					defaultValues[key] = "";
+				} else {
+					defaultValues[key] = "";
+				}
 			}
-		}
-		return defaultValues;
-	};
+			return defaultValues;
+		},
+		[],
+	);
+
+	// Helper to extract and convert entry values for form defaults
+	const getEntryFormDefaults = useCallback(
+		(contentType: ContentType, entry: Partial<EntryFormData>) => {
+			if (!entry) return undefined;
+			const result: Record<string, any> = {};
+			for (const key of Object.keys(contentType.properties)) {
+				const field = contentType.properties[key];
+				if (!field) continue;
+				let value = entry[key];
+				if (field.type === "string" && field.format === "date") {
+					if (value instanceof Date) {
+						value = value.toISOString().slice(0, 10);
+					} else if (value === null) {
+						value = "";
+					}
+				}
+				result[key] = value;
+			}
+			return result;
+		},
+		[],
+	);
 
 	const formSchema = contentType ? createFormSchema(contentType) : z.object({});
-	const defaultValues = contentType ? createDefaultValues(contentType) : {};
+	// Only set defaultValues after entry is loaded (if editing)
+	const initialDefaultValues = contentType
+		? createDefaultValues(
+				contentType,
+				entryId && entry ? getEntryFormDefaults(contentType, entry) : undefined,
+			)
+		: {};
 
 	const form = useForm<EntryFormData>({
 		resolver: zodResolver(formSchema),
-		defaultValues,
+		defaultValues: initialDefaultValues,
 		mode: "onTouched",
 	});
+
+	// Reset form values when entry is loaded (for editing)
+	useEffect(() => {
+		if (isLoaded) {
+			return;
+		}
+		if (contentType && entryId && entry) {
+			const entryData = JSON.parse(entry.data);
+			const entryDefaults = createDefaultValues(
+				contentType,
+				getEntryFormDefaults(contentType, entryData),
+			);
+			form.reset(entryDefaults);
+		}
+		setIsLoaded(true);
+	}, [
+		isLoaded,
+		contentType,
+		entryId,
+		entry,
+		form,
+		createDefaultValues,
+		getEntryFormDefaults,
+	]);
 
 	// Track form state for errors and dirty fields
 	const { errors, dirtyFields } = useFormState({
@@ -341,7 +412,7 @@ export function EntryEditor({
 
 			// Handle file upload if needed with specified upload mode
 			const media = values?.media as FileFieldValue | undefined;
-			const { mediaType, mediaUrl, mediaCid } = await uploadFile(
+			const { url, cid } = await uploadFile(
 				media,
 				uploadMode,
 				(progress: number) => {
@@ -352,17 +423,20 @@ export function EntryEditor({
 
 			// Create entry using LiveStore event
 			await createEntry({
+				id: cid,
 				...values,
-				contentTypeId: contentTypeIdFromUrl,
-				media: { mediaType, url: mediaUrl, cid: mediaCid },
+				// TODO allow configure per schema
+				name: values.title,
+				contentTypeId: entry.contentTypeId,
+				media: { url: url, cid: cid },
 			});
 
 			console.log("Entry created successfully");
 
 			// Set the submission result for the sidebar
 			setSubmissionResult({
-				cid: mediaCid || "local",
-				url: mediaUrl || "local",
+				cid: cid || "local",
+				url: url || "local",
 			});
 		} catch (error) {
 			console.error("Error creating entry:", error);
@@ -395,7 +469,7 @@ export function EntryEditor({
 		const delayClass = isAnimated ? `delay-${Math.min(index * 100, 500)}` : "";
 		const animationClass = isAnimated ? "field-slide-up" : "opacity-0";
 
-		if (field.type === "object" && field.properties?.mediaType) {
+		if (field.type === "object" && field.properties?.url) {
 			// use separate field
 			return (
 				<FormField
@@ -495,7 +569,7 @@ export function EntryEditor({
 		);
 	};
 
-	if (!contentType) {
+	if (!contentType || (entryId && !entry)) {
 		return <div>Loading...</div>;
 	}
 

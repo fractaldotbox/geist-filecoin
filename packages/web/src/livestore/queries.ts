@@ -1,10 +1,8 @@
 import { queryDb } from "@livestore/livestore";
+import { useClientDocument } from "@livestore/react";
 import { tables } from "./schema.js";
 
-// Query for UI state
-export const uiState$ = queryDb((get) => tables.uiState.get(), {
-	label: "uiState",
-});
+export const useUiState = () => useClientDocument(tables.uiState);
 
 // Query for all entries
 export const allEntries$ = queryDb(
@@ -21,6 +19,16 @@ export const entriesByContentType$ = (contentTypeId: string) =>
 				.where({ contentTypeId, deletedAt: null })
 				.orderBy("createdAt", "desc"),
 		{ label: `entriesByContentType-${contentTypeId}` },
+	);
+
+// Query for entries by space
+export const entriesBySpace$ = (spaceId: string) =>
+	queryDb(
+		(get) =>
+			tables.entries
+				.where({ spaceId, deletedAt: null })
+				.orderBy("createdAt", "desc"),
+		{ label: `entriesBySpace-${spaceId}` },
 	);
 
 // Query for a specific entry
@@ -50,13 +58,13 @@ export const allSpaces$ = queryDb(
 );
 
 // Query for the first active space (used as current space for now)
-export const firstActiveSpace$ = queryDb(
+export const firstSpace$ = queryDb(
 	(get) =>
 		tables.spaces
-			.where({ deletedAt: null, isActive: 1 })
+			.where({ deletedAt: null })
 			.orderBy("createdAt", "desc")
 			.first({ fallback: () => null }),
-	{ label: "firstActiveSpace" },
+	{ label: "firstSpace" },
 );
 
 // Query for a specific space

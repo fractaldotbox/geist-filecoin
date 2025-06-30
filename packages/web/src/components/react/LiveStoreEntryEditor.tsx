@@ -1,5 +1,5 @@
 import { useStore } from "@livestore/react";
-import { allEntries$, uiState$ } from "../../livestore/queries";
+import { allEntries$, useUiState } from "../../livestore/queries";
 import { useLiveStore } from "./hooks/useLiveStore";
 
 export function LiveStoreEntryEditor() {
@@ -8,7 +8,7 @@ export function LiveStoreEntryEditor() {
 
 	// Query data from LiveStore
 	const entries = store.useQuery(allEntries$);
-	const uiState = store.useQuery(uiState$);
+	const [uiState, setUiState] = useUiState();
 
 	return (
 		<div>

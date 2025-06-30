@@ -1,6 +1,6 @@
 import { useStore } from "@livestore/react";
 import { Folder } from "lucide-react";
-import { firstActiveSpace$ } from "../../livestore/queries";
+import { firstSpace$ } from "../../livestore/queries";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
 
@@ -10,7 +10,7 @@ interface NavigationProps {
 
 export function Navigation({ onSpacesClick }: NavigationProps) {
 	const { store } = useStore();
-	const currentSpace = store.useQuery(firstActiveSpace$);
+	const currentSpace = store.useQuery(firstSpace$);
 
 	const displayText = currentSpace?.name ? currentSpace.name : "Spaces";
 	const truncatedDisplayText =

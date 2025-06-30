@@ -1,3 +1,4 @@
+import type { StorageProviderCredentialConfig } from "@geist-filecoin/domain";
 import { useStore } from "@livestore/react";
 import { events } from "../../../livestore/schema";
 
@@ -9,9 +10,8 @@ export const useSpaceStore = () => {
 		name: string;
 		description: string;
 		storageProvider: string;
-		storageProviderCredentials: string;
-		spaceProof: string;
-		isActive: boolean;
+		storageProviderId: string;
+		storageProviderCredentials: StorageProviderCredentialConfig[];
 	}) => {
 		return store.commit(
 			events.spaceCreated({
@@ -19,9 +19,9 @@ export const useSpaceStore = () => {
 				name: spaceData.name,
 				description: spaceData.description,
 				storageProvider: spaceData.storageProvider,
-				storageProviderCredentials: spaceData.storageProviderCredentials || "",
-				spaceProof: spaceData.spaceProof || "",
-				isActive: spaceData.isActive,
+				storageProviderId: spaceData.storageProviderId,
+				storageProviderCredentials:
+					JSON.stringify(spaceData.storageProviderCredentials) || "",
 			}),
 		);
 	};
@@ -32,9 +32,8 @@ export const useSpaceStore = () => {
 			name: string;
 			description: string;
 			storageProvider: string;
-			storageProviderCredentials: string;
-			spaceProof: string;
-			isActive: boolean;
+			storageProviderId: string;
+			storageProviderCredentials: StorageProviderCredentialConfig[];
 		},
 	) => {
 		return store.commit(
@@ -43,9 +42,9 @@ export const useSpaceStore = () => {
 				name: spaceData.name,
 				description: spaceData.description,
 				storageProvider: spaceData.storageProvider,
-				storageProviderCredentials: spaceData.storageProviderCredentials || "",
-				spaceProof: spaceData.spaceProof || "",
-				isActive: spaceData.isActive,
+				storageProviderId: spaceData.storageProviderId,
+				storageProviderCredentials:
+					JSON.stringify(spaceData.storageProviderCredentials) || "",
 			}),
 		);
 	};

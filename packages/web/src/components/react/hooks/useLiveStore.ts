@@ -8,21 +8,17 @@ export const useLiveStore = () => {
 	const createEntry = (
 		entryData: EntryFormData & { contentTypeId: string },
 	) => {
-		const id = crypto.randomUUID();
-		const now = new Date();
-
 		// Handle media field properly
 		const media = entryData.media as FileFieldValue | undefined;
 
 		return store.commit(
 			events.entryCreated({
-				id,
+				id: entryData.id,
+				name: (entryData.name as string) || "",
+				spaceId: (entryData.spaceId as string) || "",
 				contentTypeId: entryData.contentTypeId,
-				title: (entryData.title as string) || "",
-				content: (entryData.content as string) || "",
-				mediaType: media?.mediaType || "",
-				mediaUrl: media?.url || "",
-				mediaCid: media?.cid || "",
+				data: (entryData.data as string) || "",
+				storageProviderKey: media?.cid || "", // Add missing storageProviderKey field
 				tags: entryData.tags ? JSON.stringify(entryData.tags) : "",
 				publishedAt: entryData.publishedAt
 					? new Date(entryData.publishedAt as string)
@@ -32,21 +28,11 @@ export const useLiveStore = () => {
 	};
 
 	const updateEntry = (id: string, entryData: Partial<EntryFormData>) => {
-		// Handle media field properly
-		const media = entryData.media as FileFieldValue | undefined;
-
 		return store.commit(
 			events.entryUpdated({
 				id,
-				title: (entryData.title as string) || "",
-				content: (entryData.content as string) || "",
-				mediaType: media?.mediaType || "",
-				mediaUrl: media?.url || "",
-				mediaCid: media?.cid || "",
-				tags: entryData.tags ? JSON.stringify(entryData.tags) : "",
-				publishedAt: entryData.publishedAt
-					? new Date(entryData.publishedAt as string)
-					: new Date(),
+				name: entryData.name as string,
+				...entryData,
 			}),
 		);
 	};
@@ -61,15 +47,17 @@ export const useLiveStore = () => {
 	};
 
 	const createContentType = (contentTypeData: {
+		id: string;
+		spaceId: string;
 		name: string;
 		description: string;
 		properties: Record<string, any>;
 		required: string[];
 	}) => {
-		const id = crypto.randomUUID();
 		return store.commit(
 			events.contentTypeCreated({
-				id,
+				id: contentTypeData.id,
+				spaceId: (contentTypeData.spaceId as string) || "",
 				name: contentTypeData.name,
 				description: contentTypeData.description,
 				properties: JSON.stringify(contentTypeData.properties),
@@ -113,6 +101,7 @@ export const useLiveStore = () => {
 
 	const setUiState = (uiState: {
 		currentContentTypeId?: string;
+		currentSpaceId?: string;
 		formData?: string;
 		isSubmitting?: boolean;
 		uploadProgress?: number;

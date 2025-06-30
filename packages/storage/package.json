@@ -19,7 +19,14 @@
 		"test": "vitest",
 		"test:ui": "vitest --ui"
 	},
-	"dependencies": {},
+	"dependencies": {
+		"@geist-filecoin/domain": "workspace:*",
+		"@ipld/dag-ucan": "^3.4.5",
+		"@noble/ed25519": "^2.2.0",
+		"@noble/hashes": "^1.6.1",
+		"@web3-storage/w3up-client": "^16.5.2",
+		"ky": "^1.8.1"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@types/node": "^22.15.17",
