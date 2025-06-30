@@ -1,8 +1,6 @@
 import type { UploadListItem } from "@web3-storage/w3up-client/dist/src/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-	type EntryData,
-	createEntryData,
 	createEntryDataFromIPFS,
 	fetchIPFSMetadata,
 } from "./storacha-entry-mapper";
@@ -127,8 +125,6 @@ describe("storacha-entry-mapper", () => {
 
 			expect(result.name).toContain(
 				"Upload bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
-			);
-				"Storacha upload with CID: bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
 			);
 		});
 	});
