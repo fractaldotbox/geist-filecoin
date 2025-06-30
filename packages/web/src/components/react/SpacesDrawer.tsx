@@ -27,7 +27,7 @@ import {
 } from "../../constants/storage-providers";
 import { allSpaces$, useUiState } from "../../livestore/queries";
 
-import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
+import type { StorageProviderCredentialConfig } from "@geist-filecoin/domain";
 import { useLiveStore } from "./hooks/useLiveStore";
 import { useSpaceStore } from "./hooks/useSpaceStore";
 import { Badge } from "./ui/badge";
@@ -536,6 +536,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 															<div className="space-y-2 text-xs">
 																{space.storageProvider ===
 																	StorageProvider.Storacha && (
+																	// biome-ignore lint/complexity/noUselessFragments: <explanation>
 																	<>
 																		<div className="flex items-center justify-between">
 																			<span className="text-muted-foreground">

@@ -1,9 +1,6 @@
-import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import { useSpaceStore } from "@/components/react/hooks/useSpaceStore";
-import { StorageProvider } from "@/constants/storage-providers";
-import { SAMPLE_SPACES } from "@geist-filecoin/domain/fixture/space";
-import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
 import { allSpaces$ } from "@/livestore/queries";
+import { SAMPLE_SPACES } from "@geist-filecoin/domain/fixture/space";
 import { useStore } from "@livestore/react";
 
 export function useSpaceSeeder() {

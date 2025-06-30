@@ -106,7 +106,7 @@ export const useSpaceFiles = (options: {
 	const { client: storachaClient, delegation } = useStorachaContext();
 
 	const loadFiles = useCallback(async () => {
-		if (!storachaClient) {
+		if (!storachaClient || !delegation) {
 			return;
 		}
 
@@ -116,8 +116,8 @@ export const useSpaceFiles = (options: {
 			storachaClient.did(),
 		);
 		const currentSpace = await storachaClient.currentSpace();
-		await storachaClient.addSpace(delegation!);
-		await storachaClient.addProof(delegation!);
+		await storachaClient.addSpace(delegation);
+		await storachaClient.addProof(delegation);
 
 		console.log("loading files from space", currentSpace?.did());
 		console.log("by ", storachaClient.did());

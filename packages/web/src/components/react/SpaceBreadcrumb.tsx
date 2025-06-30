@@ -9,7 +9,6 @@ import {
 	BreadcrumbSeparator,
 } from "./ui/breadcrumb";
 
-
 interface SpaceBreadcrumbProps {
 	spaces: readonly Space[];
 	currentSpaceId: string;

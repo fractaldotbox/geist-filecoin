@@ -118,15 +118,11 @@ describe("storacha-entry-mapper", () => {
 			const spaceId = "test-space-id";
 			const gatewayUrl = "https://test-gateway.ipfs.w3s.link";
 
-			const result = await createEntryDataFromIPFS(
-				spaceId,
-				mockUpload,
-			);
+			const result = await createEntryDataFromIPFS(spaceId, mockUpload);
 
 			expect(result.name).toContain(
 				"Upload bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
 			);
 		});
 	});
-
 });

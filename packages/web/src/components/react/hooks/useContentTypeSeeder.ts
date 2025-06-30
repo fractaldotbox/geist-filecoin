@@ -1,7 +1,7 @@
 import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import { BLOG, LANDING, PRODUCT } from "@/content-type/content-type";
-import { SAMPLE_SPACES } from "@geist-filecoin/domain/fixture/space";
 import { allContentTypes$ } from "@/livestore/queries";
+import { SAMPLE_SPACES } from "@geist-filecoin/domain/fixture/space";
 import { useStore } from "@livestore/react";
 
 export function useContentTypeSeeder() {
