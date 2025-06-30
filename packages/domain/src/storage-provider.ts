@@ -35,7 +35,6 @@ export interface StorageProviderConfig {
 	instructions: string;
 }
 
-
 export const STORAGE_PROVIDERS: StorageProviderConfig[] = [
 	{
 		value: StorageProvider.Storacha,

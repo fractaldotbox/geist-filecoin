@@ -1,5 +1,5 @@
 {
-	"name": "@geist-filecoin/domain",
+	"name": "@geist-filecoin/storage",
 	"type": "module",
 	"version": "0.0.1",
 	"main": "./dist/index.js",
@@ -19,8 +19,7 @@
 		"test": "vitest",
 		"test:ui": "vitest --ui"
 	},
-	"dependencies": {
-	},
+	"dependencies": {},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@types/node": "^22.15.17",
