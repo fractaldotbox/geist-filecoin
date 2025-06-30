@@ -1,16 +1,6 @@
 import type { UploadListItem } from "@web3-storage/w3up-client/dist/src/types";
+import type { Entry } from "@geist-filecoin/domain";
 import ky from "ky";
-
-export interface EntryData {
-	id: string;
-	name: string;
-	spaceId: string;
-	contentTypeId: string;
-	data: string;
-	storageProviderKey: string;
-	tags: string;
-	publishedAt: Date;
-}
 
 export interface EntryMetadata {
 	name?: string;
@@ -51,11 +41,10 @@ export const createGatewayUrl = (cid: string): string => {
 	return `https://${cid}.ipfs.w3s.link/`;
 };
 
-// Create EntryData from IPFS metadata
 export const createEntryDataFromIPFS = async (
 	spaceId: string,
 	upload: UploadListItem,
-): Promise<EntryData> => {
+): Promise<Entry> => {
 	const cid = upload.root.toString();
 
 	const cidRootWithGatewayUrl = createGatewayUrl(cid);

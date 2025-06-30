@@ -1,3 +1,4 @@
+import type { Space } from "@geist-filecoin/domain";
 import { Link } from "react-router-dom";
 import {
 	Breadcrumb,
@@ -8,18 +9,6 @@ import {
 	BreadcrumbSeparator,
 } from "./ui/breadcrumb";
 
-export interface Space {
-	id: string;
-	name: string;
-	description: string;
-	storageProvider: string;
-	storageProviderCredentials: string;
-	storageProviderId: string;
-	spaceProof: string;
-	createdAt: Date;
-	updatedAt: Date;
-	deletedAt: Date | null;
-}
 
 interface SpaceBreadcrumbProps {
 	spaces: readonly Space[];

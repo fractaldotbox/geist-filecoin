@@ -1,5 +1,7 @@
-import { StorageProvider } from "@/constants/storage-providers";
-import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
+import {
+	StorageProvider,
+	type StorageProviderCredentialConfig,
+} from "../storage-provider";
 
 // Sample space configurations for different use cases
 export const SAMPLE_SPACES = [

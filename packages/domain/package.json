@@ -1,5 +1,5 @@
 {
-	"name": "@geist-filecoin/storage",
+	"name": "@geist-filecoin/domain",
 	"type": "module",
 	"version": "0.0.1",
 	"main": "./dist/index.js",
@@ -11,6 +11,11 @@
 			"import": "./src/index.ts",
 			"default": "./dist/index.js"
 		},
+		"./fixture/*": {
+			"types": "./dist/fixture/*.d.ts",
+			"import": "./src/fixture/*.ts",
+			"default": "./dist/fixture/*.js"
+		},
 		"./package.json": "./package.json"
 	},
 	"scripts": {
@@ -20,16 +25,15 @@
 		"test:ui": "vitest --ui"
 	},
 	"dependencies": {
-		"@geist-filecoin/domain": "workspace:*",
 		"@ipld/dag-ucan": "^3.4.5",
 		"@noble/ed25519": "^2.2.0",
 		"@noble/hashes": "^1.6.1",
-		"@web3-storage/w3up-client": "^16.5.2",
-		"ky": "^1.8.1"
+		"@web3-storage/w3up-client": "^16.5.2"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@types/node": "^22.15.17",
+		"@vitest/ui": "^2.1.8",
 		"typescript": "^5.8.3",
 		"vitest": "^2.1.8"
 	}
