@@ -1,18 +1,9 @@
 import { queryDb } from "@livestore/livestore";
 import { useClientDocument } from "@livestore/react";
-import { useStore } from "@livestore/react";
-import { useLiveStore } from "../components/react/hooks/useLiveStore";
 import { tables } from "./schema.js";
 
-// Query for UI state
-export const uiState$ = queryDb((get) => tables.uiState.get(), {
-	label: "uiState",
-});
 
-export const useUiState = () => {
-	const { store } = useStore();
-	return store.useClientDocument(tables.uiState);
-};
+export const useUiState = () => useClientDocument(tables.uiState);
 
 // Query for all entries
 export const allEntries$ = queryDb(
