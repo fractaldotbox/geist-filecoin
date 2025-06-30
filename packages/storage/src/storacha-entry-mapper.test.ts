@@ -83,14 +83,8 @@ describe("storacha-entry-mapper", () => {
 			} as unknown as UploadListItem;
 
 			const spaceId = "test-space-id";
-			const gatewayUrl =
-				"https://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu.ipfs.w3s.link";
 
-			const result = await createEntryDataFromIPFS(
-				spaceId,
-				mockUpload,
-				gatewayUrl,
-			);
+			const result = await createEntryDataFromIPFS(spaceId, mockUpload);
 
 			expect(result).toEqual({
 				id: "bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",

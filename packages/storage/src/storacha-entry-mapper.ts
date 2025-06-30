@@ -5,8 +5,7 @@ export interface EntryData {
 	id: string;
 	spaceId: string;
 	contentTypeId: string;
-	title: string;
-	content: string;
+	data: string;
 	storageProviderKey: string;
 	tags: string;
 	publishedAt: Date;
@@ -14,6 +13,7 @@ export interface EntryData {
 
 export interface EntryMetadata {
 	name?: string;
+	contentTypeId?: string;
 	spaceId?: string;
 	contentType?: string;
 }
@@ -58,16 +58,12 @@ export const createEntryDataFromIPFS = async (
 	const cid = upload.root.toString();
 
 	const cidRootWithGatewayUrl = createGatewayUrl(cid);
-	console.log("fetching metadata from", cidRootWithGatewayUrl);
 	const { metadata, data } = await fetchIPFSMetadata(cidRootWithGatewayUrl);
-	console.log("metadata", metadata);
-	console.log("data", data);
 	return {
 		id: cid,
 		spaceId,
-		contentTypeId: metadata.contentType || "",
-		title: (data as any).name || `Upload ${cid}`,
-		content: JSON.stringify(data),
+		contentTypeId: metadata.contentTypeId || "",
+		data: JSON.stringify(data),
 		storageProviderKey: spaceId,
 		tags: JSON.stringify({
 			shards: upload.shards || [],
@@ -88,8 +84,7 @@ export const createEntryData = (
 		id: cid, // Use the CID as the unique identifier
 		spaceId,
 		contentTypeId: inferContentType(cid),
-		title: `Upload ${upload.root}`, // Generate a title from the CID
-		content: `Storacha upload with CID: ${cid}`,
+		data: `Storacha upload with CID: ${cid}`,
 		storageProviderKey: spaceId,
 		tags: JSON.stringify({
 			shards: upload.shards || [],

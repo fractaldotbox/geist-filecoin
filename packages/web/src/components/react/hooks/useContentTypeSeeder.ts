@@ -1,5 +1,6 @@
 import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import { BLOG, LANDING, PRODUCT } from "@/content-type/content-type";
+import { SAMPLE_SPACES } from "@/fixture/space";
 import { allContentTypes$ } from "@/livestore/queries";
 import { useStore } from "@livestore/react";
 
@@ -16,10 +17,12 @@ export function useContentTypeSeeder() {
 		[BLOG, LANDING, PRODUCT].map(({ id, description, schema }) => {
 			console.log("seeding content type", id);
 			createContentType({
+				id,
 				name: id,
 				description,
 				properties: schema.properties,
 				required: schema.required,
+				spaceId: SAMPLE_SPACES?.[0].id,
 			});
 		});
 	};

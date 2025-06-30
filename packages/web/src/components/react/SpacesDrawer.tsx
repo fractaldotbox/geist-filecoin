@@ -25,7 +25,7 @@ import {
 	STORAGE_PROVIDER_LABELS,
 	StorageProvider,
 } from "../../constants/storage-providers";
-import { allSpaces$, uiState$ } from "../../livestore/queries";
+import { allSpaces$, useUiState } from "../../livestore/queries";
 
 import type { StorageProviderCredentialConfig } from "@/lib/storage-provider";
 import { useLiveStore } from "./hooks/useLiveStore";
@@ -87,9 +87,9 @@ interface SpacesDrawerProps {
 export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 	const { store } = useStore();
 	const { createSpace, updateSpace, deleteSpace } = useSpaceStore();
-	const { setUiState } = useLiveStore();
+	const { setUiState: setUiStateFromLiveStore } = useLiveStore();
 	const spaces = store.useQuery(allSpaces$);
-	const uiState = store.useQuery(uiState$);
+	const [uiState, setUiState] = useUiState();
 	const currentSpaceId = uiState?.currentSpaceId || "";
 	const navigate = useNavigate();
 
@@ -118,10 +118,10 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		}
 
 		const targetSpaceId = spaces?.[0]?.id;
-		if (targetSpaceId !== uiState?.currentSpaceId) {
-			setUiState({ currentSpaceId: targetSpaceId });
+		if (targetSpaceId && targetSpaceId !== uiState?.currentSpaceId) {
+			setUiStateFromLiveStore({ currentSpaceId: targetSpaceId });
 		}
-	}, [uiState?.currentSpaceId, setUiState, spaces?.[0]?.id]);
+	}, [uiState?.currentSpaceId, setUiStateFromLiveStore, spaces?.[0]?.id]);
 
 	const watchedStorageProvider = form.watch("storageProvider");
 
@@ -146,7 +146,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		const id = `space-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 		// Deactivate all existing spaces before creating the new active space
-		await setUiState({ currentSpaceId: id });
+		await setUiStateFromLiveStore({ currentSpaceId: id });
 
 		// Create credentials based on storage provider
 		let storageProviderCredentials: StorageProviderCredentialConfig[] = [];
@@ -201,7 +201,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 
 	const handleSetActiveSpace = async (targetSpaceId: string) => {
 		// Set the target space as active
-		await setUiState({ currentSpaceId: targetSpaceId });
+		await setUiStateFromLiveStore({ currentSpaceId: targetSpaceId });
 
 		// Close the drawer and redirect to content-types page
 		onClose();
@@ -233,7 +233,6 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		);
 	};
 
-	// TO
 	const parseStorageCredentials = (space: any) => {
 		if (space.storageProvider === StorageProvider.Storacha) {
 			try {

@@ -1,6 +1,6 @@
 import { Button } from "@/components/react/ui/button";
 import { Card } from "@/components/react/ui/card";
-import { allEntries$, allSpaces$, uiState$ } from "@/livestore/queries";
+import { allEntries$, allSpaces$, useUiState } from "@/livestore/queries";
 import { useStore } from "@livestore/react";
 import { AlertCircle, Folder } from "lucide-react";
 import { useEffect } from "react";
@@ -14,7 +14,7 @@ export default function HomePage() {
 
 	const spaces = store.useQuery(allSpaces$);
 	const entries = store.useQuery(allEntries$);
-	const uiState = store.useQuery(uiState$);
+	const [uiState, setUiState] = useUiState();
 	const hasSpaces = spaces.length > 0;
 	const currentSpaceId = uiState?.currentSpaceId;
 

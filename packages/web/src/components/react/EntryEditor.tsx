@@ -27,7 +27,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import ky from "ky";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
@@ -193,23 +193,16 @@ async function uploadFile(
 }
 
 export function EntryEditor({
-	contentTypeId,
+	entryId,
 }: {
-	contentTypeId?: string;
+	entryId?: string;
 }) {
-	// Get template type from URL or use the contentTypeId passed from props
-	const params = new URLSearchParams(window.location.search);
-	const contentTypeIdFromUrl =
-		contentTypeId || params.get("contentType") || "blog";
+	console.log("EntryEditor", entryId);
 
-	const { spaceId, entryId } = useParams();
-
-	// parse contentype id from entryId
+	const [isLoaded, setIsLoaded] = useState(false);
 
 	const { store, createEntry } = useLiveStore();
 	const entry = store.useQuery(entryById$(entryId || ""));
-
-	console.log("entryId", entryId);
 
 	// Use LiveStore-based content type hooks and entry creation
 	const contentTypeData = useContentType(entry.contentTypeId);
@@ -281,34 +274,105 @@ export function EntryEditor({
 		return z.object(schemaShape);
 	};
 
-	// Create default values based on content type
-	const createDefaultValues = (contentType: ContentType): EntryFormData => {
-		const defaultValues: EntryFormData = {};
-		for (const key of Object.keys(contentType.properties)) {
-			const field = contentType.properties[key];
-			if (!field) continue;
+	// Create default values based on content type and entry data
+	const createDefaultValues = useCallback(
+		(
+			contentType: ContentType,
+			entryFormData?: EntryFormData,
+		): EntryFormData => {
+			const defaultValues: EntryFormData = {};
 
-			if (field.type === "array") {
-				defaultValues[key] = [];
-			} else if (field.type === "object" && field.properties?.url) {
-				defaultValues[key] = { url: "" };
-			} else if (field.type === "string" && field.format === "date") {
-				defaultValues[key] = "";
-			} else {
-				defaultValues[key] = "";
+			for (const key of Object.keys(contentType.properties)) {
+				const field = contentType.properties[key];
+				if (!field) continue;
+
+				if (entryFormData && entryFormData[key] !== undefined) {
+					let value = entryFormData[key];
+					// Convert Date/null to string for date fields
+					if (field.type === "string" && field.format === "date") {
+						if (value instanceof Date) {
+							value = value.toISOString().slice(0, 10);
+						} else if (value === null) {
+							value = "";
+						}
+					}
+					defaultValues[key] = value;
+				} else if (field.type === "array") {
+					defaultValues[key] = [];
+				} else if (field.type === "object" && field.properties?.url) {
+					defaultValues[key] = { url: "" };
+				} else if (field.type === "string" && field.format === "date") {
+					defaultValues[key] = "";
+				} else {
+					defaultValues[key] = "";
+				}
 			}
-		}
-		return defaultValues;
-	};
+			return defaultValues;
+		},
+		[],
+	);
+
+	// Helper to extract and convert entry values for form defaults
+	const getEntryFormDefaults = useCallback(
+		(contentType: ContentType, entry: { [key: string]: any } | undefined) => {
+			if (!entry) return undefined;
+			const result: Record<string, any> = {};
+			for (const key of Object.keys(contentType.properties)) {
+				const field = contentType.properties[key];
+				if (!field) continue;
+				let value = entry[key];
+				if (field.type === "string" && field.format === "date") {
+					if (value instanceof Date) {
+						value = value.toISOString().slice(0, 10);
+					} else if (value === null) {
+						value = "";
+					}
+				}
+				result[key] = value;
+			}
+			return result;
+		},
+		[],
+	);
 
 	const formSchema = contentType ? createFormSchema(contentType) : z.object({});
-	const defaultValues = contentType ? createDefaultValues(contentType) : {};
+	// Only set defaultValues after entry is loaded (if editing)
+	const initialDefaultValues = contentType
+		? createDefaultValues(
+				contentType,
+				entryId && entry ? getEntryFormDefaults(contentType, entry) : undefined,
+			)
+		: {};
 
 	const form = useForm<EntryFormData>({
 		resolver: zodResolver(formSchema),
-		defaultValues,
+		defaultValues: initialDefaultValues,
 		mode: "onTouched",
 	});
+
+	// Reset form values when entry is loaded (for editing)
+	useEffect(() => {
+		if (isLoaded) {
+			return;
+		}
+		if (contentType && entryId && entry) {
+			const entryData = JSON.parse(entry.data);
+			const entryDefaults = createDefaultValues(
+				contentType,
+				getEntryFormDefaults(contentType, entryData),
+			);
+			form.reset(entryDefaults);
+		}
+		setIsLoaded(true);
+	}, [
+		isLoaded,
+		contentType,
+		entryId,
+		entry,
+		form,
+		createDefaultValues,
+		getEntryFormDefaults,
+	]);
 
 	// Track form state for errors and dirty fields
 	const { errors, dirtyFields } = useFormState({
@@ -360,7 +424,7 @@ export function EntryEditor({
 			// Create entry using LiveStore event
 			await createEntry({
 				...values,
-				contentTypeId: contentTypeIdFromUrl,
+				contentTypeId: entry.contentTypeId,
 				media: { url: url, cid: cid },
 			});
 
@@ -502,7 +566,7 @@ export function EntryEditor({
 		);
 	};
 
-	if (!contentType) {
+	if (!contentType || (entryId && !entry)) {
 		return <div>Loading...</div>;
 	}
 

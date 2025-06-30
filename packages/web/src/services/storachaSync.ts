@@ -27,22 +27,6 @@ interface StorachaListResult {
 	results: StorachaUpload[];
 }
 
-interface SyncConfig {
-	client: Client;
-	store: any;
-}
-
-interface EntryData {
-	id: string;
-	spaceId: string;
-	contentTypeId: string;
-	title: string;
-	content: string;
-	storageProviderKey: string;
-	tags: string;
-	publishedAt: Date;
-}
-
 // Pure function to fetch all uploads from a space
 export const fetchSpaceUploads = async (
 	client: Client,
@@ -71,12 +55,6 @@ export const fetchSpaceUploads = async (
 	return allUploads;
 };
 
-// We don't have information to infer content type from CID
-// decrypt & indexing from data will be necessary
-export const inferContentType = (cid: string): string => {
-	return "storacha-upload";
-};
-
 // Pure function to determine if upload is recent
 export const isRecentUpload = (
 	uploadDate: Date,
@@ -94,29 +72,6 @@ export const findExistingEntry = <T extends { id: string }>(
 ): T | undefined => {
 	return entries.find((entry) => entry.id === entryId);
 };
-
-// // with content addressing nature, entry id will change per content
-// export const createEntryData = (
-// 	spaceId: string,
-// 	upload: UploadListItem,
-// ): EntryData => {
-// 	const cid = upload.root.toString();
-
-// 	return {
-// 		id: cid, // Use the CID as the unique identifier
-// 		spaceId,
-// 		contentTypeId: inferContentType(cid),
-// 		title: `Upload ${upload.root}`, // Generate a title from the CID
-// 		content: `Storacha upload with CID: ${cid}`,
-// 		storageProviderKey: spaceId,
-// 		tags: JSON.stringify({
-// 			shards: upload.shards || [],
-// 			// inserted: upload.inserted,
-// 			// updated: upload.updated
-// 		}),
-// 		publishedAt: new Date(upload.insertedAt),
-// 	};
-// };
 
 // either query data cut off or just always try to create new entries
 export const useSync = (spaceId: string) => {

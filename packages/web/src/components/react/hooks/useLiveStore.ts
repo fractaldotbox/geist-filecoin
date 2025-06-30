@@ -9,19 +9,15 @@ export const useLiveStore = () => {
 		entryData: EntryFormData & { contentTypeId: string },
 	) => {
 		const id = crypto.randomUUID();
-		const now = new Date();
-
 		// Handle media field properly
 		const media = entryData.media as FileFieldValue | undefined;
 
-		console.log("commit entry", entryData);
 		return store.commit(
 			events.entryCreated({
 				id,
 				spaceId: (entryData.spaceId as string) || "",
 				contentTypeId: entryData.contentTypeId,
-				title: (entryData.title as string) || "",
-				content: (entryData.content as string) || "",
+				data: (entryData.data as string) || "",
 				storageProviderKey: media?.cid || "", // Add missing storageProviderKey field
 				tags: entryData.tags ? JSON.stringify(entryData.tags) : "",
 				publishedAt: entryData.publishedAt
@@ -50,16 +46,16 @@ export const useLiveStore = () => {
 	};
 
 	const createContentType = (contentTypeData: {
+		id: string;
 		spaceId: string;
 		name: string;
 		description: string;
 		properties: Record<string, any>;
 		required: string[];
 	}) => {
-		const id = crypto.randomUUID();
 		return store.commit(
 			events.contentTypeCreated({
-				id,
+				id: contentTypeData.id,
 				spaceId: (contentTypeData.spaceId as string) || "",
 				name: contentTypeData.name,
 				description: contentTypeData.description,

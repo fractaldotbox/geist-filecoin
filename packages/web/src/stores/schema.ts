@@ -3,7 +3,7 @@ import { useLiveStore } from "../components/react/hooks/useLiveStore.js";
 import {
 	allContentTypes$,
 	contentTypeById$,
-	uiState$,
+	useUiState,
 } from "../livestore/queries.js";
 
 export interface ContentTypeField {
@@ -47,10 +47,10 @@ export function useContentTypeWithLoading(contentTypeId: string) {
 // Legacy compatibility - export a hook that mimics the old contentTypeStore behavior
 export function useContentTypeStore() {
 	const { store } = useStore();
-	const { setUiState } = useLiveStore();
+	const { setUiState: setUiStateFromLiveStore } = useLiveStore();
 
 	// Get current content type ID from UI state
-	const uiState = store.useQuery(uiState$);
+	const [uiState, setUiState] = useUiState();
 
 	const currentContentTypeId = uiState?.currentContentTypeId || "";
 	const contentType = useContentType(currentContentTypeId);
@@ -59,6 +59,6 @@ export function useContentTypeStore() {
 		contentType,
 		currentContentTypeId,
 		setCurrentContentTypeId: (id: string) =>
-			setUiState({ currentContentTypeId: id }),
+			setUiStateFromLiveStore({ currentContentTypeId: id }),
 	};
 }

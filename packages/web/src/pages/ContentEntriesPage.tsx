@@ -1,3 +1,4 @@
+import SpaceBreadcrumb from "@/components/react/SpaceBreadcrumb";
 import { useSpaceFiles } from "@/components/react/hooks/useStoracha";
 import { Badge } from "@/components/react/ui/badge";
 import {
@@ -55,7 +56,7 @@ import {
 	useStorachaContext,
 } from "../components/react/StorachaProvider";
 import { StorageProvider } from "../constants/storage-providers";
-import { allEntries$, allSpaces$, uiState$ } from "../livestore/queries";
+import { allEntries$, allSpaces$, useUiState } from "../livestore/queries";
 import { useSync } from "../services/storachaSync";
 
 // Helper functions
@@ -74,7 +75,7 @@ export default function ContentEntriesPage() {
 	const { openSpacesDrawer } = useSpacesDrawer();
 	const navigate = useNavigate();
 
-	const uiState = store.useQuery(uiState$);
+	const [uiState, setUiState] = useUiState();
 	const { client: storachaClient, delegation } = useStorachaContext();
 	const { sync } = useSync(uiState.currentSpaceId);
 	const [isInitialSyncing, setisInitialSyncing] = useState(true);
@@ -241,22 +242,10 @@ export default function ContentEntriesPage() {
 						</div>
 
 						{/* Breadcrumb */}
-						<Breadcrumb>
-							<BreadcrumbList>
-								<BreadcrumbItem>
-									<BreadcrumbLink asChild>
-										<Link to="/">Home</Link>
-									</BreadcrumbLink>
-								</BreadcrumbItem>
-								<BreadcrumbSeparator />
-								<BreadcrumbItem>
-									<BreadcrumbPage>
-										{spaces.find((s) => s.id === uiState.currentSpaceId)
-											?.name || "Unknown Space"}
-									</BreadcrumbPage>
-								</BreadcrumbItem>
-							</BreadcrumbList>
-						</Breadcrumb>
+						<SpaceBreadcrumb
+							spaces={spaces}
+							currentSpaceId={uiState.currentSpaceId}
+						/>
 
 						{/* Filters */}
 						<div className="flex items-center gap-4 flex-wrap">
