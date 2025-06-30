@@ -2,7 +2,6 @@ import { queryDb } from "@livestore/livestore";
 import { useClientDocument } from "@livestore/react";
 import { tables } from "./schema.js";
 
-
 export const useUiState = () => useClientDocument(tables.uiState);
 
 // Query for all entries

@@ -14,8 +14,8 @@ export const tables = {
 			id: State.SQLite.text({ primaryKey: true }),
 			spaceId: State.SQLite.text({ default: "" }), // Associate with space
 			contentTypeId: State.SQLite.text({ default: "" }),
-			title: State.SQLite.text({ default: "" }),
-			content: State.SQLite.text({ default: "" }),
+			name: State.SQLite.text({ default: "" }),
+			data: State.SQLite.text({ default: "" }),
 			storageProviderKey: State.SQLite.text({ default: "" }), // Storacha upload CID
 			tags: State.SQLite.text({ default: "[]" }), // JSON string
 			publishedAt: State.SQLite.integer({
@@ -115,6 +115,7 @@ export const events = {
 		name: "v1.EntryCreated",
 		schema: Schema.Struct({
 			id: Schema.String,
+			name: Schema.String,
 			spaceId: Schema.String,
 			contentTypeId: Schema.String,
 			data: Schema.String,
@@ -128,6 +129,7 @@ export const events = {
 		name: "v1.EntryUpdated",
 		schema: Schema.Struct({
 			id: Schema.String,
+			name: Schema.String,
 			spaceId: Schema.optional(Schema.String),
 			data: Schema.optional(Schema.String),
 			storageProviderKey: Schema.optional(Schema.String),
@@ -222,8 +224,8 @@ const materializers = State.SQLite.materializers(events, {
 		id,
 		spaceId,
 		contentTypeId,
-		title,
-		content,
+		name,
+		data,
 		storageProviderKey,
 		tags,
 		publishedAt,
@@ -232,8 +234,8 @@ const materializers = State.SQLite.materializers(events, {
 			id,
 			spaceId,
 			contentTypeId,
-			title,
-			content,
+			name,
+			data,
 			storageProviderKey,
 			tags,
 			publishedAt,

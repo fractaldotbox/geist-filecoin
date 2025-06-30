@@ -3,6 +3,7 @@ import ky from "ky";
 
 export interface EntryData {
 	id: string;
+	name: string;
 	spaceId: string;
 	contentTypeId: string;
 	data: string;
@@ -62,6 +63,7 @@ export const createEntryDataFromIPFS = async (
 	return {
 		id: cid,
 		spaceId,
+		name: metadata.name || "",
 		contentTypeId: metadata.contentTypeId || "",
 		data: JSON.stringify(data),
 		storageProviderKey: spaceId,

@@ -88,9 +88,6 @@ export const useSync = (spaceId: string) => {
 
 		console.log("syncing", spaceId, "storacha files", uploads.length);
 
-		// Use the entries from the hook call at the top level
-		// const entries = uploads.map((upload) => createEntryData(spaceId, upload));
-
 		for await (const upload of uploads) {
 			const entry = await createEntryDataFromIPFS(spaceId, upload);
 
@@ -105,6 +102,7 @@ export const useSync = (spaceId: string) => {
 			console.log("creating entry", entry.id);
 			await createEntry({
 				...entry,
+				name: entry.name,
 				tags: JSON.parse(entry.tags),
 				publishedAt: entry.publishedAt.toISOString(),
 			});

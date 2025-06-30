@@ -15,6 +15,7 @@ export const useLiveStore = () => {
 		return store.commit(
 			events.entryCreated({
 				id,
+				name: (entryData.name as string) || "",
 				spaceId: (entryData.spaceId as string) || "",
 				contentTypeId: entryData.contentTypeId,
 				data: (entryData.data as string) || "",
@@ -31,6 +32,7 @@ export const useLiveStore = () => {
 		return store.commit(
 			events.entryUpdated({
 				id,
+				name: entryData.name,
 				...entryData,
 			}),
 		);

@@ -314,7 +314,7 @@ export function EntryEditor({
 
 	// Helper to extract and convert entry values for form defaults
 	const getEntryFormDefaults = useCallback(
-		(contentType: ContentType, entry: { [key: string]: any } | undefined) => {
+		(contentType: ContentType, entry: Partial<EntryFormData>) => {
 			if (!entry) return undefined;
 			const result: Record<string, any> = {};
 			for (const key of Object.keys(contentType.properties)) {

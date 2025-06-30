@@ -51,10 +51,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSpacesDrawer } from "../App";
-import {
-	useStorachaClient,
-	useStorachaContext,
-} from "../components/react/StorachaProvider";
+import { useStorachaContext } from "../components/react/StorachaProvider";
 import { StorageProvider } from "../constants/storage-providers";
 import { allEntries$, allSpaces$, useUiState } from "../livestore/queries";
 import { useSync } from "../services/storachaSync";
@@ -85,7 +82,8 @@ export default function ContentEntriesPage() {
 	const [selectedStatus, setSelectedStatus] = useState<
 		"all" | "published" | "draft" | "archived"
 	>("all");
-	const [selectedContentType, setSelectedContentType] = useState<string>("all");
+	const [selectedContentTypeId, setSelectedContentTypeId] =
+		useState<string>("all");
 	const [searchQuery, setSearchQuery] = useState("");
 
 	// Auto-sync when Storacha client and spaces are available
@@ -111,7 +109,6 @@ export default function ContentEntriesPage() {
 			// TODO check race condition on storacha spaceId
 			await sync(uploads);
 			setisInitialSyncing(false);
-			// console.log("files", files);
 		})();
 	}, [
 		storachaClient,
@@ -135,8 +132,6 @@ export default function ContentEntriesPage() {
 			(entry) => entry.spaceId === uiState.currentSpaceId,
 		);
 
-		console.log("uiState", uiState.currentSpaceId);
-		console.log("entries", filtered.length, entries.length);
 		// Filter by time range
 		if (selectedFilter === "recent") {
 			filtered = filtered.filter((entry) => {
@@ -154,9 +149,9 @@ export default function ContentEntriesPage() {
 		}
 
 		// Filter by content type
-		if (selectedContentType !== "all") {
+		if (selectedContentTypeId !== "all") {
 			filtered = filtered.filter(
-				(entry) => entry.contentTypeId === selectedContentType,
+				(entry) => entry.contentTypeId === selectedContentTypeId,
 			);
 		}
 
@@ -165,8 +160,8 @@ export default function ContentEntriesPage() {
 			const query = searchQuery.toLowerCase();
 			filtered = filtered.filter(
 				(entry) =>
-					entry.title?.toLowerCase().includes(query) ||
-					entry.content?.toLowerCase().includes(query) ||
+					entry.name?.toLowerCase().includes(query) ||
+					entry.data?.toLowerCase().includes(query) ||
 					entry.contentTypeId?.toLowerCase().includes(query),
 			);
 		}
@@ -177,7 +172,7 @@ export default function ContentEntriesPage() {
 		uiState.currentSpaceId,
 		selectedFilter,
 		selectedStatus,
-		selectedContentType,
+		selectedContentTypeId,
 		searchQuery,
 	]);
 
@@ -279,8 +274,8 @@ export default function ContentEntriesPage() {
 							</Select>
 
 							<Select
-								value={selectedContentType}
-								onValueChange={setSelectedContentType}
+								value={selectedContentTypeId}
+								onValueChange={setSelectedContentTypeId}
 							>
 								<SelectTrigger className="w-40">
 									<SelectValue placeholder="Content Type" />
@@ -342,13 +337,8 @@ export default function ContentEntriesPage() {
 													<TableCell>
 														<div className="space-y-1">
 															<div className="font-medium">
-																{entry.title || "Untitled"}
+																{entry.name || "Untitled"}
 															</div>
-															{entry.content && (
-																<div className="text-sm text-muted-foreground line-clamp-1">
-																	{entry.content.substring(0, 60)}...
-																</div>
-															)}
 															{entry.tags &&
 																parseTags(entry.tags).length > 0 && (
 																	<div className="flex gap-1">
@@ -413,15 +403,14 @@ export default function ContentEntriesPage() {
 													<TableCell>
 														<div className="flex items-center gap-1">
 															<DropdownMenu>
-																<DropdownMenuTrigger>
-																	<Button
-																		variant="ghost"
-																		size="icon"
-																		className="h-8 w-8"
+																<DropdownMenuTrigger asChild>
+																	<button
+																		type="button"
+																		className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 w-8"
 																		onClick={(e) => e.stopPropagation()}
 																	>
 																		<MoreHorizontal className="w-4 h-4" />
-																	</Button>
+																	</button>
 																</DropdownMenuTrigger>
 																<DropdownMenuContent>
 																	<DropdownMenuItem
@@ -453,7 +442,7 @@ export default function ContentEntriesPage() {
 									<p className="text-muted-foreground mb-4">
 										{searchQuery ||
 										selectedStatus !== "all" ||
-										selectedContentType !== "all" ||
+										selectedContentTypeId !== "all" ||
 										selectedFilter === "recent"
 											? "No content matches your current filters. Try adjusting your search criteria."
 											: "Your space is ready but doesn't have any content entries yet."}
