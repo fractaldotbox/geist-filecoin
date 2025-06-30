@@ -1,0 +1,23 @@
+{
+	"data": {
+		"title": "Awesome Blog Post",
+		"slug": "blog-post",
+		"content": "lorem ipsum dolor sit amet",
+		"author": "John Doe",
+		"heroImage": {
+			"mediaType": "image/jpeg",
+			"url": "/fuji.jpg"
+		},
+		"metaDescription": "A brief description for SEO purposes",
+		"tags": ["blog", "sample"],
+		"publishDate": "2025-06-28T00:00:00.000Z"
+	},
+	"metadata": {
+		"name": "Awesome Blog Post",
+		"contentType": "text/plain",
+		"contentTypeId": "blog",
+		"spaceId": "demo-space",
+		"createdAt": "2025-06-28T00:00:00.000Z",
+		"updatedAt": "2025-06-29T00:00:00.000Z"
+	}
+}
