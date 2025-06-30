@@ -1,5 +1,5 @@
 {
-	"name": "@geist-filecoin/storage",
+	"name": "@geist-filecoin/domain",
 	"type": "module",
 	"version": "0.0.1",
 	"main": "./dist/index.js",

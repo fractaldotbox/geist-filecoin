@@ -1,0 +1,16 @@
+{
+	"data": {
+		"title": "Awesome Blog Post",
+		"slug": "blog-post",
+		"content": "lorem ipsum dolor sit amet",
+		"mediaUrl": "/fuji.jpg"
+	},
+	"metadata": {
+		"name": "Awesome Blog Post",
+		"contentType": "text/plain",
+		"contentTypeId": "blog",
+		"spaceId": "demo-space",
+		"createdAt": "2025-06-28T00:00:00.000Z",
+		"updatedAt": "2025-06-29T00:00:00.000Z"
+	}
+}
