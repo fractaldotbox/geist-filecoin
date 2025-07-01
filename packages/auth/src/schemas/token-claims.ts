@@ -1,4 +1,4 @@
-export const ACCESS_SCHEMA = {
+export const CLAIMS_SCHEMA = {
 	title: "Claims Rule",
 	type: "object",
 	properties: {

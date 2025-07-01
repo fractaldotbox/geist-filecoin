@@ -48,9 +48,9 @@ import { ChevronDown, ChevronsUpDown } from "lucide-react";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import { EAS_RULE_SCHEMA } from "../../../../auth/src/schemas/eas-rule-criteria";
-import { ENV_RULE_SCHEMA } from "../../../../auth/src/schemas/env-rule-criteria";
-import { ACCESS_SCHEMA } from "../../../../auth/src/schemas/rule-access";
+import { EAS_POLICY_SCHEMA } from "../../../../auth/src/schemas/eas-policy-criteria";
+import { ENV_RULE_SCHEMA } from "../../../../auth/src/schemas/env-policy-criteria";
+import { ACCESS_SCHEMA } from "../../../../auth/src/schemas/token-claims";
 
 // --- Utility: Convert JSON Schema to Zod ---
 function jsonSchemaToZod(schema: any) {
@@ -138,7 +138,7 @@ function renderFieldsFromSchema(schema: any, form: any, parentKey = "") {
 
 // --- Dynamic Rule Schemas ---
 const RULE_SCHEMAS = {
-	eas: EAS_RULE_SCHEMA,
+	eas: EAS_POLICY_SCHEMA,
 	env: ENV_RULE_SCHEMA,
 };
 
@@ -237,143 +237,146 @@ export default function AccessControlPanel() {
 
 	return (
 		<div className="max-w-xl mx-auto py-10 space-y-8">
-			{/* Add Rule Dialog */}
-			<Dialog>
-				<DialogTrigger asChild>
-					<Button variant="default">Add Rule</Button>
-				</DialogTrigger>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Create Access Rule</DialogTitle>
-					</DialogHeader>
-					<FormProvider {...form}>
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-6"
-							>
-								{/* Rule Criteria Type Selector */}
-								<FormField
-									control={form.control}
-									name="criteriaType"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Rule Criteria Type</FormLabel>
-											<FormControl>
-												<Select
-													value={String(field.value)}
-													onValueChange={(val) => {
-														setCriteriaType(val as RuleCriteriaType);
-														field.onChange(val);
-													}}
-												>
-													<SelectTrigger>
-														<SelectValue placeholder="Select rule type" />
-													</SelectTrigger>
-													<SelectContent>
-														{RULE_CRITERIA_TYPES.map((type) => (
-															<SelectItem key={type.value} value={type.value}>
-																{type.label}
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								{/* Dynamic Criteria Fields */}
-								{renderFieldsFromSchema(RULE_SCHEMAS[criteriaType], form)}
-								{/* Claims Fields (always shown) */}
-								<hr />
-								<h3>Access Token Type</h3>
-								<FormField
-									control={form.control}
-									name="claims.tokenType"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Token Type</FormLabel>
-											<FormControl>
-												<Select
-													value={String(field.value)}
-													onValueChange={(val) => {
-														setTokenType(val);
-														field.onChange(val);
-													}}
-												>
-													<SelectTrigger>
-														<SelectValue placeholder="Select Token Type" />
-													</SelectTrigger>
-													<SelectContent>
-														{TOKEN_TYPES.map((type) => (
-															<SelectItem key={type.value} value={type.value}>
-																{type.label}
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<div>
-									<FormLabel>Claims</FormLabel>
+			<div className="container">
+				{/* Add Rule Dialog */}
+				<Dialog>
+					<DialogTrigger asChild>
+						<Button variant="default">Add Rule</Button>
+					</DialogTrigger>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>Create Access Rule</DialogTitle>
+						</DialogHeader>
+						<FormProvider {...form}>
+							<Form {...form}>
+								<form
+									onSubmit={form.handleSubmit(onSubmit)}
+									className="space-y-6"
+								>
+									{/* Rule Criteria Type Selector */}
 									<FormField
 										control={form.control}
-										name="claims.claims"
+										name="criteriaType"
 										render={({ field }) => (
 											<FormItem>
-												<div className="flex flex-col gap-2">
-													{getClaimsOptions(tokenType).map((claim: string) => {
-														const value: string[] = Array.isArray(field.value)
-															? field.value
-															: [];
-														return (
-															<label
-																key={claim}
-																className="flex items-center gap-2"
-															>
-																<input
-																	type="checkbox"
-																	checked={value.includes(claim)}
-																	onChange={(e) => {
-																		if (e.target.checked) {
-																			field.onChange([...value, claim]);
-																		} else {
-																			field.onChange(
-																				value.filter(
-																					(v: string) => v !== claim,
-																				),
-																			);
-																		}
-																	}}
-																/>
-																<span>{claim}</span>
-															</label>
-														);
-													})}
-												</div>
+												<FormLabel>Rule Criteria Type</FormLabel>
+												<FormControl>
+													<Select
+														value={String(field.value)}
+														onValueChange={(val) => {
+															setCriteriaType(val as RuleCriteriaType);
+															field.onChange(val);
+														}}
+													>
+														<SelectTrigger>
+															<SelectValue placeholder="Select rule type" />
+														</SelectTrigger>
+														<SelectContent>
+															{RULE_CRITERIA_TYPES.map((type) => (
+																<SelectItem key={type.value} value={type.value}>
+																	{type.label}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+												</FormControl>
 												<FormMessage />
 											</FormItem>
 										)}
 									/>
-								</div>
-								<Button type="submit">Create Rule</Button>
-							</form>
-						</Form>
-					</FormProvider>
-					{submitted && (
-						<div className="mt-8">
-							<h3 className="font-semibold mb-2">Rule JSON</h3>
-							<pre className="bg-muted p-4 rounded text-xs overflow-x-auto">
-								{JSON.stringify(submitted, null, 2)}
-							</pre>
-						</div>
-					)}
-				</DialogContent>
-			</Dialog>
+									{/* Dynamic Criteria Fields */}
+									{renderFieldsFromSchema(RULE_SCHEMAS[criteriaType], form)}
+									{/* Claims Fields (always shown) */}
+									<hr />
+									<h3>Access Token Type</h3>
+									<FormField
+										control={form.control}
+										name="claims.tokenType"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Token Type</FormLabel>
+												<FormControl>
+													<Select
+														value={String(field.value)}
+														onValueChange={(val) => {
+															setTokenType(val);
+															field.onChange(val);
+														}}
+													>
+														<SelectTrigger>
+															<SelectValue placeholder="Select Token Type" />
+														</SelectTrigger>
+														<SelectContent>
+															{TOKEN_TYPES.map((type) => (
+																<SelectItem key={type.value} value={type.value}>
+																	{type.label}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<div>
+										<FormLabel>Claims</FormLabel>
+										<FormField
+											control={form.control}
+											name="claims.claims"
+											render={({ field }) => (
+												<FormItem>
+													<div className="flex flex-col gap-2">
+														{getClaimsOptions(tokenType).map((claim: string) => {
+															const value: string[] = Array.isArray(field.value)
+																? field.value
+																: [];
+															return (
+																<label
+																	key={claim}
+																	className="flex items-center gap-2"
+																>
+																	<input
+																		type="checkbox"
+																		checked={value.includes(claim)}
+																		onChange={(e) => {
+																			if (e.target.checked) {
+																				field.onChange([...value, claim]);
+																			} else {
+																				field.onChange(
+																					value.filter(
+																						(v: string) => v !== claim,
+																					),
+																				);
+																			}
+																		}}
+																	/>
+																	<span>{claim}</span>
+																</label>
+															);
+														})}
+													</div>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</div>
+									<Button type="submit">Create Rule</Button>
+								</form>
+							</Form>
+						</FormProvider>
+						{submitted && (
+							<div className="mt-8">
+								<h3 className="font-semibold mb-2">Rule JSON</h3>
+								<pre className="bg-muted p-4 rounded text-xs overflow-x-auto">
+									{JSON.stringify(submitted, null, 2)}
+								</pre>
+							</div>
+						)}
+					</DialogContent>
+				</Dialog>
+			</div>
+
 			<AccessRuleList
 				rules={rules as any[]}
 				expandedRuleId={expandedRuleId}
