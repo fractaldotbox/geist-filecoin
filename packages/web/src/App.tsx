@@ -4,6 +4,7 @@ import { Navigation } from "@/components/react/Navigation";
 import { SpacesDrawer } from "@/components/react/SpacesDrawer";
 import ContentEntriesPage from "@/pages/ContentEntriesPage";
 import SpacesPage from "@/pages/SpacesPage";
+import AccessControlPage from "@/pages/admin/AccessControlPanel";
 import ContentTypeEditorPage from "@/pages/editor/ContentTypeEditorPage";
 import ContentTypeSelectPage from "@/pages/editor/ContentTypeSelectPage";
 import EntryEditorPage from "@/pages/editor/EntryEditorPage";
@@ -57,6 +58,10 @@ function App() {
 						<Route
 							path="/space/:spaceId/entries"
 							element={<ContentEntriesPage />}
+						/>
+						<Route
+							path="/space/:spaceId/iam"
+							element={<AccessControlPage />}
 						/>
 						<Route path="/spaces" element={<SpacesPage />} />
 						<Route

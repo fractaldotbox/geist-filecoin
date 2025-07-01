@@ -102,3 +102,26 @@ export const latestStorageAuthorizationForSpace$ = (spaceId: string) =>
 				.first({ fallback: () => null }),
 		{ label: `latestStorageAuthorizationForSpace-${spaceId}` },
 	);
+
+// Query for all access rules
+export const allAccessRules$ = queryDb(
+	(get) =>
+		tables.accessRules.orderBy("createdAt", "desc"),
+	{ label: "allAccessRules" },
+);
+
+// Query for access rules by space
+export const accessRulesBySpace$ = (spaceId: string) =>
+	queryDb(
+		(get) =>
+			tables.accessRules
+				.where({ spaceId })
+				.orderBy("createdAt", "desc"),
+		{ label: `accessRulesBySpace-${spaceId}` },
+	);
+
+// Query for a specific access rule
+export const accessRuleById$ = (id: string) =>
+	queryDb((get) => tables.accessRules.where({ id }).first(), {
+		label: `accessRuleById-${id}`,
+	});
