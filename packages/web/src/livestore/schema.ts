@@ -392,7 +392,14 @@ const materializers = State.SQLite.materializers(events, {
 			updatedAt: new Date(),
 		}),
 
-	"v1.AccessRuleCreated": ({ id, spaceId, criteriaType, criteria, access, createdAt }) =>
+	"v1.AccessRuleCreated": ({
+		id,
+		spaceId,
+		criteriaType,
+		criteria,
+		access,
+		createdAt,
+	}) =>
 		tables.accessRules.insert({
 			id,
 			spaceId,
@@ -409,8 +416,7 @@ const materializers = State.SQLite.materializers(events, {
 		return tables.accessRules.update(updateData).where({ id });
 	},
 
-	"v1.AccessRuleDeleted": ({ id }) =>
-		tables.accessRules.delete().where({ id }),
+	"v1.AccessRuleDeleted": ({ id }) => tables.accessRules.delete().where({ id }),
 });
 
 const state = State.SQLite.makeState({ tables, materializers });

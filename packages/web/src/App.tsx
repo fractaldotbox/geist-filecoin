@@ -59,10 +59,7 @@ function App() {
 							path="/space/:spaceId/entries"
 							element={<ContentEntriesPage />}
 						/>
-						<Route
-							path="/space/:spaceId/iam"
-							element={<AccessControlPage />}
-						/>
+						<Route path="/space/:spaceId/iam" element={<AccessControlPage />} />
 						<Route path="/spaces" element={<SpacesPage />} />
 						<Route
 							path="/editor/space/:spaceId/content-type/select"
