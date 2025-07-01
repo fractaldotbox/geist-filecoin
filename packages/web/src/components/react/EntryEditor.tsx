@@ -14,108 +14,177 @@ import { Card } from "@/components/react/ui/card";
 import { Form, FormField } from "@/components/react/ui/form";
 import { simulateProgress } from "@/components/react/ui/global-progress";
 import {
-	type Schema,
-	type SchemaField,
-	loadSchema,
-	schemaStore,
+	allEntries$,
+	entryById$,
+	firstSpace$,
+	latestStorageAuthorizationForSpace$,
+} from "@/livestore/queries";
+import {
+	type ContentType,
+	type ContentTypeField,
+	useContentType,
 } from "@/stores/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useStore } from "@nanostores/react";
 import ky from "ky";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
 import { MarkdownField } from "./fields/MarkdownField";
+import { useLiveStore } from "./hooks/useLiveStore";
 
-// This would normally be imported from the Lighthouse SDK
-// import lighthouse from "@lighthouse-web3/sdk";
+import * as Client from "@web3-storage/w3up-client";
+import { Signer } from "@web3-storage/w3up-client/principal/ed25519";
+import * as Proof from "@web3-storage/w3up-client/proof";
+import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
+import { useParams } from "react-router-dom";
 
-/**
- * Uploads a file to IPFS using Lighthouse
- */
-async function uploadFileToLighthouse(
-	file: File,
-	progressCallback?: (progress: number) => void,
-): Promise<{ cid: string; url: string }> {
-	// Simulate uploading for now
-	// When the SDK is properly installed, replace this with actual lighthouse upload
-	// const output = await lighthouse.upload(file, process.env.LIGHTHOUSE_API_KEY);
-
-	// Simulate progress
-	for (let i = 0; i <= 10; i++) {
-		if (progressCallback) {
-			progressCallback(i / 10);
-		}
-		await new Promise((resolve) => setTimeout(resolve, 300));
-	}
-
-	// Simulate final response
-	const randomCid = `bafybeig${Math.random().toString(36).substring(2, 10)}`;
-	return {
-		cid: randomCid,
-		url: `https://gateway.lighthouse.storage/ipfs/${randomCid}`,
-	};
+// Upload mode enum
+export enum UploadMode {
+	StorachaDelegated = "storacha_delegated",
+	Server = "server",
 }
 
-// New API endpoint upload function
-async function submitContent(
-	values: EntryFormData,
+/**
+ * Uploads a file directly to Storacha using delegated token
+ */
+async function uploadFileToStoracha(
+	file: File,
+	delegatedToken: string,
 	progressCallback?: (progress: number) => void,
 ): Promise<{ cid: string; url: string }> {
 	try {
-		console.log("submit", values);
-
-		const media = values?.media as FileFieldValue;
-		let uploadResponse: { url: string; cid: string } | undefined;
-
-		// Create a copy of the values to modify
-		const submissionData = { ...values };
-
-		// Check if media has a URL starting with blob: (which means it's a local file reference)
-		if (media?.file) {
-			// Create FormData for file upload
-			const formData = new FormData();
-			formData.append("file", media.file);
-
-			uploadResponse = (await ky
-				.post("/api/upload", {
-					body: formData,
-				})
-				.json()) as { url: string; cid: string };
-
-			console.log("uploadResponse", uploadResponse);
-			// Update the media object with the remote URL and CID
-			//@ts-ignore
-			submissionData.media = {
-				mediaType: media.mediaType,
-				cid: uploadResponse.cid,
-			};
+		if (!delegatedToken) {
+			throw new Error("Storacha delegated token not found");
 		}
 
-		const response = await ky.post("/api/submit", {
-			json: submissionData,
-			headers: {
-				"Content-Type": "application/json",
+		// Report initial progress
+		if (progressCallback) {
+			progressCallback(0.1);
+		}
+
+		// Create Storacha client
+		const storachaStore = new StoreMemory();
+		const client = await Client.create({ store: storachaStore });
+
+		if (progressCallback) {
+			progressCallback(0.2);
+		}
+
+		// Parse the delegated proof
+		const proof = await Proof.parse(delegatedToken);
+		const space = await client.addSpace(proof);
+		await client.setCurrentSpace(space.did());
+
+		if (progressCallback) {
+			progressCallback(0.4);
+		}
+
+		// Upload the file using the Storacha client
+		const cid = await client.uploadFile(file, {
+			onShardStored: () => {
+				// Update progress as shards are stored
+				if (progressCallback) {
+					progressCallback(0.8);
+				}
 			},
 		});
 
-		if (!response.ok) {
-			const errorData = (await response.json()) as { message?: string };
-			throw new Error(errorData.message || "Upload failed");
-		}
-
-		const data = (await response.json()) as { cid: string; url: string };
-
-		// Call progress callback with completion
 		if (progressCallback) {
 			progressCallback(1);
 		}
 
 		return {
-			cid: data.cid,
-			url: data.url,
+			cid: cid.toString(),
+			url: `https://w3s.link/ipfs/${cid}`,
+		};
+	} catch (error) {
+		console.error("Storacha upload error:", error);
+		throw error;
+	}
+}
+
+/**
+ * Uploads a file to server endpoint
+ */
+async function uploadFileWithApi(
+	file: File,
+	progressCallback?: (progress: number) => void,
+): Promise<{ cid: string; url: string }> {
+	try {
+		// Create FormData for file upload
+		const formData = new FormData();
+		formData.append("file", file);
+
+		if (progressCallback) {
+			progressCallback(0.5);
+		}
+
+		const uploadResponse = (await ky
+			.post("/api/upload", {
+				body: formData,
+			})
+			.json()) as { url: string; cid: string };
+
+		console.log("uploadResponse", uploadResponse);
+
+		// Call progress callback
+		if (progressCallback) {
+			progressCallback(1);
+		}
+
+		return {
+			cid: uploadResponse.cid,
+			url: uploadResponse.url,
+		};
+	} catch (error) {
+		console.error("API upload error:", error);
+		throw error;
+	}
+}
+
+// Function to handle file upload before creating entry event
+async function uploadFile(
+	media: FileFieldValue | undefined,
+	uploadMode: UploadMode = UploadMode.StorachaDelegated,
+	progressCallback?: (progress: number) => void,
+	delegatedToken?: string,
+): Promise<{ url: string; cid: string }> {
+	console.log("uploadFile", media, uploadMode);
+	// If no media or media doesn't have a file, return empty values
+	if (!media || !media.file) {
+		return {
+			url: media?.url || "",
+			cid: media?.cid || "",
+		};
+	}
+
+	try {
+		let uploadResult: { cid: string; url: string };
+
+		// Branch between upload modes
+		switch (uploadMode) {
+			case UploadMode.StorachaDelegated:
+				if (!delegatedToken) {
+					throw new Error("Delegated token is required for Storacha upload");
+				}
+				uploadResult = await uploadFileToStoracha(
+					media.file,
+					delegatedToken,
+					progressCallback,
+				);
+				break;
+			case UploadMode.Server:
+				uploadResult = await uploadFileWithApi(media.file, progressCallback);
+				break;
+			default:
+				throw new Error(`Unknown upload mode: ${uploadMode}`);
+		}
+
+		return {
+			url: uploadResult.url,
+			cid: uploadResult.cid,
 		};
 	} catch (error) {
 		console.error("Upload error:", error);
@@ -123,8 +192,47 @@ async function submitContent(
 	}
 }
 
-export function EntryEditor({ schemaId }: { schemaId?: string }) {
-	const schema = useStore(schemaStore);
+export function EntryEditor({
+	entryId,
+}: {
+	entryId?: string;
+}) {
+	console.log("EntryEditor", entryId);
+
+	const [isLoaded, setIsLoaded] = useState(false);
+
+	const { store, createEntry } = useLiveStore();
+	const entry = store.useQuery(entryById$(entryId || ""));
+
+	// Use LiveStore-based content type hooks and entry creation
+	const contentTypeData = useContentType(entry.contentTypeId);
+
+	// Get active space and its storage authorization
+	const activeSpace = store.useQuery(firstSpace$);
+	const storageAuth = activeSpace
+		? store.useQuery(latestStorageAuthorizationForSpace$(activeSpace.id))
+		: null;
+
+	useEffect(() => {
+		return store.subscribe(allEntries$, {
+			onUpdate: (newValue) => {
+				console.log("allEntries", newValue);
+			},
+		});
+	}, [store]);
+
+	const contentType = contentTypeData
+		? {
+				type: "object" as const,
+				...contentTypeData,
+				properties: JSON.parse(contentTypeData.properties) as Record<
+					string,
+					ContentTypeField
+				>,
+				required: JSON.parse(contentTypeData.required) as string[],
+			}
+		: null;
+
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [isAnimated, setIsAnimated] = useState(false);
@@ -132,16 +240,15 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 		{ cid: string; url: string } | undefined
 	>(undefined);
 
-	// Create form schema based on the loaded schema
-	const createFormSchema = (schema: Schema) => {
+	// Create form schema based on the loaded content type
+	const createFormSchema = (contentType: ContentType) => {
 		const schemaShape: Record<string, z.ZodTypeAny> = {};
 
-		for (const [key, field] of Object.entries(schema.properties)) {
-			const isRequired = schema.required.includes(key);
+		for (const [key, field] of Object.entries(contentType.properties)) {
+			const isRequired = contentType.required.includes(key);
 
-			if (field.type === "object" && field.properties?.mediaType) {
+			if (field.type === "object" && field.properties?.url) {
 				schemaShape.media = z.object({
-					mediaType: z.string().optional(),
 					url: z.string().optional(),
 					file: z.instanceof(File).optional(),
 					cid: z.string().optional(), // Add the cid property to fix the linter error
@@ -167,12 +274,105 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 		return z.object(schemaShape);
 	};
 
-	const formSchema = schema ? createFormSchema(schema) : z.object({});
+	// Create default values based on content type and entry data
+	const createDefaultValues = useCallback(
+		(
+			contentType: ContentType,
+			entryFormData?: EntryFormData,
+		): EntryFormData => {
+			const defaultValues: EntryFormData = {};
+
+			for (const key of Object.keys(contentType.properties)) {
+				const field = contentType.properties[key];
+				if (!field) continue;
+
+				if (entryFormData && entryFormData[key] !== undefined) {
+					let value = entryFormData[key];
+					// Convert Date/null to string for date fields
+					if (field.type === "string" && field.format === "date") {
+						if (value instanceof Date) {
+							value = value.toISOString().slice(0, 10);
+						} else if (value === null) {
+							value = "";
+						}
+					}
+					defaultValues[key] = value;
+				} else if (field.type === "array") {
+					defaultValues[key] = [];
+				} else if (field.type === "object" && field.properties?.url) {
+					defaultValues[key] = { url: "" };
+				} else if (field.type === "string" && field.format === "date") {
+					defaultValues[key] = "";
+				} else {
+					defaultValues[key] = "";
+				}
+			}
+			return defaultValues;
+		},
+		[],
+	);
+
+	// Helper to extract and convert entry values for form defaults
+	const getEntryFormDefaults = useCallback(
+		(contentType: ContentType, entry: Partial<EntryFormData>) => {
+			if (!entry) return undefined;
+			const result: Record<string, any> = {};
+			for (const key of Object.keys(contentType.properties)) {
+				const field = contentType.properties[key];
+				if (!field) continue;
+				let value = entry[key];
+				if (field.type === "string" && field.format === "date") {
+					if (value instanceof Date) {
+						value = value.toISOString().slice(0, 10);
+					} else if (value === null) {
+						value = "";
+					}
+				}
+				result[key] = value;
+			}
+			return result;
+		},
+		[],
+	);
+
+	const formSchema = contentType ? createFormSchema(contentType) : z.object({});
+	// Only set defaultValues after entry is loaded (if editing)
+	const initialDefaultValues = contentType
+		? createDefaultValues(
+				contentType,
+				entryId && entry ? getEntryFormDefaults(contentType, entry) : undefined,
+			)
+		: {};
+
 	const form = useForm<EntryFormData>({
 		resolver: zodResolver(formSchema),
-		defaultValues: {},
-		mode: "onTouched", // Validate on blur
+		defaultValues: initialDefaultValues,
+		mode: "onTouched",
 	});
+
+	// Reset form values when entry is loaded (for editing)
+	useEffect(() => {
+		if (isLoaded) {
+			return;
+		}
+		if (contentType && entryId && entry) {
+			const entryData = JSON.parse(entry.data);
+			const entryDefaults = createDefaultValues(
+				contentType,
+				getEntryFormDefaults(contentType, entryData),
+			);
+			form.reset(entryDefaults);
+		}
+		setIsLoaded(true);
+	}, [
+		isLoaded,
+		contentType,
+		entryId,
+		entry,
+		form,
+		createDefaultValues,
+		getEntryFormDefaults,
+	]);
 
 	// Track form state for errors and dirty fields
 	const { errors, dirtyFields } = useFormState({
@@ -180,67 +380,66 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 	});
 
 	useEffect(() => {
-		// Get template type from URL or use the schemaId passed from props
-		const params = new URLSearchParams(window.location.search);
-		const template = schemaId || params.get("template") || "blog";
-
-		loadSchema(template);
-	}, [schemaId]);
-
-	useEffect(() => {
-		if (schema) {
-			// Initialize form with empty values
-			const defaultValues: EntryFormData = {};
-			for (const key of Object.keys(schema.properties)) {
-				if (schema.properties[key].type === "array") {
-					defaultValues[key] = [];
-				} else if (
-					schema.properties[key].type === "object" &&
-					schema.properties[key].properties?.mediaType
-				) {
-					defaultValues[key] = { mediaType: "", url: "" };
-				} else if (
-					schema.properties[key].type === "string" &&
-					schema.properties[key].format === "date"
-				) {
-					defaultValues[key] = undefined; // Default date fields to undefined
-				} else {
-					defaultValues[key] = "";
-				}
-			}
-			form.reset(defaultValues);
-
+		if (contentType && contentTypeData) {
 			// Trigger animation after form is initialized
 			setTimeout(() => {
 				setIsAnimated(true);
 			}, 100);
 		}
-	}, [schema, form]);
+	}, [contentType, contentTypeData]);
 
-	// Decouple the file upload and metadata upload
-	// as easier to use form-data for the file upload
-	// and json for the metadata upload
-
+	// Create entry using LiveStore events instead of direct API calls
 	const onSubmit = async (values: EntryFormData) => {
 		setIsSubmitting(true);
 		setSubmissionResult(undefined); // Reset submission result
 		console.log("debug:", values, typeof values);
 		try {
+			// TODO extract as space attribute
+			const uploadMode = UploadMode.StorachaDelegated;
 			// Show global progress bar
 			await simulateProgress();
 
-			const uploadResult = await submitContent(values, (progress) => {
-				setUploadProgress(progress);
+			// Get delegated token from storage authorization if using Storacha mode
+			let delegatedToken: string | undefined;
+			if (uploadMode === UploadMode.StorachaDelegated) {
+				if (!storageAuth || !storageAuth.delegationCid) {
+					throw new Error(
+						"No Storacha storage authorization found for the active space",
+					);
+				}
+				delegatedToken = storageAuth.delegationCid;
+			}
+
+			// Handle file upload if needed with specified upload mode
+			const media = values?.media as FileFieldValue | undefined;
+			const { url, cid } = await uploadFile(
+				media,
+				uploadMode,
+				(progress: number) => {
+					setUploadProgress(progress);
+				},
+				delegatedToken,
+			);
+
+			// Create entry using LiveStore event
+			await createEntry({
+				id: cid,
+				...values,
+				// TODO allow configure per schema
+				name: values.title,
+				contentTypeId: entry.contentTypeId,
+				media: { url: url, cid: cid },
 			});
 
-			console.log("uploadResult", uploadResult);
-			// Process the submission with uploaded files
-			console.log("Form submitted with processed data:", values);
+			console.log("Entry created successfully");
 
-			// Set the submission result
-			setSubmissionResult(uploadResult);
+			// Set the submission result for the sidebar
+			setSubmissionResult({
+				cid: cid || "local",
+				url: url || "local",
+			});
 		} catch (error) {
-			console.error("Error submitting form:", error);
+			console.error("Error creating entry:", error);
 		} finally {
 			setIsSubmitting(false);
 			setUploadProgress(0);
@@ -249,15 +448,19 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 
 	const onInvalidSubmit = () => {
 		// Mark all required fields as touched to show validation errors
-		if (schema) {
-			for (const field of schema.required) {
+		if (contentType) {
+			for (const field of contentType.required) {
 				form.trigger(field);
 			}
 		}
 	};
 
-	const renderField = (name: string, field: SchemaField, index: number) => {
-		const isRequired = Boolean(schema?.required.includes(name));
+	const renderField = (
+		name: string,
+		field: ContentTypeField,
+		index: number,
+	) => {
+		const isRequired = Boolean(contentType?.required.includes(name));
 		// A field is dirty if it's been touched by the user or if the form has been submitted
 		const isDirty = !!dirtyFields[name] || form.formState.isSubmitted;
 		const error = errors[name]?.message as string | undefined;
@@ -266,7 +469,7 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 		const delayClass = isAnimated ? `delay-${Math.min(index * 100, 500)}` : "";
 		const animationClass = isAnimated ? "field-slide-up" : "opacity-0";
 
-		if (field.type === "object" && field.properties?.mediaType) {
+		if (field.type === "object" && field.properties?.url) {
 			// use separate field
 			return (
 				<FormField
@@ -366,7 +569,7 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 		);
 	};
 
-	if (!schema) {
+	if (!contentType || (entryId && !entry)) {
 		return <div>Loading...</div>;
 	}
 
@@ -380,8 +583,8 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 								onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)}
 								className="space-y-6"
 							>
-								{Object.entries(schema.properties).map(([name, field], index) =>
-									renderField(name, field, index),
+								{Object.entries(contentType.properties).map(
+									([name, field], index) => renderField(name, field, index),
 								)}
 								<Button
 									type="submit"
@@ -404,7 +607,10 @@ export function EntryEditor({ schemaId }: { schemaId?: string }) {
 					</Card>
 				</div>
 				<div className="md:col-span-1 sticky top-6">
-					<EditorSidebar schema={schema} submissionResult={submissionResult} />
+					<EditorSidebar
+						contentType={contentType}
+						submissionResult={submissionResult}
+					/>
 				</div>
 			</div>
 		</div>
