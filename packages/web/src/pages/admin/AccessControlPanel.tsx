@@ -327,34 +327,38 @@ export default function AccessControlPanel() {
 											render={({ field }) => (
 												<FormItem>
 													<div className="flex flex-col gap-2">
-														{getClaimsOptions(tokenType).map((claim: string) => {
-															const value: string[] = Array.isArray(field.value)
-																? field.value
-																: [];
-															return (
-																<label
-																	key={claim}
-																	className="flex items-center gap-2"
-																>
-																	<input
-																		type="checkbox"
-																		checked={value.includes(claim)}
-																		onChange={(e) => {
-																			if (e.target.checked) {
-																				field.onChange([...value, claim]);
-																			} else {
-																				field.onChange(
-																					value.filter(
-																						(v: string) => v !== claim,
-																					),
-																				);
-																			}
-																		}}
-																	/>
-																	<span>{claim}</span>
-																</label>
-															);
-														})}
+														{getClaimsOptions(tokenType).map(
+															(claim: string) => {
+																const value: string[] = Array.isArray(
+																	field.value,
+																)
+																	? field.value
+																	: [];
+																return (
+																	<label
+																		key={claim}
+																		className="flex items-center gap-2"
+																	>
+																		<input
+																			type="checkbox"
+																			checked={value.includes(claim)}
+																			onChange={(e) => {
+																				if (e.target.checked) {
+																					field.onChange([...value, claim]);
+																				} else {
+																					field.onChange(
+																						value.filter(
+																							(v: string) => v !== claim,
+																						),
+																					);
+																				}
+																			}}
+																		/>
+																		<span>{claim}</span>
+																	</label>
+																);
+															},
+														)}
 													</div>
 													<FormMessage />
 												</FormItem>

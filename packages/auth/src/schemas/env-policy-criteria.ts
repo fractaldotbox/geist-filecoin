@@ -14,7 +14,7 @@ export const ENV_RULE_SCHEMA = {
 	required: ["didPattern", "claims"],
 };
 
-export const checkEnvCriteria = async (policyConfig: any, input: AuthInput)=>{
+export const checkEnvCriteria = async (policyConfig: any, input: AuthInput) => {
 	const { whitelistEnvKey } = policyConfig;
 
 	const whitelist = input.env[whitelistEnvKey];
@@ -32,5 +32,4 @@ export const checkEnvCriteria = async (policyConfig: any, input: AuthInput)=>{
 	}
 
 	return true;
-}
-
+};
