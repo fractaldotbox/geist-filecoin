@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { processPolicies } from "./policy-engine";
 import type { AccessPolicy, AuthInput } from "./schemas/access-policy";
+import { match } from "ts-pattern";
 
 describe("processPolicies", () => {
 	let mockAuthInput: AuthInput;

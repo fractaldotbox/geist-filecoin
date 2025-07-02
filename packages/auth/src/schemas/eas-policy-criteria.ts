@@ -21,12 +21,12 @@ export const EAS_POLICY_SCHEMA = {
 };
 
 export const checkEasRule = async (policyConfig: any, input: AuthInput) => {
-	// const {schemaId, field} = policyConfig;
+	const {schemaId, field} = policyConfig;
 
 	const { subject, context } = input;
 
-	// query data
-
+	// query indexed data
+	// TODO
 	// const schema = await getSchema(schemaId);
 	const isValid = true;
 	// const isValid = validate(rule, EAS_POLICY_SCHEMA);

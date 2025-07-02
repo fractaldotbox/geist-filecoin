@@ -1,9 +1,9 @@
 import type { AuthInput } from "./input";
 
-export const ENV_RULE_SCHEMA = {
+export const ENV_POLICY_SCHEMA = {
 	title: "Access Rule",
 	type: "object",
-	key: "env-rule-criteria",
+	key: "env-policy-criteria",
 	properties: {
 		whitelistEnvKey: {
 			type: "string",
@@ -17,7 +17,7 @@ export const ENV_RULE_SCHEMA = {
 export const checkEnvCriteria = async (policyConfig: any, input: AuthInput) => {
 	const { whitelistEnvKey } = policyConfig;
 
-	const whitelist = input.env[whitelistEnvKey];
+	const whitelist = input.context.env[whitelistEnvKey];
 
 	if (!whitelist) {
 		return false;

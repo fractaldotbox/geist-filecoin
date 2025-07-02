@@ -1,6 +1,8 @@
-import type { AccessPolicy, AuthInput } from "./schemas/access-policy";
+import type { Access, AccessPolicy, AuthInput } from "./schemas/access-policy";
 import { checkEasRule } from "./schemas/eas-policy-criteria";
 import { checkEnvCriteria } from "./schemas/env-policy-criteria";
+import {  createClaimsGenerationRequest } from "./schemas/token-claims";
+import { createDelegationWithCapabilities, createUserDelegation } from "@geist-filecoin/storage";
 
 export const processorsByPolicyType = {
 	env: checkEnvCriteria,
@@ -8,37 +10,47 @@ export const processorsByPolicyType = {
 };
 
 // union topkens / claims
+// TODO aggregate by spaceId
 export const processPolicies = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
 ) => {
-	const claimsByTokenType = new Map<string, Set<string>>();
+	const accessByTokenType: Record<string, Access> = {};
+
 	for (const policy of policies) {
 		const processor =
 			processorsByPolicyType[
 				policy.policyType as keyof typeof processorsByPolicyType
 			];
 		if (processor) {
-			const result = await processor(policy.policyConfig, input);
-			if (result) {
-				const existing = claimsByTokenType.get(policy.tokenType);
-				if (existing) {
-					for (const claim of policy.claims) {
-						existing.add(claim);
-					}
-					claimsByTokenType.set(policy.tokenType, existing);
-				} else {
-					claimsByTokenType.set(policy.tokenType, new Set(policy.claims));
-				}
+			const isAccessible = await processor(policy.policyCriteria, input);
+			if (isAccessible) {
+				// TODO handle union
+				accessByTokenType[policy.tokenType]= policy.policyAccess;
 			}
 		}
 	}
 
-	return claimsByTokenType;
+	return accessByTokenType;
 };
 
-// export const authorize = async (policies: AccessPolicy[], input: AuthInput)=>{
-//     const result = await processPolicies(policies, input);
 
-//     return result;
-// }
+
+export const authorize = async (policies: AccessPolicy[], input: AuthInput, config: {
+	serverAgentKeyString: string;
+	proofString: string;
+})=>{
+    const accessByTokenType = await processPolicies(policies, input);
+
+	const byTokenType = createClaimsGenerationRequest(accessByTokenType, input);
+
+	
+	const { delegation, client, space } = await createUserDelegation({
+		userDid: input.subject,
+		// TODO
+		serverAgentKeyString: config.serverAgentKeyString,
+		proofString: config.proofString,
+	})
+
+    return [];
+}

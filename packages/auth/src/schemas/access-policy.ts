@@ -1,10 +1,15 @@
 import type { AuthInput, Did } from "./input";
 
-export type AccessPolicy = {
-	policyType: string;
-	policyConfig: any;
-	tokenType: string;
+export type Access = {
 	claims: string[];
+	metadata: Record<string, string>;
+}
+
+export type AccessPolicy = {
+	tokenType: string;
+	policyType: string;
+	policyCriteria: Record<string, any>;
+	policyAccess: Access;
 };
 
 export type Processor = (policyConfig: any, input: AuthInput) => boolean;

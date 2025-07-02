@@ -2,14 +2,6 @@ import AccessRuleList from "@/components/react/AccessRuleList";
 import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import { Button } from "@/components/react/ui/button";
 import {
-	Card,
-	CardAction,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/react/ui/card";
-import {
 	Dialog,
 	DialogClose,
 	DialogContent,
@@ -39,18 +31,10 @@ import { useUiState } from "@/livestore/queries";
 import { allAccessRules$ } from "@/livestore/queries";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useStore } from "@livestore/react";
-import {
-	Root as Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@radix-ui/react-collapsible";
-import { ChevronDown, ChevronsUpDown } from "lucide-react";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import { EAS_POLICY_SCHEMA } from "../../../../auth/src/schemas/eas-policy-criteria";
-import { ENV_RULE_SCHEMA } from "../../../../auth/src/schemas/env-policy-criteria";
-import { CLAIMS_SCHEMA } from "../../../../auth/src/schemas/token-claims";
+import { EAS_POLICY_SCHEMA, ENV_POLICY_SCHEMA, CLAIMS_SCHEMA } from "@geist-filecoin/auth";
 
 // --- Utility: Convert JSON Schema to Zod ---
 function jsonSchemaToZod(schema: any) {
@@ -139,7 +123,7 @@ function renderFieldsFromSchema(schema: any, form: any, parentKey = "") {
 // --- Dynamic Rule Schemas ---
 const RULE_SCHEMAS = {
 	eas: EAS_POLICY_SCHEMA,
-	env: ENV_RULE_SCHEMA,
+	env: ENV_POLICY_SCHEMA,
 };
 
 const POLICY_CRITERIA_TYPES = [
@@ -165,6 +149,7 @@ type TokenType = (typeof TOKEN_TYPE_VALUES)[number];
 const ClaimsRuleSchema = z.object({
 	tokenType: z.string(),
 	claims: z.array(z.string()),
+	spaceId: z.string().optional(),
 });
 
 // --- Main Rule Schema ---
@@ -201,7 +186,7 @@ export default function AccessControlPanel() {
 			...Object.fromEntries(
 				Object.keys(RULE_SCHEMAS[criteriaType].properties).map((k) => [k, ""]),
 			),
-			claims: { tokenType: "", claims: [] },
+			claims: { tokenType: "", claims: [], spaceId: "" },
 		},
 		mode: "onTouched",
 	});
@@ -220,10 +205,13 @@ export default function AccessControlPanel() {
 		const { criteriaType, claims, ...criteriaFields } = data;
 		// Prepare access (claims)
 		const typedClaims = claims as z.infer<typeof ClaimsRuleSchema>;
-		const access = {
+		const access: any = {
 			tokenType: typedClaims.tokenType,
 			claims: typedClaims.claims,
 		};
+		if (typedClaims.tokenType === "ucan" && typedClaims.spaceId) {
+			access.spaceId = typedClaims.spaceId;
+		}
 		await createAccessPolicy({
 			id,
 			spaceId,
@@ -317,6 +305,22 @@ export default function AccessControlPanel() {
 											</FormItem>
 										)}
 									/>
+									{/* Conditionally render spaceId field for Storacha UCAN */}
+									{tokenType === "ucan" && (
+										<FormField
+											control={form.control}
+											name="claims.spaceId"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Space ID</FormLabel>
+													<FormControl>
+														<Input placeholder="Enter Storacha Space ID" {...field} />
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									)}
 									<div>
 										<FormLabel>Claims</FormLabel>
 										{tokenType && (
