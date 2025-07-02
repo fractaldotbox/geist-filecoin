@@ -133,7 +133,7 @@ export const useLiveStore = () => {
 		);
 	};
 
-	const createAccessRule = (accessRuleData: {
+	const createAccessPolicy = (accessRuleData: {
 		id: string;
 		spaceId: string;
 		criteriaType: string;
@@ -188,7 +188,7 @@ export const useLiveStore = () => {
 		deleteContentType,
 		setUiState,
 		createStorachaStorageAuthorization,
-		createAccessRule,
+		createAccessPolicy,
 		updateAccessRule,
 		deleteAccessRule,
 	};

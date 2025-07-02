@@ -1,20 +1,21 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { processRules } from "./policy-engine";
+import { processPolicies } from "./policy-engine";
 import type { AccessPolicy, AuthInput } from "./schemas/access-policy";
 
-describe("processRules", () => {
+describe("processPolicies", () => {
 	let mockAuthInput: AuthInput;
 	let envPolicy: AccessPolicy;
 
 	beforeEach(() => {
 		mockAuthInput = {
 			subject: "did:key:test123",
-			context: {},
-			resource: "/test/resource",
-			env: {
-				GEIST_USER: "did:key:test123,did:key:test456",
-				OTHER_USER: "did:key:other123",
+			context: {
+				env: {
+					GEIST_USER: "did:key:test123,did:key:test456",
+					OTHER_USER: "did:key:other123",
+				},
 			},
+			resource: "/test/resource",
 		};
 
 		envPolicy = {
@@ -30,7 +31,7 @@ describe("processRules", () => {
 	describe("with env-policy-criteria", () => {
 		it("should return claims when subject is in whitelist", async () => {
 			const policies = [envPolicy];
-			const result = await processRules(policies, mockAuthInput);
+			const result = await processPolicies(policies, mockAuthInput);
 			expect(result.has("access")).toBe(true);
 			expect(result.get("access")).toEqual(new Set(["read", "write"]));
 		});
@@ -42,7 +43,7 @@ describe("processRules", () => {
 				subject: "did:key:unauthorized",
 			};
 
-			const result = await processRules(policies, inputWithDifferentSubject);
+			const result = await processPolicies(policies, inputWithDifferentSubject);
 			expect(result.size).toBe(0);
 		});
 
@@ -50,10 +51,12 @@ describe("processRules", () => {
 			const policies = [envPolicy];
 			const inputWithoutEnv: AuthInput = {
 				...mockAuthInput,
-				env: {},
+				context: {
+					env: {},
+				},
 			};
 
-			const result = await processRules(policies, inputWithoutEnv);
+			const result = await processPolicies(policies, inputWithoutEnv);
 			expect(result.size).toBe(0);
 		});
 
@@ -61,12 +64,14 @@ describe("processRules", () => {
 			const policies = [envPolicy];
 			const inputWithEmptyEnv: AuthInput = {
 				...mockAuthInput,
-				env: {
-					GEIST_USER: "",
+				context: {
+					env: {
+						GEIST_USER: "",
+					},
 				},
 			};
 
-			const result = await processRules(policies, inputWithEmptyEnv);
+			const result = await processPolicies(policies, inputWithEmptyEnv);
 			expect(result.size).toBe(0);
 		});
 
@@ -77,7 +82,7 @@ describe("processRules", () => {
 				subject: "did:key:test456",
 			};
 
-			const result = await processRules(policies, inputWithSecondSubject);
+			const result = await processPolicies(policies, inputWithSecondSubject);
 			expect(result.has("access")).toBe(true);
 			expect(result.get("access")).toEqual(new Set(["read", "write"]));
 		});
@@ -91,7 +96,7 @@ describe("processRules", () => {
 				},
 			};
 
-			const result = await processRules(policies, inputWithSingleWhitelist);
+			const result = await processPolicies(policies, inputWithSingleWhitelist);
 			expect(result.has("access")).toBe(true);
 			expect(result.get("access")).toEqual(new Set(["read", "write"]));
 		});
@@ -105,7 +110,7 @@ describe("processRules", () => {
 			};
 
 			const policies = [unknownPolicy];
-			const result = await processRules(policies, mockAuthInput);
+			const result = await processPolicies(policies, mockAuthInput);
 			expect(result.size).toBe(0);
 		});
 
@@ -125,7 +130,7 @@ describe("processRules", () => {
 				subject: "did:key:other123",
 			};
 
-			const result = await processRules(policies, inputWithOtherSubject);
+			const result = await processPolicies(policies, inputWithOtherSubject);
 			expect(result.has("access")).toBe(true);
 			expect(result.get("access")).toEqual(new Set(["read"]));
 		});
@@ -146,13 +151,16 @@ describe("processRules", () => {
 				subject: "did:key:unauthorized",
 			};
 
-			const result = await processRules(policies, inputWithUnauthorizedSubject);
+			const result = await processPolicies(
+				policies,
+				inputWithUnauthorizedSubject,
+			);
 			expect(result.size).toBe(0);
 		});
 
 		it("should handle empty policies array", async () => {
 			const policies: AccessPolicy[] = [];
-			const result = await processRules(policies, mockAuthInput);
+			const result = await processPolicies(policies, mockAuthInput);
 			expect(result.size).toBe(0);
 		});
 
@@ -167,7 +175,7 @@ describe("processRules", () => {
 			};
 
 			const policies = [envPolicy, envPolicy2];
-			const result = await processRules(policies, mockAuthInput);
+			const result = await processPolicies(policies, mockAuthInput);
 			expect(result.has("access")).toBe(true);
 			expect(result.get("access")).toEqual(
 				new Set(["read", "write", "delete", "admin"]),
@@ -185,7 +193,7 @@ describe("processRules", () => {
 			};
 
 			const policies = [envPolicy, envPolicy2];
-			const result = await processRules(policies, mockAuthInput);
+			const result = await processPolicies(policies, mockAuthInput);
 			expect(result.has("access")).toBe(true);
 			expect(result.has("refresh")).toBe(true);
 			expect(result.get("access")).toEqual(new Set(["read", "write"]));

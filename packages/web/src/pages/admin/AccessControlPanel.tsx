@@ -50,7 +50,7 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { EAS_POLICY_SCHEMA } from "../../../../auth/src/schemas/eas-policy-criteria";
 import { ENV_RULE_SCHEMA } from "../../../../auth/src/schemas/env-policy-criteria";
-import { ACCESS_SCHEMA } from "../../../../auth/src/schemas/token-claims";
+import { CLAIMS_SCHEMA } from "../../../../auth/src/schemas/token-claims";
 
 // --- Utility: Convert JSON Schema to Zod ---
 function jsonSchemaToZod(schema: any) {
@@ -142,7 +142,7 @@ const RULE_SCHEMAS = {
 	env: ENV_RULE_SCHEMA,
 };
 
-const RULE_CRITERIA_TYPES = [
+const POLICY_CRITERIA_TYPES = [
 	{ value: "eas", label: "EAS Attestation" },
 	{ value: "env", label: "Environment Whitelist" },
 ] as const;
@@ -152,11 +152,11 @@ const TOKEN_TYPES = [
 	{ value: "api", label: "API JWT" },
 ] as const;
 
-type RuleCriteriaType = (typeof RULE_CRITERIA_TYPES)[number]["value"];
+type RuleCriteriaType = (typeof POLICY_CRITERIA_TYPES)[number]["value"];
 
 // --- Claims Schema ---
-// Define TokenType from ACCESS_SCHEMA
-const TOKEN_TYPE_VALUES = ACCESS_SCHEMA.properties.anyOf.map(
+// Define TokenType from CLAIMS_SCHEMA
+const TOKEN_TYPE_VALUES = CLAIMS_SCHEMA.properties.anyOf.map(
 	(item: any) => item.tokenType,
 );
 type TokenType = (typeof TOKEN_TYPE_VALUES)[number];
@@ -181,17 +181,17 @@ type RuleFormType = z.infer<ReturnType<typeof getRuleFormSchema>>;
 
 // Helper to get claims options for a given tokenType
 function getClaimsOptions(tokenType: TokenType) {
-	const found = ACCESS_SCHEMA.properties.anyOf.find(
+	const found = CLAIMS_SCHEMA.properties.anyOf.find(
 		(item: any) => item.tokenType === tokenType,
 	);
 	return found ? found.claims : [];
 }
 
 export default function AccessControlPanel() {
-	const { createAccessRule } = useLiveStore();
+	const { createAccessPolicy } = useLiveStore();
 	const [uiState] = useUiState();
 	const [criteriaType, setCriteriaType] = useState<RuleCriteriaType>("eas");
-	const [tokenType, setTokenType] = useState<TokenType>("ucan");
+	const [tokenType, setTokenType] = useState<TokenType>("");
 	const [submitted, setSubmitted] = useState<RuleFormType | null>(null);
 	const RuleFormSchema = getRuleFormSchema(criteriaType);
 	const form = useForm<RuleFormType>({
@@ -224,7 +224,7 @@ export default function AccessControlPanel() {
 			tokenType: typedClaims.tokenType,
 			claims: typedClaims.claims,
 		};
-		await createAccessRule({
+		await createAccessPolicy({
 			id,
 			spaceId,
 			criteriaType: criteriaType as string,
@@ -238,14 +238,13 @@ export default function AccessControlPanel() {
 	return (
 		<div className="max-w-xl mx-auto py-10 space-y-8">
 			<div className="container">
-				{/* Add Rule Dialog */}
 				<Dialog>
 					<DialogTrigger asChild>
-						<Button variant="default">Add Rule</Button>
+						<Button variant="default">Add Policy</Button>
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Create Access Rule</DialogTitle>
+							<DialogTitle>Create Access Policy</DialogTitle>
 						</DialogHeader>
 						<FormProvider {...form}>
 							<Form {...form}>
@@ -253,13 +252,12 @@ export default function AccessControlPanel() {
 									onSubmit={form.handleSubmit(onSubmit)}
 									className="space-y-6"
 								>
-									{/* Rule Criteria Type Selector */}
 									<FormField
 										control={form.control}
 										name="criteriaType"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>Rule Criteria Type</FormLabel>
+												<FormLabel>Policy Criteria Type</FormLabel>
 												<FormControl>
 													<Select
 														value={String(field.value)}
@@ -269,10 +267,10 @@ export default function AccessControlPanel() {
 														}}
 													>
 														<SelectTrigger>
-															<SelectValue placeholder="Select rule type" />
+															<SelectValue placeholder="Select policy type" />
 														</SelectTrigger>
 														<SelectContent>
-															{RULE_CRITERIA_TYPES.map((type) => (
+															{POLICY_CRITERIA_TYPES.map((type) => (
 																<SelectItem key={type.value} value={type.value}>
 																	{type.label}
 																</SelectItem>
@@ -321,57 +319,59 @@ export default function AccessControlPanel() {
 									/>
 									<div>
 										<FormLabel>Claims</FormLabel>
-										<FormField
-											control={form.control}
-											name="claims.claims"
-											render={({ field }) => (
-												<FormItem>
-													<div className="flex flex-col gap-2">
-														{getClaimsOptions(tokenType).map(
-															(claim: string) => {
-																const value: string[] = Array.isArray(
-																	field.value,
-																)
-																	? field.value
-																	: [];
-																return (
-																	<label
-																		key={claim}
-																		className="flex items-center gap-2"
-																	>
-																		<input
-																			type="checkbox"
-																			checked={value.includes(claim)}
-																			onChange={(e) => {
-																				if (e.target.checked) {
-																					field.onChange([...value, claim]);
-																				} else {
-																					field.onChange(
-																						value.filter(
-																							(v: string) => v !== claim,
-																						),
-																					);
-																				}
-																			}}
-																		/>
-																		<span>{claim}</span>
-																	</label>
-																);
-															},
-														)}
-													</div>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
+										{tokenType && (
+											<FormField
+												control={form.control}
+												name="claims.claims"
+												render={({ field }) => (
+													<FormItem>
+														<div className="flex flex-col gap-2">
+															{getClaimsOptions(tokenType).map(
+																(claim: string) => {
+																	const value: string[] = Array.isArray(
+																		field.value,
+																	)
+																		? field.value
+																		: [];
+																	return (
+																		<label
+																			key={claim}
+																			className="flex items-center gap-2"
+																		>
+																			<input
+																				type="checkbox"
+																				checked={value.includes(claim)}
+																				onChange={(e) => {
+																					if (e.target.checked) {
+																						field.onChange([...value, claim]);
+																					} else {
+																						field.onChange(
+																							value.filter(
+																								(v: string) => v !== claim,
+																							),
+																						);
+																					}
+																				}}
+																			/>
+																			<span>{claim}</span>
+																		</label>
+																	);
+																},
+															)}
+														</div>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										)}
 									</div>
-									<Button type="submit">Create Rule</Button>
+									<Button type="submit">Create Policy</Button>
 								</form>
 							</Form>
 						</FormProvider>
 						{submitted && (
 							<div className="mt-8">
-								<h3 className="font-semibold mb-2">Rule JSON</h3>
+								<h3 className="font-semibold mb-2">Policy JSON</h3>
 								<pre className="bg-muted p-4 rounded text-xs overflow-x-auto">
 									{JSON.stringify(submitted, null, 2)}
 								</pre>

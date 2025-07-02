@@ -8,7 +8,7 @@ export const processorsByPolicyType = {
 };
 
 // union topkens / claims
-export const processRules = async (
+export const processPolicies = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
 ) => {
@@ -38,7 +38,7 @@ export const processRules = async (
 };
 
 // export const authorize = async (policies: AccessPolicy[], input: AuthInput)=>{
-//     const result = await processRules(policies, input);
+//     const result = await processPolicies(policies, input);
 
 //     return result;
 // }
