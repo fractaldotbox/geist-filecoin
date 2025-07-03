@@ -7,7 +7,9 @@ A modern content management system built with React and LiveStore for local-firs
 - **Local-First Data**: LiveStore provides offline-first data storage with SQLite
 - **Real-Time Sync**: Automatic synchronization across devices using Cloudflare Workers
 - **Modern UI**: Built with React, Tailwind CSS, and shadcn/ui components
-- **Filecoin Integration**: Lighthouse SDK for decentralized file storage
+- **File Retrieval API**: RESTful API for secure file access with multiple storage providers
+- **AES-256 Encryption**: Industry-standard encryption for file security
+- **Storage Abstraction**: Support for Storacha, IPFS, Lighthouse, and S3
 - **Type Safety**: Full TypeScript support throughout the application
 
 ## LiveStore Integration
@@ -22,19 +24,27 @@ This project uses [LiveStore](https://docs.livestore.dev/) for local-first data 
 ## Project Structure
 
 ```
-packages/web/
-├── src/
-│   ├── livestore/           # LiveStore configuration
-│   │   ├── schema.ts       # Data model and events
-│   │   ├── queries.ts      # Database queries
-│   │   └── livestore.worker.ts # Background worker
-│   ├── worker/             # Cloudflare Worker
-│   │   └── index.ts        # Sync handler
-│   └── components/react/   # React components
-│       ├── LiveStoreProvider.tsx
-│       ├── hooks/useLiveStore.ts
-│       └── LiveStoreEntryEditor.tsx
-├── wrangler.toml           # Cloudflare Worker config
+packages/
+├── web/                    # Frontend React application
+│   ├── src/
+│   │   ├── livestore/     # LiveStore configuration
+│   │   ├── components/    # React components
+│   │   └── ...
+├── retrieval/             # File retrieval API service
+│   ├── app/api/          # Next.js API routes
+│   │   └── route.ts      # File and space endpoints
+│   └── types/            # TypeScript definitions
+├── storage/               # Storage abstraction layer
+│   └── src/
+│       └── storacha.ts   # Storacha/IPFS integration
+├── encryption/            # AES-256 encryption utilities
+│   ├── src/
+│   │   └── encryption.ts # Encryption/decryption functions
+│   ├── scripts/          # Utility scripts
+│   └── test/             # Test suite
+└── cf-worker/            # Cloudflare Worker for sync
+    └── src/
+        └── index.ts      # Sync handler
 ```
 
 ## Contributing

@@ -1,0 +1,34 @@
+{
+	"title": "Secure File Storage with Filecoin",
+	"slug": "secure-file-storage-filecoin",
+	"hero": {
+		"headline": "Decentralized Storage Made Simple",
+		"subheadline": "Store your files securely on the Filecoin network with end-to-end encryption",
+		"ctaText": "Get Started",
+		"ctaLink": "/signup",
+		"backgroundImage": "https://example.com/hero-bg.jpg"
+	},
+	"features": [
+		{
+			"title": "End-to-End Encryption",
+			"description": "Your files are encrypted before leaving your device, ensuring complete privacy and security.",
+			"icon": "https://example.com/icons/shield.svg"
+		},
+		{
+			"title": "Decentralized Storage",
+			"description": "Leverage the power of Filecoin's distributed network for reliable, censorship-resistant storage.",
+			"icon": "https://example.com/icons/network.svg"
+		},
+		{
+			"title": "Easy Integration",
+			"description": "Simple APIs and SDKs make it easy to integrate secure storage into your applications.",
+			"icon": "https://example.com/icons/code.svg"
+		},
+		{
+			"title": "Cost Effective",
+			"description": "Pay only for what you use with competitive pricing on the Filecoin network.",
+			"icon": "https://example.com/icons/dollar.svg"
+		}
+	],
+	"metaDescription": "Secure, decentralized file storage powered by Filecoin. Store your data with end-to-end encryption and benefit from the reliability of distributed storage."
+}

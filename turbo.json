@@ -12,6 +12,16 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**/*.test.ts",
+        "src/**/*.test.tsx",
+        "test/**/*",
+        "package.json"
+      ],
+      "outputs": []
     }
   }
 } 

@@ -4,7 +4,9 @@
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
-		"lint": "turbo run lint"
+		"dev:api": "cd packages/api && pnpm dev",
+		"lint": "turbo run lint",
+		"test": "turbo run test"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",

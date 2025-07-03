@@ -1,0 +1,30 @@
+{
+    "name": "@geist-filecoin/retrieval",
+    "type": "module",
+    "version": "0.0.1",
+    "scripts": {
+        "dev": "next dev -p 4000",
+        "build": "next build",
+        "start": "next start -p 4000",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "@geist-filecoin/encryption": "workspace:*",
+        "@geist-filecoin/storage": "workspace:*",
+        "@helia/interface": "^5.0.0",
+        "@helia/unixfs": "^4.0.0",
+        "@modelcontextprotocol/sdk": "^1.13.2",
+        "@vercel/mcp-adapter": "^0.11.1",
+        "helia": "^5.0.0",
+        "ky": "^1.7.2",
+        "multiformats": "^13.0.0",
+        "next": "^15.0.0",
+        "react": "^18.0.0",
+        "react-dom": "^18.0.0",
+        "zod": "^3.24.3"
+    },
+    "devDependencies": {
+        "@types/node": "^22.15.17",
+        "typescript": "^5.8.3"
+    }
+}

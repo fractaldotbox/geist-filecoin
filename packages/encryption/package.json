@@ -1,0 +1,39 @@
+{
+  "name": "@geist-filecoin/encryption",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "AES-256-GCM encryption/decryption utilities for Geist Filecoin",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "biome check --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "generate-key": "pnpm run build && node dist/scripts/generate-key.js",
+    "encrypt-files": "pnpm run build && node dist/scripts/encrypt-files.js",
+    "crypt": "pnpm run build && node scripts/working-encrypt.js",
+    "encrypt": "pnpm run build && node scripts/working-encrypt.js encrypt",
+    "decrypt": "pnpm run build && node scripts/working-encrypt.js decrypt"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "ky": "^1.7.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "^22.15.17",
+    "@vitest/coverage-v8": "2.1.9",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.8"
+  }
+}
