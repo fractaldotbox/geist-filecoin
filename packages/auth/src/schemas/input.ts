@@ -7,8 +7,9 @@ export type AuthInput = {
 	// user in rego
 	subject: Did;
 	// data in rego
-	context: Record<string, any>;
-	resource: string;
-	// environment variables
-	env: Record<string, string>;
+	context?: {
+		env: Record<string, string>;
+		[key: string]: any;
+	};
+	resource?: string;
 };

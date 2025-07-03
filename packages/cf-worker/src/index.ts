@@ -6,6 +6,7 @@ import {
 import { makeDurableObject, makeWorker } from "@livestore/sync-cf/cf-worker";
 
 import { Router, cors, error, json } from "itty-router";
+import { authorizeUcan } from "node_modules/@geist-filecoin/auth/src/policy-engine";
 
 const { preflight, corsify } = cors({
 	origin: "*",
@@ -72,17 +73,7 @@ router.post("/api/upload", async (request: Request) => {
 	});
 });
 
-router.post("/api/auth", async (request: Request, env: any) => {
-	const { did } = await request.json();
-
-	console.log("auth for user", did);
-
-	// we could have 3 different agents (keys)
-	// space owner - delegated to server
-	// server agent - received delgation
-	// user agent requesting delegation to the space
-
-	// Read secrets from environment bindings and KV
+export const loadStorachaSecrets = async (env: any) => {
 	const agentKeyString = await env.STORACHA_AGENT_KEY_STRING.get();
 	if (!agentKeyString) {
 		throw new Error("STORACHA_AGENT_KEY_STRING is not set");
@@ -94,21 +85,64 @@ router.post("/api/auth", async (request: Request, env: any) => {
 		throw new Error("STORACHA_PROOF_STRING is not set");
 	}
 
+	return {
+		agentKeyString,
+		proofString,
+	};
+};
+
+// Overall it's tricky to combine jwt & binary (ucan) token at once
+// better off separate 2 requests from very beginning
+
+router.post("/api/auth/ucan", async (request: Request, env: any) => {
+	const { did, tokenType } = await request.json();
+
+	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
+
 	if (!did) {
 		throw new Error("did is not set");
 	}
 
-	try {
-		const { delegation } = await createUserDelegation({
-			userDid: did,
-			serverAgentKeyString: agentKeyString,
-			proofString,
-		});
+	const input = {
+		subject: did,
+		tokenType,
+		context: {
+			env: {
+				GEIST_USER: env.GEIST.get("GEIST_USER"),
+			},
+		},
+	};
 
-		return new Response(delegation, {
+	// TODO filter by tokenType
+	const policies = [
+		{
+			policyType: "env",
+			policyCriteria: {
+				whitelistEnvKey: "GEIST_USER",
+				subject: did,
+			},
+			tokenType,
+			policyAccess: {
+				metadata: {
+					spaceId: "123",
+				},
+				claims: ["upload/list", "upload/add", "space/info"],
+			},
+		},
+	];
+
+	const ucan = await authorizeUcan(policies, input, {
+		serverAgentKeyString: agentKeyString,
+		proofString,
+	});
+
+	console.log("ucan", ucan);
+
+	try {
+		return new Response(ucan, {
 			headers: {
 				"Content-Type": "application/octet-stream",
-				"Content-Length": delegation.byteLength.toString(),
+				"Content-Length": ucan?.byteLength.toString() || "0",
 			},
 		});
 	} catch (error) {
@@ -121,6 +155,26 @@ router.post("/api/auth", async (request: Request, env: any) => {
 				"Content-Type": "application/json",
 			},
 		});
+	}
+});
+
+router.post("/api/auth/jwt", async (request: Request, env: any) => {
+	const { did, tokenType } = await request.json();
+
+	console.log("auth for user", did);
+
+	if (!did) {
+		throw new Error("did is not set");
+	}
+	// we could have 3 different agents (keys)
+	// space owner - delegated to server
+	// server agent - received delgation
+	// user agent requesting delegation to the space
+
+	// Read secrets from environment bindings and KV
+
+	if (!did) {
+		throw new Error("did is not set");
 	}
 });
 

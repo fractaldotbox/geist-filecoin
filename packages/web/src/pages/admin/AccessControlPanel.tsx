@@ -29,12 +29,16 @@ import {
 import { Textarea } from "@/components/react/ui/textarea";
 import { useUiState } from "@/livestore/queries";
 import { allAccessRules$ } from "@/livestore/queries";
+import {
+	CLAIMS_SCHEMA,
+	EAS_POLICY_SCHEMA,
+	ENV_POLICY_SCHEMA,
+} from "@geist-filecoin/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useStore } from "@livestore/react";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import { EAS_POLICY_SCHEMA, ENV_POLICY_SCHEMA, CLAIMS_SCHEMA } from "@geist-filecoin/auth";
 
 // --- Utility: Convert JSON Schema to Zod ---
 function jsonSchemaToZod(schema: any) {
@@ -314,7 +318,10 @@ export default function AccessControlPanel() {
 												<FormItem>
 													<FormLabel>Space ID</FormLabel>
 													<FormControl>
-														<Input placeholder="Enter Storacha Space ID" {...field} />
+														<Input
+															placeholder="Enter Storacha Space ID"
+															{...field}
+														/>
 													</FormControl>
 													<FormMessage />
 												</FormItem>

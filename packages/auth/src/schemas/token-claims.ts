@@ -1,7 +1,5 @@
 import type { Access, AccessPolicy, AuthInput } from "./access-policy";
 
-
-
 export const CLAIMS_SCHEMA = {
 	title: "Claims Policy",
 	type: "object",
@@ -30,26 +28,36 @@ export const CLAIMS_SCHEMA = {
 	},
 };
 
-
-export const createClaimsGenerationRequest = (accessByTokenType: Record<string, Access>, input: AuthInput) => {
-	
+export const createClaimsGenerationRequest = (
+	accessByTokenType: Record<string, Access>,
+	input: AuthInput,
+) => {
 	return Object.fromEntries(
-		Object.keys(accessByTokenType)
-		.map((tokenType) => {
-			const access = accessByTokenType[tokenType] || {claims: [], metadata: {}};
+		Object.keys(accessByTokenType).map((tokenType) => {
+			const access = accessByTokenType[tokenType] || {
+				claims: [],
+				metadata: {},
+			};
 
-			const {claims, metadata} = access;
+			const { claims, metadata } = access;
 
+			console.log("tokenType", tokenType);
 			if (tokenType === "ucan") {
-				return [tokenType, {
-					spaceId: metadata.spaceId,
-					claims,
-				}];
+				return [
+					tokenType,
+					{
+						spaceId: metadata.spaceId,
+						claims,
+					},
+				];
 			}
 
-			return [tokenType, {
-				claims
-			}];
-		})
+			return [
+				tokenType,
+				{
+					claims,
+				},
+			];
+		}),
 	);
-}
+};

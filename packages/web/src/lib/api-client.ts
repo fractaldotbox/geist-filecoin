@@ -34,13 +34,15 @@ export const auth = {
 	requestDelegation: async ({
 		spaceId,
 		did,
+		tokenType,
 	}: {
 		spaceId: string;
 		did: string;
+		tokenType: string;
 	}): Promise<ArrayBuffer> => {
 		return apiClient
-			.post("api/auth", {
-				json: { spaceId, did },
+			.post("api/auth/ucan", {
+				json: { spaceId, did, tokenType },
 			})
 			.arrayBuffer();
 	},

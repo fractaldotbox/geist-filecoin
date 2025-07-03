@@ -21,7 +21,7 @@ export const EAS_POLICY_SCHEMA = {
 };
 
 export const checkEasRule = async (policyConfig: any, input: AuthInput) => {
-	const {schemaId, field} = policyConfig;
+	const { schemaId, field } = policyConfig;
 
 	const { subject, context } = input;
 

@@ -17,8 +17,10 @@ export const ENV_POLICY_SCHEMA = {
 export const checkEnvCriteria = async (policyConfig: any, input: AuthInput) => {
 	const { whitelistEnvKey } = policyConfig;
 
-	const whitelist = input.context.env[whitelistEnvKey];
+	const whitelist = input.context?.env[whitelistEnvKey];
 
+	console.log("whitelist", whitelist, whitelistEnvKey);
+	console.log("checkEnvCriteria, input", input);
 	if (!whitelist) {
 		return false;
 	}

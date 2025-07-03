@@ -63,6 +63,9 @@ importers:
 
   packages/cf-worker:
     dependencies:
+      '@geist-filecoin/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@geist-filecoin/storage':
         specifier: workspace:*
         version: link:../storage

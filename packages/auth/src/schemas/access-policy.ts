@@ -3,7 +3,7 @@ import type { AuthInput, Did } from "./input";
 export type Access = {
 	claims: string[];
 	metadata: Record<string, string>;
-}
+};
 
 export type AccessPolicy = {
 	tokenType: string;

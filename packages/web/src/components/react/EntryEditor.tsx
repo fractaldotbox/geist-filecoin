@@ -64,7 +64,7 @@ async function uploadFileToStoracha(
 			progressCallback(0.1);
 		}
 
-		// Create Storacha client
+		// TODO use storachaProvider
 		const storachaStore = new StoreMemory();
 		const client = await Client.create({ store: storachaStore });
 
