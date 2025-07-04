@@ -5,12 +5,14 @@
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"scripts": {
-		"build": "tsc",
-		"dev": "wrangler dev --port 8787",
-		"deploy": "wrangler deploy",
+		"dev": "vite dev ",
+		"build": "vite build",
+		"preview": "npm run build && vite preview",
+		"deploy": "npm run build && wrangler deploy",
 		"lint": "biome check --fix"
 	},
 	"dependencies": {
+		"@cloudflare/vite-plugin": "^1.9.0",
 		"@geist-filecoin/auth": "workspace:*",
 		"@geist-filecoin/storage": "workspace:*",
 		"@livestore/sync-cf": "^0.3.1",

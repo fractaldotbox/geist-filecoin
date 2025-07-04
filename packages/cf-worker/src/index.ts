@@ -1,4 +1,3 @@
-import { makeDurableObject, makeWorker } from "@livestore/sync-cf/cf-worker";
 import jwt from "@tsndr/cloudflare-worker-jwt";
 
 import { authorizeUcan } from "@geist-filecoin/auth";
@@ -34,25 +33,6 @@ const errorHandler = (error: Error, request: Request) => {
 		},
 	);
 };
-
-export class WebSocketServer extends makeDurableObject({
-	onPush: async (message) => {
-		console.log("onPush", message.batch);
-	},
-	onPull: async (message) => {
-		console.log("onPull", message);
-	},
-}) {}
-
-// Note AutoRouter not compatabile
-const worker = makeWorker({
-	validatePayload: (payload: any) => {
-		if (payload?.authToken !== "insecure-token-change-me") {
-			throw new Error("Invalid auth token");
-		}
-	},
-	enableCORS: true,
-});
 
 const router = Router({
 	before: [preflight],
@@ -175,6 +155,10 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 	}
 });
 
+router.get("/websocket", async (request: Request, env: any) => {
+	return await env.WORKER_LIVESTORE.fetch(request, env);
+});
+
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	const { did, tokenType } = await request.json();
 
@@ -209,8 +193,6 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 		jwtSecret,
 	);
 
-	// TODO
-	// Read secrets from environment bindings and KV
 	return new Response(
 		JSON.stringify({
 			jwt,
@@ -223,13 +205,7 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	);
 });
 
-// Fallback to original worker for all other routes
-router.all("*", (request: Request, env: any, ctx: any) => {
-	return worker.fetch(request, env, ctx);
-});
-
 export default {
-	...worker,
 	fetch: (request: Request, env: any, ctx: any) => {
 		return router.fetch(request, env, ctx);
 	},
