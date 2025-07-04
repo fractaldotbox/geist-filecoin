@@ -14,6 +14,7 @@
 		"@geist-filecoin/auth": "workspace:*",
 		"@geist-filecoin/storage": "workspace:*",
 		"@livestore/sync-cf": "^0.3.1",
+		"@tsndr/cloudflare-worker-jwt": "^3.2.0",
 		"itty-router": "^5.0.18"
 	},
 	"devDependencies": {

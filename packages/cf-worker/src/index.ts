@@ -1,9 +1,5 @@
-import {
-	createClient,
-	createUserDelegation,
-	initStorachaClient,
-} from "@geist-filecoin/storage";
 import { makeDurableObject, makeWorker } from "@livestore/sync-cf/cf-worker";
+import jwt from "@tsndr/cloudflare-worker-jwt";
 
 import { Router, cors, error, json } from "itty-router";
 import { authorizeUcan } from "node_modules/@geist-filecoin/auth/src/policy-engine";
@@ -162,17 +158,29 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	const { did, tokenType } = await request.json();
 
+	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET");
+
 	console.log("auth for user", did);
 
 	if (!did) {
 		throw new Error("did is not set");
 	}
 
+	// TODO align token with claims / scope
+	const token = await jwt.sign(
+		{
+			sub: did,
+			nbf: Math.floor(Date.now() / 1000) + 60 * 60, // Not before: Now + 1h
+			exp: Math.floor(Date.now() / 1000) + 2 * (60 * 60), // Expires: Now + 2h
+		},
+		jwtSecret,
+	);
+
 	// TODO
 	// Read secrets from environment bindings and KV
 	return new Response(
 		JSON.stringify({
-			jwt: "",
+			jwt: token,
 		}),
 		{
 			headers: {
