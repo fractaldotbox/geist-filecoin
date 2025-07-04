@@ -12,6 +12,7 @@
 		"test:run": "vitest run"
 	},
 	"dependencies": {
+		"@geist-filecoin/auth": "workspace:*",
 		"@geist-filecoin/storage": "workspace:*",
 		"@geist-filecoin/domain": "workspace:*",
 		"@hookform/resolvers": "^5.0.1",

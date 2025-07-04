@@ -1,10 +1,8 @@
-import {
-	createClient,
-	createUserDelegation,
-	initStorachaClient,
-} from "@geist-filecoin/storage";
 import { makeDurableObject, makeWorker } from "@livestore/sync-cf/cf-worker";
+import jwt from "@tsndr/cloudflare-worker-jwt";
 
+import { authorizeUcan } from "@geist-filecoin/auth";
+import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import { Router, cors, error, json } from "itty-router";
 
 const { preflight, corsify } = cors({
@@ -72,17 +70,26 @@ router.post("/api/upload", async (request: Request) => {
 	});
 });
 
-router.post("/api/auth", async (request: Request, env: any) => {
-	const { did } = await request.json();
+export const authorizeJWT = async (
+	policies: AccessPolicy[],
+	input: AuthInput,
+	jwtSecret: string,
+) => {
+	// TO
+	// TODO align token with claims / scope
+	const token = await jwt.sign(
+		{
+			sub: input.subject,
+			nbf: Math.floor(Date.now() / 1000) + 60 * 60, // Not before: Now + 1h
+			exp: Math.floor(Date.now() / 1000) + 2 * (60 * 60), // Expires: Now + 2h
+		},
+		jwtSecret,
+	);
 
-	console.log("auth for user", did);
+	return token;
+};
 
-	// we could have 3 different agents (keys)
-	// space owner - delegated to server
-	// server agent - received delgation
-	// user agent requesting delegation to the space
-
-	// Read secrets from environment bindings and KV
+export const loadStorachaSecrets = async (env: any) => {
 	const agentKeyString = await env.STORACHA_AGENT_KEY_STRING.get();
 	if (!agentKeyString) {
 		throw new Error("STORACHA_AGENT_KEY_STRING is not set");
@@ -94,21 +101,65 @@ router.post("/api/auth", async (request: Request, env: any) => {
 		throw new Error("STORACHA_PROOF_STRING is not set");
 	}
 
+	return {
+		agentKeyString,
+		proofString,
+	};
+};
+
+// Overall it's tricky to combine jwt & binary (ucan) token at once
+// better off separate 2 requests from very beginning
+
+router.post("/api/auth/ucan", async (request: Request, env: any) => {
+	const { did, spaceId, tokenType } = await request.json();
+
+	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
+
 	if (!did) {
 		throw new Error("did is not set");
 	}
 
-	try {
-		const { delegation } = await createUserDelegation({
-			userDid: did,
-			serverAgentKeyString: agentKeyString,
-			proofString,
-		});
+	const input = {
+		subject: did,
+		tokenType,
+		context: {
+			spaceId,
+			env: {
+				GEIST_USER: await env.GEIST.get("GEIST_USER"),
+			},
+		},
+	};
 
-		return new Response(delegation, {
+	// TODO load policies
+	const policies = [
+		{
+			policyType: "env",
+			policyCriteria: {
+				whitelistEnvKey: "GEIST_USER",
+				subject: did,
+			},
+			tokenType,
+			policyAccess: {
+				metadata: {
+					spaceId,
+				},
+				claims: ["access/claim", "upload/list", "upload/add", "space/info"],
+			},
+		},
+	];
+
+	console.log("authorize input", input, policies);
+
+	const ucan = await authorizeUcan(policies, input, {
+		serverAgentKeyString: agentKeyString,
+		proofString,
+	});
+
+	try {
+		return new Response(ucan, {
 			headers: {
 				"Content-Type": "application/octet-stream",
-				"Content-Length": delegation.byteLength.toString(),
+				"Content-Length": ucan?.byteLength.toString() || "0",
 			},
 		});
 	} catch (error) {
@@ -122,6 +173,54 @@ router.post("/api/auth", async (request: Request, env: any) => {
 			},
 		});
 	}
+});
+
+router.post("/api/auth/jwt", async (request: Request, env: any) => {
+	const { did, tokenType } = await request.json();
+
+	const policies = [
+		{
+			policyType: "env",
+			policyCriteria: {
+				whitelistEnvKey: "GEIST_USER",
+				subject: did,
+			},
+			tokenType,
+			policyAccess: {
+				metadata: {},
+				claims: ["admin:iam"],
+			},
+		},
+	];
+
+	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET");
+
+	console.log("auth for user", did);
+
+	if (!did) {
+		throw new Error("did is not set");
+	}
+
+	const jwt = await authorizeJWT(
+		policies,
+		{
+			subject: did,
+		},
+		jwtSecret,
+	);
+
+	// TODO
+	// Read secrets from environment bindings and KV
+	return new Response(
+		JSON.stringify({
+			jwt,
+		}),
+		{
+			headers: {
+				"Content-Type": "application/json",
+			},
+		},
+	);
 });
 
 // Fallback to original worker for all other routes

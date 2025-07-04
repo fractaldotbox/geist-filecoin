@@ -6,7 +6,7 @@ export const useLiveStore = () => {
 	const { store } = useStore();
 
 	const createEntry = (
-		entryData: EntryFormData & { contentTypeId: string },
+		entryData: Partial<EntryFormData> & { contentTypeId: string; id: string },
 	) => {
 		// Handle media field properly
 		const media = entryData.media as FileFieldValue | undefined;
@@ -133,6 +133,51 @@ export const useLiveStore = () => {
 		);
 	};
 
+	const createAccessPolicy = (accessRuleData: {
+		id: string;
+		spaceId: string;
+		criteriaType: string;
+		criteria: string;
+		access: string;
+		createdAt: Date;
+	}) => {
+		return store.commit(
+			events.accessRuleCreated({
+				id: accessRuleData.id,
+				spaceId: accessRuleData.spaceId,
+				criteriaType: accessRuleData.criteriaType,
+				criteria: accessRuleData.criteria,
+				access: accessRuleData.access,
+				createdAt: accessRuleData.createdAt,
+			}),
+		);
+	};
+
+	const updateAccessRule = (
+		id: string,
+		accessRuleData: Partial<{
+			spaceId: string;
+			criteriaType: string;
+			criteria: string;
+			access: string;
+		}>,
+	) => {
+		return store.commit(
+			events.accessRuleUpdated({
+				id,
+				...accessRuleData,
+			}),
+		);
+	};
+
+	const deleteAccessRule = (id: string) => {
+		return store.commit(
+			events.accessRuleDeleted({
+				id,
+			}),
+		);
+	};
+
 	return {
 		store,
 		createEntry,
@@ -143,5 +188,8 @@ export const useLiveStore = () => {
 		deleteContentType,
 		setUiState,
 		createStorachaStorageAuthorization,
+		createAccessPolicy,
+		updateAccessRule,
+		deleteAccessRule,
 	};
 };

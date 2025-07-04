@@ -1,7 +1,7 @@
 import { useStore } from "@livestore/react";
 import { type Capabilities, type Delegation, Provider } from "@w3ui/react";
 import * as Client from "@web3-storage/w3up-client";
-import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
+import { StoreIndexedDB } from "@web3-storage/w3up-client/stores/indexeddb";
 import {
 	type ReactNode,
 	createContext,
@@ -69,7 +69,7 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 	useEffect(() => {
 		const initializeStorachaClient = async () => {
 			try {
-				const storachaStore = new StoreMemory();
+				const storachaStore = new StoreIndexedDB("storacha-client");
 				const storachaClient = await Client.create({ store: storachaStore });
 
 				// Update state with the client instance and DID

@@ -12,19 +12,32 @@ const requestDelegation = async ({
 	did: string;
 	spaceId: string;
 }) => {
-	const delegationArchive = await apiClient.auth.requestDelegation({
-		spaceId: spaceId,
-		did,
-	});
+	try {
+		const delegationArchive = await apiClient.auth.authorizeUcan({
+			spaceId: spaceId,
+			did,
+		});
 
-	const delegation = await extract(new Uint8Array(delegationArchive));
-	console.log("request delegation", did, "space:", spaceId);
-	console.log(delegation.ok);
-	if (!delegation.ok) {
-		throw new Error("Failed to extract delegation");
+		if (delegationArchive?.byteLength === 0) {
+			return {
+				ok: null,
+			};
+		}
+
+		const delegation = await extract(new Uint8Array(delegationArchive));
+		console.log("request delegation", did, "space:", spaceId);
+		if (!delegation.ok) {
+			throw new Error("Failed to extract delegation");
+		}
+
+		return delegation;
+	} catch (error) {
+		console.error("error requesting delegation", error);
 	}
 
-	return delegation;
+	return {
+		ok: null,
+	};
 };
 
 interface StorachaUpload {
@@ -73,6 +86,10 @@ export const useDelegateAccount = (options: {
 					spaceId: spaceDid,
 					did,
 				});
+
+				if (!delegationResults.ok) {
+					throw new Error("Failed to request delegation");
+				}
 
 				// TODO request only if expired
 				setDelegation(delegationResults.ok);

@@ -28,10 +28,7 @@ export const apiClient: KyInstance = ky.create({
 
 // Auth endpoints
 export const auth = {
-	/**
-	 * Request delegation for a DID
-	 */
-	requestDelegation: async ({
+	authorizeUcan: async ({
 		spaceId,
 		did,
 	}: {
@@ -39,10 +36,22 @@ export const auth = {
 		did: string;
 	}): Promise<ArrayBuffer> => {
 		return apiClient
-			.post("api/auth", {
+			.post("api/auth/ucan", {
 				json: { spaceId, did },
 			})
 			.arrayBuffer();
+	},
+	authorizeJWT: async ({
+		did,
+	}: {
+		did: string;
+		tokenType: string;
+	}): Promise<ArrayBuffer> => {
+		return apiClient
+			.post("api/auth/jwt", {
+				json: { did },
+			})
+			.json();
 	},
 } as const;
 

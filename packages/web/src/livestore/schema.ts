@@ -68,6 +68,18 @@ export const tables = {
 		},
 	}),
 
+	accessRules: State.SQLite.table({
+		name: "accessRules",
+		columns: {
+			id: State.SQLite.text({ primaryKey: true }),
+			spaceId: State.SQLite.text(),
+			criteriaType: State.SQLite.text(),
+			criteria: State.SQLite.text(),
+			access: State.SQLite.text(),
+			createdAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
+		},
+	}),
+
 	storageAuthorizations: State.SQLite.table({
 		name: "storageAuthorizations",
 		columns: {
@@ -215,6 +227,34 @@ export const events = {
 		}),
 	}),
 
+	accessRuleCreated: Events.synced({
+		name: "v1.AccessRuleCreated",
+		schema: Schema.Struct({
+			id: Schema.String,
+			spaceId: Schema.String,
+			criteriaType: Schema.String,
+			criteria: Schema.String,
+			access: Schema.String,
+			createdAt: Schema.Date,
+		}),
+	}),
+
+	accessRuleUpdated: Events.synced({
+		name: "v1.AccessRuleUpdated",
+		schema: Schema.Struct({
+			id: Schema.String,
+			spaceId: Schema.optional(Schema.String),
+			criteriaType: Schema.optional(Schema.String),
+			criteria: Schema.optional(Schema.String),
+			access: Schema.optional(Schema.String),
+		}),
+	}),
+
+	accessRuleDeleted: Events.synced({
+		name: "v1.AccessRuleDeleted",
+		schema: Schema.Struct({ id: Schema.String }),
+	}),
+
 	uiStateSet: tables.uiState.set,
 };
 
@@ -351,6 +391,32 @@ const materializers = State.SQLite.materializers(events, {
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		}),
+
+	"v1.AccessRuleCreated": ({
+		id,
+		spaceId,
+		criteriaType,
+		criteria,
+		access,
+		createdAt,
+	}) =>
+		tables.accessRules.insert({
+			id,
+			spaceId,
+			criteriaType,
+			criteria,
+			access,
+			createdAt,
+		}),
+
+	"v1.AccessRuleUpdated": ({ id, ...data }) => {
+		const updateData = Object.fromEntries(
+			Object.entries({ ...data }).filter(([_, value]) => value !== undefined),
+		);
+		return tables.accessRules.update(updateData).where({ id });
+	},
+
+	"v1.AccessRuleDeleted": ({ id }) => tables.accessRules.delete().where({ id }),
 });
 
 const state = State.SQLite.makeState({ tables, materializers });

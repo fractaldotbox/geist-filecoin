@@ -31,13 +31,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
+import { useStorachaClient } from "./StorachaProvider";
 import { MarkdownField } from "./fields/MarkdownField";
 import { useLiveStore } from "./hooks/useLiveStore";
 
-import * as Client from "@web3-storage/w3up-client";
-import { Signer } from "@web3-storage/w3up-client/principal/ed25519";
 import * as Proof from "@web3-storage/w3up-client/proof";
-import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
 import { useParams } from "react-router-dom";
 
 // Upload mode enum
@@ -52,6 +50,7 @@ export enum UploadMode {
 async function uploadFileToStoracha(
 	file: File,
 	delegatedToken: string,
+	client: any,
 	progressCallback?: (progress: number) => void,
 ): Promise<{ cid: string; url: string }> {
 	try {
@@ -59,17 +58,13 @@ async function uploadFileToStoracha(
 			throw new Error("Storacha delegated token not found");
 		}
 
+		if (!client) {
+			throw new Error("Storacha client not found");
+		}
+
 		// Report initial progress
 		if (progressCallback) {
 			progressCallback(0.1);
-		}
-
-		// Create Storacha client
-		const storachaStore = new StoreMemory();
-		const client = await Client.create({ store: storachaStore });
-
-		if (progressCallback) {
-			progressCallback(0.2);
 		}
 
 		// Parse the delegated proof
@@ -150,6 +145,7 @@ async function uploadFile(
 	uploadMode: UploadMode = UploadMode.StorachaDelegated,
 	progressCallback?: (progress: number) => void,
 	delegatedToken?: string,
+	client?: any,
 ): Promise<{ url: string; cid: string }> {
 	console.log("uploadFile", media, uploadMode);
 	// If no media or media doesn't have a file, return empty values
@@ -169,9 +165,13 @@ async function uploadFile(
 				if (!delegatedToken) {
 					throw new Error("Delegated token is required for Storacha upload");
 				}
+				if (!client) {
+					throw new Error("Storacha client is required for Storacha upload");
+				}
 				uploadResult = await uploadFileToStoracha(
 					media.file,
 					delegatedToken,
+					client,
 					progressCallback,
 				);
 				break;
@@ -212,6 +212,9 @@ export function EntryEditor({
 	const storageAuth = activeSpace
 		? store.useQuery(latestStorageAuthorizationForSpace$(activeSpace.id))
 		: null;
+
+	// Get Storacha client from context
+	const storachaClient = useStorachaClient();
 
 	useEffect(() => {
 		return store.subscribe(allEntries$, {
@@ -278,9 +281,9 @@ export function EntryEditor({
 	const createDefaultValues = useCallback(
 		(
 			contentType: ContentType,
-			entryFormData?: EntryFormData,
-		): EntryFormData => {
-			const defaultValues: EntryFormData = {};
+			entryFormData?: Partial<EntryFormData>,
+		): Partial<EntryFormData> => {
+			const defaultValues: Partial<EntryFormData> = {};
 
 			for (const key of Object.keys(contentType.properties)) {
 				const field = contentType.properties[key];
@@ -314,7 +317,7 @@ export function EntryEditor({
 
 	// Helper to extract and convert entry values for form defaults
 	const getEntryFormDefaults = useCallback(
-		(contentType: ContentType, entry: Partial<EntryFormData>) => {
+		(contentType: ContentType, entry: any) => {
 			if (!entry) return undefined;
 			const result: Record<string, any> = {};
 			for (const key of Object.keys(contentType.properties)) {
@@ -344,7 +347,7 @@ export function EntryEditor({
 			)
 		: {};
 
-	const form = useForm<EntryFormData>({
+	const form = useForm<Partial<EntryFormData>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: initialDefaultValues,
 		mode: "onTouched",
@@ -389,7 +392,7 @@ export function EntryEditor({
 	}, [contentType, contentTypeData]);
 
 	// Create entry using LiveStore events instead of direct API calls
-	const onSubmit = async (values: EntryFormData) => {
+	const onSubmit = async (values: Partial<EntryFormData>) => {
 		setIsSubmitting(true);
 		setSubmissionResult(undefined); // Reset submission result
 		console.log("debug:", values, typeof values);
@@ -419,6 +422,7 @@ export function EntryEditor({
 					setUploadProgress(progress);
 				},
 				delegatedToken,
+				storachaClient,
 			);
 
 			// Create entry using LiveStore event
@@ -426,7 +430,7 @@ export function EntryEditor({
 				id: cid,
 				...values,
 				// TODO allow configure per schema
-				name: values.title,
+				name: values.title as string,
 				contentTypeId: entry.contentTypeId,
 				media: { url: url, cid: cid },
 			});
