@@ -31,28 +31,25 @@ export const auth = {
 	authorizeUcan: async ({
 		spaceId,
 		did,
-		tokenType,
 	}: {
 		spaceId: string;
 		did: string;
-		tokenType: string;
 	}): Promise<ArrayBuffer> => {
 		return apiClient
 			.post("api/auth/ucan", {
-				json: { spaceId, did, tokenType },
+				json: { spaceId, did },
 			})
 			.arrayBuffer();
 	},
 	authorizeJWT: async ({
 		did,
-		tokenType,
 	}: {
 		did: string;
 		tokenType: string;
 	}): Promise<ArrayBuffer> => {
 		return apiClient
 			.post("api/auth/jwt", {
-				json: { did, tokenType },
+				json: { did },
 			})
 			.json();
 	},

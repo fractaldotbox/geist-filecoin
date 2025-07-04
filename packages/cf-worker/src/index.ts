@@ -205,7 +205,6 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 		policies,
 		{
 			subject: did,
-			tokenType,
 		},
 		jwtSecret,
 	);

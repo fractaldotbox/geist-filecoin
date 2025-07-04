@@ -16,7 +16,6 @@ const requestDelegation = async ({
 		const delegationArchive = await apiClient.auth.authorizeUcan({
 			spaceId: spaceId,
 			did,
-			tokenType: "ucan",
 		});
 
 		if (delegationArchive?.byteLength === 0) {
