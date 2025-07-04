@@ -95,7 +95,7 @@ export const loadStorachaSecrets = async (env: any) => {
 // better off separate 2 requests from very beginning
 
 router.post("/api/auth/ucan", async (request: Request, env: any) => {
-	const { did, tokenType } = await request.json();
+	const { did, spaceId, tokenType } = await request.json();
 
 	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
 
@@ -107,13 +107,14 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 		subject: did,
 		tokenType,
 		context: {
+			spaceId,
 			env: {
-				GEIST_USER: env.GEIST.get("GEIST_USER"),
+				GEIST_USER: await env.GEIST.get("GEIST_USER"),
 			},
 		},
 	};
 
-	// TODO filter by tokenType
+	// TODO load policies
 	const policies = [
 		{
 			policyType: "env",
@@ -124,19 +125,19 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 			tokenType,
 			policyAccess: {
 				metadata: {
-					spaceId: "123",
+					spaceId,
 				},
-				claims: ["upload/list", "upload/add", "space/info"],
+				claims: ["access/claim", "upload/list", "upload/add", "space/info"],
 			},
 		},
 	];
+
+	console.log("authorize input", input, policies);
 
 	const ucan = await authorizeUcan(policies, input, {
 		serverAgentKeyString: agentKeyString,
 		proofString,
 	});
-
-	console.log("ucan", ucan);
 
 	try {
 		return new Response(ucan, {
@@ -166,16 +167,19 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	if (!did) {
 		throw new Error("did is not set");
 	}
-	// we could have 3 different agents (keys)
-	// space owner - delegated to server
-	// server agent - received delgation
-	// user agent requesting delegation to the space
 
+	// TODO
 	// Read secrets from environment bindings and KV
-
-	if (!did) {
-		throw new Error("did is not set");
-	}
+	return new Response(
+		JSON.stringify({
+			jwt: "",
+		}),
+		{
+			headers: {
+				"Content-Type": "application/json",
+			},
+		},
+	);
 });
 
 // Fallback to original worker for all other routes

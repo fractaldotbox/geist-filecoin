@@ -6,7 +6,7 @@ export const useLiveStore = () => {
 	const { store } = useStore();
 
 	const createEntry = (
-		entryData: EntryFormData & { contentTypeId: string },
+		entryData: Partial<EntryFormData> & { contentTypeId: string; id: string },
 	) => {
 		// Handle media field properly
 		const media = entryData.media as FileFieldValue | undefined;

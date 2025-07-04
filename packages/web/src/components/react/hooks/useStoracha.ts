@@ -12,10 +12,8 @@ const requestDelegation = async ({
 	did: string;
 	spaceId: string;
 }) => {
-	// TODO group into same type
-
 	try {
-		const delegationArchive = await apiClient.auth.requestDelegation({
+		const delegationArchive = await apiClient.auth.authorizeUcan({
 			spaceId: spaceId,
 			did,
 			tokenType: "ucan",
@@ -90,6 +88,12 @@ export const useDelegateAccount = (options: {
 					spaceId: spaceDid,
 					did,
 				});
+
+				if (!delegationResults.ok) {
+					throw new Error("Failed to request delegation");
+				}
+
+				console.log("delegationResults", delegationResults);
 
 				// TODO request only if expired
 				setDelegation(delegationResults.ok);

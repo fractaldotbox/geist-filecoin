@@ -18,7 +18,7 @@ export const processPolicies = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
 ) => {
-	console.log(input, "policies", policies);
+	console.log(input, "policies", policies[0]?.policyAccess);
 
 	for (const policy of policies) {
 		const processor =
@@ -51,6 +51,9 @@ export const authorizeUcan = async (
 	if (!isAccessible) {
 		return null;
 	}
+
+	// TODO find the relevant proof with spaceId
+	// const spaceId = input.context?.spaceId;
 
 	const { delegation, client, space } = await createUserDelegation({
 		userDid: input.subject,
