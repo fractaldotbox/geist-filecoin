@@ -1,8 +1,9 @@
 import { makeDurableObject, makeWorker } from "@livestore/sync-cf/cf-worker";
 import jwt from "@tsndr/cloudflare-worker-jwt";
 
+import { authorizeUcan } from "@geist-filecoin/auth";
+import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import { Router, cors, error, json } from "itty-router";
-import { authorizeUcan } from "node_modules/@geist-filecoin/auth/src/policy-engine";
 
 const { preflight, corsify } = cors({
 	origin: "*",
@@ -68,6 +69,25 @@ router.post("/api/upload", async (request: Request) => {
 		},
 	});
 });
+
+export const authorizeJWT = async (
+	policies: AccessPolicy[],
+	input: AuthInput,
+	jwtSecret: string,
+) => {
+	// TO
+	// TODO align token with claims / scope
+	const token = await jwt.sign(
+		{
+			sub: input.subject,
+			nbf: Math.floor(Date.now() / 1000) + 60 * 60, // Not before: Now + 1h
+			exp: Math.floor(Date.now() / 1000) + 2 * (60 * 60), // Expires: Now + 2h
+		},
+		jwtSecret,
+	);
+
+	return token;
+};
 
 export const loadStorachaSecrets = async (env: any) => {
 	const agentKeyString = await env.STORACHA_AGENT_KEY_STRING.get();
@@ -158,6 +178,21 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	const { did, tokenType } = await request.json();
 
+	const policies = [
+		{
+			policyType: "env",
+			policyCriteria: {
+				whitelistEnvKey: "GEIST_USER",
+				subject: did,
+			},
+			tokenType,
+			policyAccess: {
+				metadata: {},
+				claims: ["admin:iam"],
+			},
+		},
+	];
+
 	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET");
 
 	console.log("auth for user", did);
@@ -166,12 +201,11 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 		throw new Error("did is not set");
 	}
 
-	// TODO align token with claims / scope
-	const token = await jwt.sign(
+	const jwt = await authorizeJWT(
+		policies,
 		{
-			sub: did,
-			nbf: Math.floor(Date.now() / 1000) + 60 * 60, // Not before: Now + 1h
-			exp: Math.floor(Date.now() / 1000) + 2 * (60 * 60), // Expires: Now + 2h
+			subject: did,
+			tokenType,
 		},
 		jwtSecret,
 	);
@@ -180,7 +214,7 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	// Read secrets from environment bindings and KV
 	return new Response(
 		JSON.stringify({
-			jwt: token,
+			jwt,
 		}),
 		{
 			headers: {

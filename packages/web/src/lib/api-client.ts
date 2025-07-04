@@ -44,19 +44,17 @@ export const auth = {
 			.arrayBuffer();
 	},
 	authorizeJWT: async ({
-		spaceId,
 		did,
 		tokenType,
 	}: {
-		spaceId: string;
 		did: string;
 		tokenType: string;
 	}): Promise<ArrayBuffer> => {
 		return apiClient
 			.post("api/auth/jwt", {
-				json: { spaceId, did, tokenType },
+				json: { did, tokenType },
 			})
-			.arrayBuffer();
+			.json();
 	},
 } as const;
 

@@ -47,7 +47,6 @@ export const authorizeUcan = async (
 ) => {
 	const isAccessible = await processPolicies(policies, input);
 
-	console.log("isAccessible", isAccessible);
 	if (!isAccessible) {
 		return null;
 	}
