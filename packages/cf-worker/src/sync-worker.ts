@@ -25,10 +25,14 @@ const syncWorker = makeWorker({
 });
 
 export class WorkerLiveStore extends WorkerEntrypoint {
-	env!: Env;
-	ctx!: ExecutionContext;
 	// Currently, entrypoints without a named handler are not supported
 	async fetch(request: Request) {
-		return syncWorker.fetch(request, this.env, this.ctx);
+		return syncWorker.fetch(
+			request,
+			// @ts-expect-error
+			this.env as Env,
+			// @ts-expect-error
+			this.ctx as ExecutionContext,
+		);
 	}
 }
