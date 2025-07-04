@@ -20,13 +20,12 @@ const requestDelegation = async ({
 
 		if (delegationArchive?.byteLength === 0) {
 			return {
-				ok: false,
+				ok: null,
 			};
 		}
 
 		const delegation = await extract(new Uint8Array(delegationArchive));
 		console.log("request delegation", did, "space:", spaceId);
-		console.log(delegation.ok);
 		if (!delegation.ok) {
 			throw new Error("Failed to extract delegation");
 		}
@@ -37,7 +36,7 @@ const requestDelegation = async ({
 	}
 
 	return {
-		ok: false,
+		ok: null,
 	};
 };
 
@@ -91,8 +90,6 @@ export const useDelegateAccount = (options: {
 				if (!delegationResults.ok) {
 					throw new Error("Failed to request delegation");
 				}
-
-				console.log("delegationResults", delegationResults);
 
 				// TODO request only if expired
 				setDelegation(delegationResults.ok);

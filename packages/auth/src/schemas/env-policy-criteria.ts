@@ -19,15 +19,13 @@ export const checkEnvCriteria = async (policyConfig: any, input: AuthInput) => {
 
 	const whitelist = input.context?.env[whitelistEnvKey];
 
-	console.log("whitelist", whitelist, whitelistEnvKey);
-	console.log("checkEnvCriteria, input", input);
 	if (!whitelist) {
 		return false;
 	}
 
 	const dids = whitelist.split(",") || [];
 
-	const { subject, context } = input;
+	const { subject } = input;
 
 	if (!dids.includes(subject)) {
 		return false;
