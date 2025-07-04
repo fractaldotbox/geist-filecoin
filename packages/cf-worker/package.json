@@ -5,9 +5,10 @@
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"scripts": {
-		"build": "tsc",
 		"dev": "vite dev ",
-		"deploy": "wrangler deploy",
+		"build": "vite build",
+		"preview": "npm run build && vite preview",
+		"deploy": "npm run build && wrangler deploy",
 		"lint": "biome check --fix"
 	},
 	"dependencies": {
