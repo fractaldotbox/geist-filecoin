@@ -193,8 +193,6 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 		jwtSecret,
 	);
 
-	// TODO
-	// Read secrets from environment bindings and KV
 	return new Response(
 		JSON.stringify({
 			jwt,
@@ -207,20 +205,8 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	);
 });
 
-// // Fallback to original worker for all other routes
-router.all("*", (request: Request, env: any, ctx: any) => {
-	console.log("fallback", request.url, request.method);
-	return new Response(JSON.stringify({}), {
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-});
-
 export default {
 	fetch: (request: Request, env: any, ctx: any) => {
 		return router.fetch(request, env, ctx);
 	},
 };
-
-// export default router;
