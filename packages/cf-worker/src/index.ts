@@ -1,64 +1,58 @@
-import  {DurableObject } from "cloudflare:workers";
+import { type DurableObjectId, DurableObject } from "cloudflare:workers";
 import jwt from "@tsndr/cloudflare-worker-jwt";
 import { authorizeUcan } from "@geist-filecoin/auth";
 import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import { Router, cors, error, json } from "itty-router";
-import { Env } from "@livestore/sync-cf/cf-worker";
+import type { Env } from "@livestore/sync-cf/cf-worker";
 
 
 export class Policies extends DurableObject<Env> {
-	constructor(state:any, env:any) {
-	  super(state, env)
-	  this.counter = 0
+	private policies: any[] = [];
+	private storage: any;
 
-	  console.log(this.ctx.storage.sql);
+	constructor(state: any, env: any) {
+		super(state, env);
+		this.storage = state.storage;
+		console.log(this.storage.sql);
 
-	  this.sql.exec(`CREATE TABLE IF NOT EXISTS policies(
-		policyId    INTEGER PRIMARY KEY,
-		name  TEXT
-	  );INSERT INTO artist (policyId, name) VALUES
-		(123, 'Alice'),
-		(456, 'Bob'),
-		(789, 'Charlie');`)
+		this.init();
 	}
-  
+
+	init() {
+		this.storage.sql.exec(`CREATE TABLE IF NOT EXISTS policies(
+			policyId  INTEGER PRIMARY KEY,
+			name  TEXT
+		  )`);
+	}
+	
 	increment() {
-	  this.counter++
 	}
 
-	getAllPolicies = async () => {
-		return this.ctx.storage.sql.exec("SELECT * FROM policies;").toArray();
+	async getAllPolicies() {
+		this.policies = this.storage.sql.exec("SELECT * FROM policies;").toArray();
+		return this.policies;
 	}	
   
-	setValue(newValue: number) {
-	  this.counter = newValue
+	async addPolicies(policies: any[]) {
+		if (policies.length === 0) return;
+
+		// const stmt = this.storage.sql.prepare(`INSERT OR REPLACE INTO policies (policyId, name) VALUES (?, ?)`);
+
+		console.log(this.storage.sql);
+
+		const values = policies.map(policy => [policy.policyId, policy.name])
+		.map(([policyId, name])=>`( "${policyId}", "${name}" )`)
+		.join(',')
+		
+		await this.storage.sql.exec(
+			`INSERT OR REPLACE INTO policies (policyId, name) VALUES ${values}
+			`,
+			
+
+		)
+		
 	}
-  }
-
-// Durable Object for storing policies
-// export class Policies extends DurableObject{
-// 	sql: any
-
-// 	constructor(ctx: DurableObjectState, env: Env) {
-// 		super(state, env);
-
-// 		this.sql = ctx.storage.sql;
-
-// 		this.sql.exec(`CREATE TABLE IF NOT EXISTS policies(
-// 		  policyId    INTEGER PRIMARY KEY,
-// 		  name  TEXT
-// 		);INSERT INTO artist (policyId, name) VALUES
-// 		  (123, 'Alice'),
-// 		  (456, 'Bob'),
-// 		  (789, 'Charlie');`
-// 		);
-
-// 	}
-
-// 	getAllPolicies = async () => {
-// 		return this.sql.exec("SELECT * FROM policies;").toArray();
-// 	}
-// }
+}
 
 
 const { preflight, corsify } = cors({
@@ -66,6 +60,11 @@ const { preflight, corsify } = cors({
 	credentials: true,
 	allowMethods: ["GET", "POST", "OPTIONS"],
 });
+
+
+export const getId = (request: Request, env: any): DurableObjectId =>{
+	return env.POLICIES.idFromName(new URL(request.url).pathname);
+}
 
 // Custom error handler that logs errors
 const errorHandler = (error: Error, request: Request) => {
@@ -216,30 +215,21 @@ router.get("/websocket", async (request: Request, env: any) => {
 	return await env.WORKER_LIVESTORE.fetch(request, env);
 });
 
-
-
 router.post("/api/iam", async (request: Request, env: any) => {
-	const { did } = await request.json();
+	const { did, policies } = await request.json();
 	const id:DurableObjectId = env.POLICIES.idFromName(new URL(request.url).pathname);
 
 	const policy = await env.POLICIES.get(id);
 	console.log('env', policy)
-	let policiesGet = await policy.getAllPolicies()
-	console.log('policiesGet', policiesGet)
-
-	const policies = [
-		{
-			policyType: "env",
-			policyCriteria: {
-				whitelistEnvKey: "GEIST_USER",
-				subject: "did",
-			},
-			policyAccess: {
-				metadata: {},
-				claims: ["admin:iam"],
-			},
-		},
-	];
+	
+	// Add policies with their IDs for upsert functionality
+	await policy.addPolicies([{
+			policyId: 1, // Default ID
+			name: 'alice'
+		},{
+			policyId: 2, // Default ID
+			name: 'bob'
+		}]);
 
 	return new Response(JSON.stringify({ message: "Policies stored" }), {
 		headers: {
