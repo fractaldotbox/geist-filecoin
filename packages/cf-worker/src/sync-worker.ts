@@ -14,7 +14,6 @@ export class WebSocketServer extends makeDurableObject({
 	},
 }) {}
 
-
 // Note AutoRouter not compatabile
 const syncWorker = makeWorker({
 	validatePayload: (payload: any) => {

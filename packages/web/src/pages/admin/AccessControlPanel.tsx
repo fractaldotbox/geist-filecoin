@@ -27,6 +27,7 @@ import {
 	SelectValue,
 } from "@/components/react/ui/select";
 import { Textarea } from "@/components/react/ui/textarea";
+import apiClient from "@/lib/api-client";
 import { useUiState } from "@/livestore/queries";
 import { allAccessRules$ } from "@/livestore/queries";
 import {
@@ -36,8 +37,10 @@ import {
 } from "@geist-filecoin/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useStore } from "@livestore/react";
+import ky from "ky";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 // --- Utility: Convert JSON Schema to Zod ---
@@ -182,6 +185,7 @@ export default function AccessControlPanel() {
 	const [criteriaType, setCriteriaType] = useState<RuleCriteriaType>("eas");
 	const [tokenType, setTokenType] = useState<TokenType>("");
 	const [submitted, setSubmitted] = useState<RuleFormType | null>(null);
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const RuleFormSchema = getRuleFormSchema(criteriaType);
 	const form = useForm<RuleFormType>({
 		resolver: zodResolver(RuleFormSchema),
@@ -201,40 +205,73 @@ export default function AccessControlPanel() {
 	const [expandedRuleId, setExpandedRuleId] = useState<string | null>(null);
 
 	async function onSubmit(data: RuleFormType) {
-		// Generate a unique id for the rule
-		const id = `access-rule-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-		// Get current spaceId from uiState
-		const spaceId = uiState?.currentSpaceId || "";
-		// Prepare criteria (all fields except claims)
-		const { criteriaType, claims, ...criteriaFields } = data;
-		// Prepare access (claims)
-		const typedClaims = claims as z.infer<typeof ClaimsRuleSchema>;
-		const access: any = {
-			tokenType: typedClaims.tokenType,
-			claims: typedClaims.claims,
-		};
-		if (typedClaims.tokenType === "ucan" && typedClaims.spaceId) {
-			access.spaceId = typedClaims.spaceId;
-		}
-		await createAccessPolicy({
-			id,
-			spaceId,
-			criteriaType: criteriaType as string,
-			criteria: JSON.stringify(criteriaFields),
-			access: JSON.stringify(access),
-			createdAt: new Date(),
+		// Show immediate success feedback
+		toast.success("Policy created successfully!", {
+			description: "Your access policy has been created and saved.",
 		});
-		setSubmitted(data);
+
+		// Close dialog and reset form immediately for better UX
+		setIsDialogOpen(false);
+		form.reset();
+		setSubmitted(null);
+
+		try {
+			// Generate a unique id for the rule
+			const id = `access-rule-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			// Get current spaceId from uiState
+			const spaceId = uiState?.currentSpaceId || "";
+			// Prepare criteria (all fields except claims)
+			const { criteriaType, claims, ...criteriaFields } = data;
+			// Prepare access (claims)
+			const typedClaims = claims as z.infer<typeof ClaimsRuleSchema>;
+			const access: any = {
+				tokenType: typedClaims.tokenType,
+				claims: typedClaims.claims,
+			};
+			if (typedClaims.tokenType === "ucan" && typedClaims.spaceId) {
+				access.spaceId = typedClaims.spaceId;
+			}
+
+			// Prepare the policy data for the API
+			const policyData = {
+				id,
+				spaceId,
+				tokenType: typedClaims.tokenType,
+				criteriaType,
+				criteria: JSON.stringify(criteriaFields),
+				access: JSON.stringify(access),
+				createdAt: new Date(),
+			};
+
+			await createAccessPolicy(policyData);
+
+			// persist
+			await apiClient.auth.addPolicies({
+				policies: [policyData],
+			});
+
+			setSubmitted(data);
+		} catch (error) {
+			console.error("Failed to create access policy:", error);
+			// Show error toast and reopen dialog if there was an error
+			toast.error("Failed to create policy", {
+				description:
+					"There was an error creating your access policy. Please try again.",
+			});
+			// Reopen dialog on error so user can retry
+			setIsDialogOpen(true);
+			throw error;
+		}
 	}
 
 	return (
 		<div className="max-w-xl mx-auto py-10 space-y-8">
 			<div className="container">
-				<Dialog>
+				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 					<DialogTrigger asChild>
 						<Button variant="default">Add Policy</Button>
 					</DialogTrigger>
-					<DialogContent>
+					<DialogContent className="max-h-[80vh] overflow-y-auto">
 						<DialogHeader>
 							<DialogTitle>Create Access Policy</DialogTitle>
 						</DialogHeader>

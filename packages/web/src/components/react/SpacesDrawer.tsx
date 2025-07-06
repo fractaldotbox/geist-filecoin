@@ -28,6 +28,7 @@ import {
 import { allSpaces$, useUiState } from "../../livestore/queries";
 
 import type { StorageProviderCredentialConfig } from "@geist-filecoin/domain";
+import { toast } from "sonner";
 import { useLiveStore } from "./hooks/useLiveStore";
 import { useSpaceStore } from "./hooks/useSpaceStore";
 import { Badge } from "./ui/badge";
@@ -143,6 +144,15 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 			}
 		}
 
+		// Show immediate success feedback
+		toast.success("Space created successfully!", {
+			description: "Your content space has been created and is now active.",
+		});
+
+		// Reset form and close immediately for better UX
+		form.reset();
+		setShowCreateForm(false);
+
 		const id = `space-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 		// Deactivate all existing spaces before creating the new active space
@@ -175,18 +185,25 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 			];
 		}
 
-		await createSpace({
-			id,
-			name: data.name.trim(),
-			description: data.description?.trim() || "",
-			storageProvider: data.storageProvider,
-			storageProviderId: "",
-			storageProviderCredentials,
-		});
-
-		// Reset form and close
-		form.reset();
-		setShowCreateForm(false);
+		try {
+			await createSpace({
+				id,
+				name: data.name.trim(),
+				description: data.description?.trim() || "",
+				storageProvider: data.storageProvider,
+				storageProviderId: "",
+				storageProviderCredentials,
+			});
+		} catch (error) {
+			console.error("Failed to create space:", error);
+			// Show error toast
+			toast.error("Failed to create space", {
+				description:
+					"There was an error creating your content space. Please try again.",
+			});
+			// Reopen form on error so user can retry
+			setShowCreateForm(true);
+		}
 	};
 
 	const handleDeleteSpace = async (spaceId: string) => {

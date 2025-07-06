@@ -1,10 +1,9 @@
-import { type DurableObjectId, DurableObject } from "cloudflare:workers";
-import jwt from "@tsndr/cloudflare-worker-jwt";
+import { DurableObject, type DurableObjectId } from "cloudflare:workers";
 import { authorizeUcan } from "@geist-filecoin/auth";
 import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
-import { Router, cors, error, json } from "itty-router";
 import type { Env } from "@livestore/sync-cf/cf-worker";
-
+import jwt from "@tsndr/cloudflare-worker-jwt";
+import { Router, cors, error, json } from "itty-router";
 
 export class Policies extends DurableObject<Env> {
 	private policies: any[] = [];
@@ -20,40 +19,44 @@ export class Policies extends DurableObject<Env> {
 
 	init() {
 		this.storage.sql.exec(`CREATE TABLE IF NOT EXISTS policies(
-			policyId  INTEGER PRIMARY KEY,
-			name  TEXT
+			policyId TEXT PRIMARY KEY,
+			criteriaType  TEXT,
+			criteria  TEXT,
+			access  TEXT
 		  )`);
 	}
-	
-	increment() {
-	}
+
+	increment() {}
 
 	async getAllPolicies() {
 		this.policies = this.storage.sql.exec("SELECT * FROM policies;").toArray();
 		return this.policies;
-	}	
-  
-	async addPolicies(policies: any[]) {
+	}
+
+	async addPolicies(policies: AccessPolicy[]) {
 		if (policies.length === 0) return;
 
-		// const stmt = this.storage.sql.prepare(`INSERT OR REPLACE INTO policies (policyId, name) VALUES (?, ?)`);
+		const values = policies
+			.map((policy) => {
+				const { criteriaType, criteria, access } = policy;
+				const policyId = crypto.randomUUID();
 
-		console.log(this.storage.sql);
+				return [
+					policyId,
+					criteriaType,
+					JSON.stringify(criteria).replace(/"/g, '""'),
+					JSON.stringify(access).replace(/"/g, '""'),
+				];
+			})
+			.map((values) => `( ${values.map((value) => `"${value}"`).join(",")} )`)
+			.join(",");
 
-		const values = policies.map(policy => [policy.policyId, policy.name])
-		.map(([policyId, name])=>`( "${policyId}", "${name}" )`)
-		.join(',')
-		
 		await this.storage.sql.exec(
-			`INSERT OR REPLACE INTO policies (policyId, name) VALUES ${values}
+			`INSERT OR REPLACE INTO policies (policyId, criteriaType, criteria, access) VALUES ${values}
 			`,
-			
-
-		)
-		
+		);
 	}
 }
-
 
 const { preflight, corsify } = cors({
 	origin: "*",
@@ -61,10 +64,9 @@ const { preflight, corsify } = cors({
 	allowMethods: ["GET", "POST", "OPTIONS"],
 });
 
-
-export const getId = (request: Request, env: any): DurableObjectId =>{
+export const getId = (request: Request, env: any): DurableObjectId => {
 	return env.POLICIES.idFromName(new URL(request.url).pathname);
-}
+};
 
 // Custom error handler that logs errors
 const errorHandler = (error: Error, request: Request) => {
@@ -169,13 +171,13 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 	// TODO load policies
 	const policies = [
 		{
-			policyType: "env",
-			policyCriteria: {
+			criteriaType: "env",
+			criteria: {
 				whitelistEnvKey: "GEIST_USER",
 				subject: did,
 			},
 			tokenType,
-			policyAccess: {
+			access: {
 				metadata: {
 					spaceId,
 				},
@@ -216,20 +218,16 @@ router.get("/websocket", async (request: Request, env: any) => {
 });
 
 router.post("/api/iam", async (request: Request, env: any) => {
-	const { did, policies } = await request.json();
-	const id:DurableObjectId = env.POLICIES.idFromName(new URL(request.url).pathname);
+	const { policies } = await request.json();
+	console.log("iam add policies", policies);
+	const id: DurableObjectId = env.POLICIES.idFromName(
+		new URL(request.url).pathname,
+	);
 
 	const policy = await env.POLICIES.get(id);
-	console.log('env', policy)
-	
+
 	// Add policies with their IDs for upsert functionality
-	await policy.addPolicies([{
-			policyId: 1, // Default ID
-			name: 'alice'
-		},{
-			policyId: 2, // Default ID
-			name: 'bob'
-		}]);
+	await policy.addPolicies(policies);
 
 	return new Response(JSON.stringify({ message: "Policies stored" }), {
 		headers: {
@@ -238,19 +236,18 @@ router.post("/api/iam", async (request: Request, env: any) => {
 	});
 });
 
-
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	const { did, tokenType } = await request.json();
 
 	const policies = [
 		{
-			policyType: "env",
-			policyCriteria: {
+			criteriaType: "env",
+			criteria: {
 				whitelistEnvKey: "GEIST_USER",
 				subject: did,
 			},
 			tokenType,
-			policyAccess: {
+			access: {
 				metadata: {},
 				claims: ["admin:iam"],
 			},

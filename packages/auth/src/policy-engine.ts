@@ -7,7 +7,7 @@ import { checkEasRule } from "./schemas/eas-policy-criteria";
 import { checkEnvCriteria } from "./schemas/env-policy-criteria";
 import { createClaimsGenerationRequest } from "./schemas/token-claims";
 
-export const processorsByPolicyType = {
+export const processorsBycriteriaType = {
 	env: checkEnvCriteria,
 	eas: checkEasRule,
 };
@@ -18,16 +18,16 @@ export const processPolicies = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
 ) => {
-	console.log(input, "policies", policies[0]?.policyAccess);
+	console.log(input, "policies", policies[0]?.access);
 
 	for (const policy of policies) {
 		const processor =
-			processorsByPolicyType[
-				policy.policyType as keyof typeof processorsByPolicyType
+			processorsBycriteriaType[
+				policy.criteriaType as keyof typeof processorsBycriteriaType
 			];
 
 		if (processor) {
-			const isAccessible = await processor(policy.policyCriteria, input);
+			const isAccessible = await processor(policy.criteria, input);
 			if (isAccessible) {
 				return true;
 			}

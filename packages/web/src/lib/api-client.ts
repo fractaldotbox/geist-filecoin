@@ -1,3 +1,4 @@
+import type { AccessPolicy } from "@geist-filecoin/auth";
 import ky, { type KyInstance } from "ky";
 
 const API_BASE_URL =
@@ -46,12 +47,19 @@ export const auth = {
 	}: {
 		did: string;
 		tokenType: string;
-	}): Promise<ArrayBuffer> => {
+	}): Promise<any> => {
 		return apiClient
 			.post("api/auth/jwt", {
 				json: { did },
 			})
 			.json();
+	},
+	addPolicies: async ({
+		policies,
+	}: {
+		policies: AccessPolicy[];
+	}): Promise<any> => {
+		return apiClient.post("api/iam", { json: { policies } }).json();
 	},
 } as const;
 

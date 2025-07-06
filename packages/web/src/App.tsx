@@ -11,6 +11,7 @@ import EntryEditorPage from "@/pages/editor/EntryEditorPage";
 import { THEME_STORAGE_KEY } from "@/stores/theme";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
 import { DemoModeBanner } from "./components/react/DemoModeBanner";
 import { useDemoMode } from "./components/react/hooks/useDemoMode";
 import HomePage from "./pages/HomePage";
@@ -83,6 +84,7 @@ function App() {
 					open={isSpacesDrawerOpen}
 					onClose={() => setIsSpacesDrawerOpen(false)}
 				/>
+				<Toaster position="top-right" richColors closeButton duration={4000} />
 			</div>
 		</SpacesDrawerContext.Provider>
 	);

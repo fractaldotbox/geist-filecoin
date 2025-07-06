@@ -6,10 +6,11 @@ export type Access = {
 };
 
 export type AccessPolicy = {
+	id: string;
 	tokenType: string;
-	policyType: string;
-	policyCriteria: Record<string, any>;
-	policyAccess: Access;
+	criteriaType: string;
+	criteria: Record<string, any>;
+	access: Access;
 };
 
 export type Processor = (policyConfig: any, input: AuthInput) => boolean;

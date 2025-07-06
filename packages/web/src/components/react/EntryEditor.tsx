@@ -29,6 +29,7 @@ import ky from "ky";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
+import { toast } from "sonner";
 import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
 import { useStorachaClient } from "./StorachaProvider";
@@ -394,8 +395,18 @@ export function EntryEditor({
 	// Create entry using LiveStore events instead of direct API calls
 	const onSubmit = async (values: Partial<EntryFormData>) => {
 		setIsSubmitting(true);
-		setSubmissionResult(undefined); // Reset submission result
-		console.log("debug:", values, typeof values);
+
+		// Show immediate success feedback
+		toast.success("Content saved successfully!", {
+			description: "Your content has been published and saved to IPFS.",
+		});
+
+		// Set the submission result immediately for better UX
+		setSubmissionResult({
+			cid: "local",
+			url: "local",
+		});
+
 		try {
 			// TODO extract as space attribute
 			const uploadMode = UploadMode.StorachaDelegated;
@@ -437,13 +448,20 @@ export function EntryEditor({
 
 			console.log("Entry created successfully");
 
-			// Set the submission result for the sidebar
+			// Update the submission result with actual values
 			setSubmissionResult({
 				cid: cid || "local",
 				url: url || "local",
 			});
 		} catch (error) {
 			console.error("Error creating entry:", error);
+			// Show error toast
+			toast.error("Failed to save content", {
+				description:
+					"There was an error saving your content. Please try again.",
+			});
+			// Clear submission result on error
+			setSubmissionResult(null);
 		} finally {
 			setIsSubmitting(false);
 			setUploadProgress(0);

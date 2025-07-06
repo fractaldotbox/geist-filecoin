@@ -142,7 +142,7 @@ export const useLiveStore = () => {
 		createdAt: Date;
 	}) => {
 		return store.commit(
-			events.accessRuleCreated({
+			events.accessPolicyCreated({
 				id: accessRuleData.id,
 				spaceId: accessRuleData.spaceId,
 				criteriaType: accessRuleData.criteriaType,
@@ -163,7 +163,7 @@ export const useLiveStore = () => {
 		}>,
 	) => {
 		return store.commit(
-			events.accessRuleUpdated({
+			events.accessPolicyUpdated({
 				id,
 				...accessRuleData,
 			}),
@@ -172,7 +172,7 @@ export const useLiveStore = () => {
 
 	const deleteAccessRule = (id: string) => {
 		return store.commit(
-			events.accessRuleDeleted({
+			events.accessPolicyDeleted({
 				id,
 			}),
 		);

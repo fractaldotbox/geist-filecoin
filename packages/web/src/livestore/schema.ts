@@ -227,8 +227,8 @@ export const events = {
 		}),
 	}),
 
-	accessRuleCreated: Events.synced({
-		name: "v1.AccessRuleCreated",
+	accessPolicyCreated: Events.synced({
+		name: "v1.AccessPolicyCreated",
 		schema: Schema.Struct({
 			id: Schema.String,
 			spaceId: Schema.String,
@@ -239,8 +239,8 @@ export const events = {
 		}),
 	}),
 
-	accessRuleUpdated: Events.synced({
-		name: "v1.AccessRuleUpdated",
+	acessPolicyUpdated: Events.synced({
+		name: "v1.AccessPolicyUpdated",
 		schema: Schema.Struct({
 			id: Schema.String,
 			spaceId: Schema.optional(Schema.String),
@@ -250,8 +250,8 @@ export const events = {
 		}),
 	}),
 
-	accessRuleDeleted: Events.synced({
-		name: "v1.AccessRuleDeleted",
+	accessPolicyDeleted: Events.synced({
+		name: "v1.AccessPolicyDeleted",
 		schema: Schema.Struct({ id: Schema.String }),
 	}),
 
@@ -392,7 +392,7 @@ const materializers = State.SQLite.materializers(events, {
 			updatedAt: new Date(),
 		}),
 
-	"v1.AccessRuleCreated": ({
+	"v1.AccessPolicyCreated": ({
 		id,
 		spaceId,
 		criteriaType,
@@ -409,14 +409,15 @@ const materializers = State.SQLite.materializers(events, {
 			createdAt,
 		}),
 
-	"v1.AccessRuleUpdated": ({ id, ...data }) => {
+	"v1.AccessPolicyUpdated": ({ id, ...data }) => {
 		const updateData = Object.fromEntries(
 			Object.entries({ ...data }).filter(([_, value]) => value !== undefined),
 		);
 		return tables.accessRules.update(updateData).where({ id });
 	},
 
-	"v1.AccessRuleDeleted": ({ id }) => tables.accessRules.delete().where({ id }),
+	"v1.AccessPolicyDeleted": ({ id }) =>
+		tables.accessRules.delete().where({ id }),
 });
 
 const state = State.SQLite.makeState({ tables, materializers });
