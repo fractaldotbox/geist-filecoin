@@ -4,7 +4,7 @@ import { Navigation } from "@/components/react/Navigation";
 import { SpacesDrawer } from "@/components/react/SpacesDrawer";
 import ContentEntriesPage from "@/pages/ContentEntriesPage";
 import SpacesPage from "@/pages/SpacesPage";
-import AccessControlPage from "@/pages/admin/AccessControlPanel";
+import AccessControlPage from "@/pages/admin/AccessControlPage";
 import ContentTypeEditorPage from "@/pages/editor/ContentTypeEditorPage";
 import ContentTypeSelectPage from "@/pages/editor/ContentTypeSelectPage";
 import EntryEditorPage from "@/pages/editor/EntryEditorPage";

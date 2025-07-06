@@ -30,7 +30,16 @@ export class Policies extends DurableObject<Env> {
 
 	async getAllPolicies() {
 		this.policies = this.storage.sql.exec("SELECT * FROM policies;").toArray();
-		return this.policies;
+
+		console.log("getAllPolicies", this.policies);
+
+		return this.policies.map((policy: any) => {
+			return {
+				...policy,
+				criteria: JSON.parse(policy.criteria),
+				access: JSON.parse(policy.access),
+			};
+		});
 	}
 
 	async addPolicies(policies: AccessPolicy[]) {
@@ -66,6 +75,12 @@ const { preflight, corsify } = cors({
 
 export const getId = (request: Request, env: any): DurableObjectId => {
 	return env.POLICIES.idFromName(new URL(request.url).pathname);
+};
+
+export const getPolicyDO = async (request: Request, env: any) => {
+	const id: DurableObjectId = getId(request, env);
+	const policy = await env.POLICIES.get(id);
+	return policy;
 };
 
 // Custom error handler that logs errors
@@ -168,23 +183,10 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 		},
 	};
 
+	const policyDO = await getPolicyDO(request, env);
+
 	// TODO load policies
-	const policies = [
-		{
-			criteriaType: "env",
-			criteria: {
-				whitelistEnvKey: "GEIST_USER",
-				subject: did,
-			},
-			tokenType,
-			access: {
-				metadata: {
-					spaceId,
-				},
-				claims: ["access/claim", "upload/list", "upload/add", "space/info"],
-			},
-		},
-	];
+	const policies = await policyDO.getAllPolicies();
 
 	console.log("authorize input", input, policies);
 
@@ -239,20 +241,9 @@ router.post("/api/iam", async (request: Request, env: any) => {
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	const { did, tokenType } = await request.json();
 
-	const policies = [
-		{
-			criteriaType: "env",
-			criteria: {
-				whitelistEnvKey: "GEIST_USER",
-				subject: did,
-			},
-			tokenType,
-			access: {
-				metadata: {},
-				claims: ["admin:iam"],
-			},
-		},
-	];
+	const policyDO = await getPolicyDO(request, env);
+
+	const policies = await policyDO.getAllPolicies();
 
 	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET");
 

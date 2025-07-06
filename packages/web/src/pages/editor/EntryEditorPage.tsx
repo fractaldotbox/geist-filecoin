@@ -27,7 +27,9 @@ export default function EntryEditorPage() {
 				/>
 				<h1 className="text-2xl font-bold">Edit Content</h1>
 			</div>
-			<EntryEditor entryId={id as string} />
+			<div className="container mx-auto">
+				<EntryEditor entryId={id as string} />
+			</div>
 		</div>
 	);
 }
