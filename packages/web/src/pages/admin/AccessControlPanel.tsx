@@ -184,7 +184,7 @@ export default function AccessControlPanel() {
 	const [criteriaType, setCriteriaType] = useState<PolicyCriteriaType>("eas");
 	const [tokenType, setTokenType] = useState<TokenType>("");
 	const [submitted, setSubmitted] = useState<PolicyFormType | null>(null);
-	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [isDialogOpened, setIsDialogOpened] = useState(false);
 	const PolicyFormSchema = getPolicyFormSchema(criteriaType);
 	const form = useForm<PolicyFormType>({
 		resolver: zodResolver(PolicyFormSchema),
@@ -213,7 +213,7 @@ export default function AccessControlPanel() {
 		});
 
 		// Close dialog and reset form immediately for better UX
-		setIsDialogOpen(false);
+		setIsDialogOpened(false);
 		form.reset();
 		setSubmitted(null);
 
@@ -270,7 +270,7 @@ export default function AccessControlPanel() {
 					"There was an error creating your access policy. Please try again.",
 			});
 			// Reopen dialog on error so user can retry
-			setIsDialogOpen(true);
+			setIsDialogOpened(true);
 			throw error;
 		}
 	}
@@ -278,7 +278,7 @@ export default function AccessControlPanel() {
 	return (
 		<div className="max-w-xl mx-auto py-10 space-y-8">
 			<div className="container">
-				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+				<Dialog open={isDialogOpened} onOpenChange={setIsDialogOpened}>
 					<DialogTrigger asChild>
 						<Button variant="default">Add Policy</Button>
 					</DialogTrigger>
