@@ -20,7 +20,7 @@ export const EAS_POLICY_SCHEMA = {
 	required: ["didPattern", "claims"],
 };
 
-export const checkEasRule = async (policyConfig: any, input: AuthInput) => {
+export const checkEasCriteria = async (policyConfig: any, input: AuthInput) => {
 	const { schemaId, field } = policyConfig;
 
 	const { subject, context } = input;

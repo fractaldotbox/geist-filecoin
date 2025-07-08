@@ -1,4 +1,4 @@
-import AccessRuleList from "@/components/react/AccessRuleList";
+import AccessPolicyList from "@/components/react/AccessPolicyList";
 import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import { Button } from "@/components/react/ui/button";
 import {
@@ -29,7 +29,7 @@ import {
 import { Textarea } from "@/components/react/ui/textarea";
 import apiClient from "@/lib/api-client";
 import { useUiState } from "@/livestore/queries";
-import { allAccessRules$ } from "@/livestore/queries";
+import { allAccessPolicys$ } from "@/livestore/queries";
 import {
 	CLAIMS_SCHEMA,
 	EAS_POLICY_SCHEMA,
@@ -127,8 +127,7 @@ function renderFieldsFromSchema(schema: any, form: any, parentKey = "") {
 	});
 }
 
-// --- Dynamic Rule Schemas ---
-const RULE_SCHEMAS = {
+const POLICY_SCHEMAS = {
 	eas: EAS_POLICY_SCHEMA,
 	env: ENV_POLICY_SCHEMA,
 };
@@ -143,7 +142,7 @@ const TOKEN_TYPES = [
 	{ value: "api", label: "API JWT" },
 ] as const;
 
-type RuleCriteriaType = (typeof POLICY_CRITERIA_TYPES)[number]["value"];
+type PolicyCriteriaType = (typeof POLICY_CRITERIA_TYPES)[number]["value"];
 
 // --- Claims Schema ---
 // Define TokenType from CLAIMS_SCHEMA
@@ -152,24 +151,24 @@ const TOKEN_TYPE_VALUES = CLAIMS_SCHEMA.properties.anyOf.map(
 );
 type TokenType = (typeof TOKEN_TYPE_VALUES)[number];
 
-// Fix: Explicitly define ClaimsRuleSchema for correct typing
-const ClaimsRuleSchema = z.object({
+// Fix: Explicitly define ClaimsPolicySchema for correct typing
+const ClaimsPolicySchema = z.object({
 	tokenType: z.string(),
 	claims: z.array(z.string()),
 	spaceId: z.string().optional(),
 });
 
-// --- Main Rule Schema ---
-function getRuleFormSchema(criteriaType: RuleCriteriaType) {
-	const dynamicSchema = jsonSchemaToZod(RULE_SCHEMAS[criteriaType]);
+// --- Main Policy Schema ---
+function getPolicyFormSchema(criteriaType: PolicyCriteriaType) {
+	const dynamicSchema = jsonSchemaToZod(POLICY_SCHEMAS[criteriaType]);
 	// Always include claims
 	return dynamicSchema.extend({
 		criteriaType: z.enum(["eas", "env"]),
-		claims: ClaimsRuleSchema,
+		claims: ClaimsPolicySchema,
 	});
 }
 
-type RuleFormType = z.infer<ReturnType<typeof getRuleFormSchema>>;
+type PolicyFormType = z.infer<ReturnType<typeof getPolicyFormSchema>>;
 
 // Helper to get claims options for a given tokenType
 function getClaimsOptions(tokenType: TokenType) {
@@ -182,29 +181,32 @@ function getClaimsOptions(tokenType: TokenType) {
 export default function AccessControlPanel() {
 	const { createAccessPolicy } = useLiveStore();
 	const [uiState] = useUiState();
-	const [criteriaType, setCriteriaType] = useState<RuleCriteriaType>("eas");
+	const [criteriaType, setCriteriaType] = useState<PolicyCriteriaType>("eas");
 	const [tokenType, setTokenType] = useState<TokenType>("");
-	const [submitted, setSubmitted] = useState<RuleFormType | null>(null);
+	const [submitted, setSubmitted] = useState<PolicyFormType | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
-	const RuleFormSchema = getRuleFormSchema(criteriaType);
-	const form = useForm<RuleFormType>({
-		resolver: zodResolver(RuleFormSchema),
+	const PolicyFormSchema = getPolicyFormSchema(criteriaType);
+	const form = useForm<PolicyFormType>({
+		resolver: zodResolver(PolicyFormSchema),
 		defaultValues: {
 			criteriaType: criteriaType,
 			...Object.fromEntries(
-				Object.keys(RULE_SCHEMAS[criteriaType].properties).map((k) => [k, ""]),
+				Object.keys(POLICY_SCHEMAS[criteriaType].properties).map((k) => [
+					k,
+					"",
+				]),
 			),
 			claims: { tokenType: "", claims: [], spaceId: "" },
 		},
 		mode: "onTouched",
 	});
 
-	// Fetch all access rules
+	// Fetch all access policies
 	const { store } = useStore();
-	const rules = store.useQuery(allAccessRules$) || [];
-	const [expandedRuleId, setExpandedRuleId] = useState<string | null>(null);
+	const policies = store.useQuery(allAccessPolicys$) || [];
+	const [expandedPolicyId, setExpandedPolicyId] = useState<string | null>(null);
 
-	async function onSubmit(data: RuleFormType) {
+	async function onSubmit(data: PolicyFormType) {
 		// Show immediate success feedback
 		toast.success("Policy created successfully!", {
 			description: "Your access policy has been created and saved.",
@@ -216,14 +218,13 @@ export default function AccessControlPanel() {
 		setSubmitted(null);
 
 		try {
-			// Generate a unique id for the rule
-			const id = `access-rule-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			const id = `access-policy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 			// Get current spaceId from uiState
 			const spaceId = uiState?.currentSpaceId || "";
 			// Prepare criteria (all fields except claims)
 			const { criteriaType, claims, ...criteriaFields } = data;
 			// Prepare access (claims)
-			const typedClaims = claims as z.infer<typeof ClaimsRuleSchema>;
+			const typedClaims = claims as z.infer<typeof ClaimsPolicySchema>;
 			const access: any = {
 				tokenType: typedClaims.tokenType,
 				claims: typedClaims.claims,
@@ -232,22 +233,36 @@ export default function AccessControlPanel() {
 				access.spaceId = typedClaims.spaceId;
 			}
 
-			// Prepare the policy data for the API
-			const policyData = {
+			// Prepare the policy data for the local store
+			const localPolicyData = {
 				id,
 				spaceId,
-				tokenType: typedClaims.tokenType,
-				criteriaType,
+				criteriaType: criteriaType as string,
 				criteria: JSON.stringify(criteriaFields),
 				access: JSON.stringify(access),
 				createdAt: new Date(),
 			};
 
-			await createAccessPolicy(policyData);
+			await createAccessPolicy(localPolicyData);
+
+			// Prepare the policy data for the API (different structure)
+			const apiPolicyData = {
+				id,
+				tokenType: typedClaims.tokenType,
+				criteriaType: criteriaType as string,
+				criteria: criteriaFields,
+				access: {
+					claims: typedClaims.claims,
+					metadata:
+						typedClaims.tokenType === "ucan" && typedClaims.spaceId
+							? { spaceId: typedClaims.spaceId }
+							: {},
+				},
+			} as const;
 
 			// persist
 			await apiClient.auth.addPolicies({
-				policies: [policyData],
+				policies: [apiPolicyData as any],
 			});
 
 			setSubmitted(data);
@@ -291,7 +306,7 @@ export default function AccessControlPanel() {
 													<Select
 														value={String(field.value)}
 														onValueChange={(val) => {
-															setCriteriaType(val as RuleCriteriaType);
+															setCriteriaType(val as PolicyCriteriaType);
 															field.onChange(val);
 														}}
 													>
@@ -312,7 +327,7 @@ export default function AccessControlPanel() {
 										)}
 									/>
 									{/* Dynamic Criteria Fields */}
-									{renderFieldsFromSchema(RULE_SCHEMAS[criteriaType], form)}
+									{renderFieldsFromSchema(POLICY_SCHEMAS[criteriaType], form)}
 									{/* Claims Fields (always shown) */}
 									<hr />
 									<h3>Access Token Type</h3>
@@ -429,10 +444,10 @@ export default function AccessControlPanel() {
 				</Dialog>
 			</div>
 
-			<AccessRuleList
-				rules={rules as any[]}
-				expandedRuleId={expandedRuleId}
-				setExpandedRuleId={setExpandedRuleId}
+			<AccessPolicyList
+				policies={policies as any[]}
+				expandedPolicyId={expandedPolicyId}
+				setExpandedPolicyId={setExpandedPolicyId}
 			/>
 		</div>
 	);

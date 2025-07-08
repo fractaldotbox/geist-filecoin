@@ -1,7 +1,7 @@
 import type { AuthInput } from "./input";
 
 export const ENV_POLICY_SCHEMA = {
-	title: "Access Rule",
+	title: "Env Access Policy",
 	type: "object",
 	key: "env-policy-criteria",
 	properties: {

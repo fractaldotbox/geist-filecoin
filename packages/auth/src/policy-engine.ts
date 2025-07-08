@@ -3,13 +3,13 @@ import {
 	createUserDelegation,
 } from "@geist-filecoin/storage";
 import type { Access, AccessPolicy, AuthInput } from "./schemas/access-policy";
-import { checkEasRule } from "./schemas/eas-policy-criteria";
+import { checkEasCriteria } from "./schemas/eas-policy-criteria";
 import { checkEnvCriteria } from "./schemas/env-policy-criteria";
 import { createClaimsGenerationRequest } from "./schemas/token-claims";
 
 export const processorsBycriteriaType = {
 	env: checkEnvCriteria,
-	eas: checkEasRule,
+	eas: checkEasCriteria,
 };
 
 // union topkens / claims
