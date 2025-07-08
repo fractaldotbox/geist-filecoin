@@ -4,9 +4,9 @@ export type GetShortFormReturnType = string | null;
 
 export const getShortForm = (
 	input: string,
-	sectionLength = 4,
+	sectionLength = 6,
 ): GetShortFormReturnType => {
-	return [input.slice(0, sectionLength + 2), input.slice(-sectionLength)].join(
+	return [input.slice(0, sectionLength), input.slice(-sectionLength)].join(
 		"...",
 	);
 };
