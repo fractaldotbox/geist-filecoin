@@ -1,4 +1,4 @@
-import { getShortHex } from "@/lib/utils/hex";
+import { getShortForm } from "@/lib/utils/string";
 import { type Address, getAddress, isHex } from "viem";
 
 export type GetShortAddressReturnType = string | null;
@@ -13,5 +13,5 @@ export const getShortAddress = (
 
 	const checksumed = getAddress(address);
 
-	return getShortHex(checksumed, sectionLength);
+	return getShortForm(checksumed, sectionLength);
 };
