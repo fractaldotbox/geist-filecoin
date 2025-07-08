@@ -20,7 +20,7 @@ type AccessPolicy = {
 	criteriaType: string;
 	criteria: string;
 	access: string;
-	createdAt: number | string;
+	createdAt: Date;
 };
 
 type AccessPolicyListProps = {
@@ -73,7 +73,10 @@ const AccessPolicyList: React.FC<AccessPolicyListProps> = ({
 										{policy.criteriaType}
 									</CardTitle>
 									<CardDescription>
-										Created: {new Date(policy.createdAt).toLocaleString()}
+										Created:{" "}
+										{policy.createdAt instanceof Date
+											? policy.createdAt.toLocaleString()
+											: new Date(policy.createdAt).toLocaleString()}
 									</CardDescription>
 								</div>
 								<CardAction>

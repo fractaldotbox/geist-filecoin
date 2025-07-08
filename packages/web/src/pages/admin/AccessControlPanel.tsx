@@ -201,7 +201,6 @@ export default function AccessControlPanel() {
 		mode: "onTouched",
 	});
 
-	// Fetch all access policies
 	const { store } = useStore();
 	const policies = store.useQuery(allAccessPolicys$) || [];
 	const [expandedPolicyId, setExpandedPolicyId] = useState<string | null>(null);
@@ -441,7 +440,7 @@ export default function AccessControlPanel() {
 			</div>
 
 			<AccessPolicyList
-				policies={policies as any[]}
+				policies={policies}
 				expandedPolicyId={expandedPolicyId}
 				setExpandedPolicyId={setExpandedPolicyId}
 			/>
