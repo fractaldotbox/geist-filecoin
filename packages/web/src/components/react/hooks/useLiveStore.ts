@@ -134,7 +134,6 @@ export const useLiveStore = () => {
 	};
 
 	const createAccessPolicy = (accessPolicyData: {
-		id: string;
 		spaceId: string;
 		criteriaType: string;
 		criteria: string;
@@ -143,7 +142,7 @@ export const useLiveStore = () => {
 	}) => {
 		return store.commit(
 			events.accessPolicyCreated({
-				id: accessPolicyData.id,
+				id: crypto.randomUUID(),
 				spaceId: accessPolicyData.spaceId,
 				criteriaType: accessPolicyData.criteriaType,
 				criteria: accessPolicyData.criteria,

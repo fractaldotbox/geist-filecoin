@@ -20,6 +20,7 @@ describe("processPolicies", () => {
 		};
 
 		envPolicy = {
+			id: "env-policy-1",
 			criteriaType: "env",
 			criteria: {
 				whitelistEnvKey: "GEIST_USER",
@@ -110,6 +111,7 @@ describe("processPolicies", () => {
 
 		it("should return empty map for unknown policy type", async () => {
 			const unknownPolicy: AccessPolicy = {
+				id: "unknown-policy-1",
 				criteriaType: "unknown",
 				criteria: {},
 				tokenType: "access",
@@ -126,6 +128,7 @@ describe("processPolicies", () => {
 
 		it("should return claims if any policy allows access (allowlist behavior)", async () => {
 			const envPolicy2: AccessPolicy = {
+				id: "env-policy-2",
 				criteriaType: "env",
 				criteria: {
 					whitelistEnvKey: "OTHER_USER",
@@ -152,6 +155,7 @@ describe("processPolicies", () => {
 
 		it("should return empty map when no policies allow access", async () => {
 			const envPolicy2: AccessPolicy = {
+				id: "env-policy-3",
 				criteriaType: "env",
 				criteria: {
 					whitelistEnvKey: "OTHER_USER",
@@ -184,6 +188,7 @@ describe("processPolicies", () => {
 
 		it("should aggregate claims from multiple policies with same token type", async () => {
 			const envPolicy2: AccessPolicy = {
+				id: "env-policy-4",
 				criteriaType: "env",
 				criteria: {
 					whitelistEnvKey: "GEIST_USER",
@@ -205,6 +210,7 @@ describe("processPolicies", () => {
 
 		it("should handle different token types separately", async () => {
 			const envPolicy2: AccessPolicy = {
+				id: "env-policy-5",
 				criteriaType: "env",
 				criteria: {
 					whitelistEnvKey: "GEIST_USER",

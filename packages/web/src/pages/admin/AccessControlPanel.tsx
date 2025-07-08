@@ -218,8 +218,6 @@ export default function AccessControlPanel() {
 		setSubmitted(null);
 
 		try {
-			const id = `access-policy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-			// Get current spaceId from uiState
 			const spaceId = uiState?.currentSpaceId || "";
 			// Prepare criteria (all fields except claims)
 			const { criteriaType, claims, ...criteriaFields } = data;
@@ -235,7 +233,6 @@ export default function AccessControlPanel() {
 
 			// Prepare the policy data for the local store
 			const localPolicyData = {
-				id,
 				spaceId,
 				criteriaType: criteriaType as string,
 				criteria: JSON.stringify(criteriaFields),
@@ -247,7 +244,6 @@ export default function AccessControlPanel() {
 
 			// Prepare the policy data for the API (different structure)
 			const apiPolicyData = {
-				id,
 				tokenType: typedClaims.tokenType,
 				criteriaType: criteriaType as string,
 				criteria: criteriaFields,

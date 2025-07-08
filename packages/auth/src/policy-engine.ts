@@ -17,8 +17,10 @@ export const processorsBycriteriaType = {
 export const processPolicies = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
-) => {
+): Promise<Record<string, Access>> => {
 	console.log(input, "policies", policies[0]?.access);
+
+	const accessByTokenType: Record<string, Access> = {};
 
 	for (const policy of policies) {
 		const processor =
@@ -29,12 +31,17 @@ export const processPolicies = async (
 		if (processor) {
 			const isAccessible = await processor(policy.criteria, input);
 			if (isAccessible) {
-				return true;
+				// Group access by token type - last matching policy wins
+				const tokenType = policy.tokenType;
+				accessByTokenType[tokenType] = {
+					claims: [...policy.access.claims],
+					metadata: { ...policy.access.metadata },
+				};
 			}
 		}
 	}
 
-	return false;
+	return accessByTokenType;
 };
 
 export const authorizeUcan = async (
@@ -45,9 +52,10 @@ export const authorizeUcan = async (
 		proofString: string;
 	},
 ) => {
-	const isAccessible = await processPolicies(policies, input);
+	const accessByTokenType = await processPolicies(policies, input);
 
-	if (!isAccessible) {
+	// Check if any access was granted
+	if (Object.keys(accessByTokenType).length === 0) {
 		return null;
 	}
 
