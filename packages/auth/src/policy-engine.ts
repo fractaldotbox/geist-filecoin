@@ -3,13 +3,13 @@ import {
 	createUserDelegation,
 } from "@geist-filecoin/storage";
 import type { Access, AccessPolicy, AuthInput } from "./schemas/access-policy";
-import { checkEasRule } from "./schemas/eas-policy-criteria";
+import { checkEasCriteria } from "./schemas/eas-policy-criteria";
 import { checkEnvCriteria } from "./schemas/env-policy-criteria";
 import { createClaimsGenerationRequest } from "./schemas/token-claims";
 
-export const processorsByPolicyType = {
+export const processorsBycriteriaType = {
 	env: checkEnvCriteria,
-	eas: checkEasRule,
+	eas: checkEasCriteria,
 };
 
 // union topkens / claims
@@ -17,24 +17,31 @@ export const processorsByPolicyType = {
 export const processPolicies = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
-) => {
-	console.log(input, "policies", policies[0]?.policyAccess);
+): Promise<Record<string, Access>> => {
+	console.log(input, "policies", policies[0]?.access);
+
+	const accessByTokenType: Record<string, Access> = {};
 
 	for (const policy of policies) {
 		const processor =
-			processorsByPolicyType[
-				policy.policyType as keyof typeof processorsByPolicyType
+			processorsBycriteriaType[
+				policy.criteriaType as keyof typeof processorsBycriteriaType
 			];
 
 		if (processor) {
-			const isAccessible = await processor(policy.policyCriteria, input);
+			const isAccessible = await processor(policy.criteria, input);
 			if (isAccessible) {
-				return true;
+				// Group access by token type - last matching policy wins
+				const tokenType = policy.tokenType;
+				accessByTokenType[tokenType] = {
+					claims: [...policy.access.claims],
+					metadata: { ...policy.access.metadata },
+				};
 			}
 		}
 	}
 
-	return false;
+	return accessByTokenType;
 };
 
 export const authorizeUcan = async (
@@ -45,9 +52,10 @@ export const authorizeUcan = async (
 		proofString: string;
 	},
 ) => {
-	const isAccessible = await processPolicies(policies, input);
+	const accessByTokenType = await processPolicies(policies, input);
 
-	if (!isAccessible) {
+	// Check if any access was granted
+	if (Object.keys(accessByTokenType).length === 0) {
 		return null;
 	}
 

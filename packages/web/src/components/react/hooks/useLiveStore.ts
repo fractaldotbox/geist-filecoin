@@ -133,8 +133,7 @@ export const useLiveStore = () => {
 		);
 	};
 
-	const createAccessPolicy = (accessRuleData: {
-		id: string;
+	const createAccessPolicy = (accessPolicyData: {
 		spaceId: string;
 		criteriaType: string;
 		criteria: string;
@@ -142,20 +141,20 @@ export const useLiveStore = () => {
 		createdAt: Date;
 	}) => {
 		return store.commit(
-			events.accessRuleCreated({
-				id: accessRuleData.id,
-				spaceId: accessRuleData.spaceId,
-				criteriaType: accessRuleData.criteriaType,
-				criteria: accessRuleData.criteria,
-				access: accessRuleData.access,
-				createdAt: accessRuleData.createdAt,
+			events.accessPolicyCreated({
+				id: crypto.randomUUID(),
+				spaceId: accessPolicyData.spaceId,
+				criteriaType: accessPolicyData.criteriaType,
+				criteria: accessPolicyData.criteria,
+				access: accessPolicyData.access,
+				createdAt: accessPolicyData.createdAt,
 			}),
 		);
 	};
 
-	const updateAccessRule = (
+	const updateAccessPolicy = (
 		id: string,
-		accessRuleData: Partial<{
+		accessPolicyData: Partial<{
 			spaceId: string;
 			criteriaType: string;
 			criteria: string;
@@ -163,16 +162,16 @@ export const useLiveStore = () => {
 		}>,
 	) => {
 		return store.commit(
-			events.accessRuleUpdated({
+			events.accessPolicyUpdated({
 				id,
-				...accessRuleData,
+				...accessPolicyData,
 			}),
 		);
 	};
 
-	const deleteAccessRule = (id: string) => {
+	const deleteAccessPolicy = (id: string) => {
 		return store.commit(
-			events.accessRuleDeleted({
+			events.accessPolicyDeleted({
 				id,
 			}),
 		);
@@ -189,7 +188,7 @@ export const useLiveStore = () => {
 		setUiState,
 		createStorachaStorageAuthorization,
 		createAccessPolicy,
-		updateAccessRule,
-		deleteAccessRule,
+		updateAccessPolicy,
+		deleteAccessPolicy,
 	};
 };

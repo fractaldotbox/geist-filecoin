@@ -78,6 +78,9 @@ importers:
       '@tsndr/cloudflare-worker-jwt':
         specifier: ^3.2.0
         version: 3.2.0
+      itty-durable:
+        specifier: ^2.4.1
+        version: 2.4.1(itty-router@5.0.18)
       itty-router:
         specifier: ^5.0.18
         version: 5.0.18
@@ -6249,6 +6252,14 @@ packages:
       p-defer: 3.0.0
       p-fifo: 1.0.0
       readable-stream: 3.6.2
+    dev: false
+
+  /itty-durable@2.4.1(itty-router@5.0.18):
+    resolution: {integrity: sha512-y3Qb1z/ZMUjmnwrF0pYm61gjEkh6L6DqHtuGVEs0tM6+yc8NOug4eGaFT+ioL1XMG+WIr6dd97799zgr4rcIzg==}
+    peerDependencies:
+      itty-router: ^5.0.4
+    dependencies:
+      itty-router: 5.0.18
     dev: false
 
   /itty-router@5.0.18:

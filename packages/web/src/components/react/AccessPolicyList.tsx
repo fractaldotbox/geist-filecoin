@@ -15,32 +15,32 @@ import {
 import { ChevronDown, ChevronsUpDown } from "lucide-react";
 import type React from "react";
 
-type AccessRule = {
+type AccessPolicy = {
 	id: string;
 	criteriaType: string;
 	criteria: string;
 	access: string;
-	createdAt: number | string;
+	createdAt: Date;
 };
 
-type AccessRuleListProps = {
-	rules: readonly AccessRule[];
-	expandedRuleId: string | null;
-	setExpandedRuleId: (id: string | null) => void;
+type AccessPolicyListProps = {
+	policies: readonly AccessPolicy[];
+	expandedPolicyId: string | null;
+	setExpandedPolicyId: (id: string | null) => void;
 };
 
-const AccessRuleList: React.FC<AccessRuleListProps> = ({
-	rules,
-	expandedRuleId,
-	setExpandedRuleId,
+const AccessPolicyList: React.FC<AccessPolicyListProps> = ({
+	policies,
+	expandedPolicyId,
+	setExpandedPolicyId,
 }) => {
-	if (!rules.length) {
+	if (!policies.length) {
 		return (
 			<Card className="p-8 text-center">
 				<div className="flex flex-col items-center">
-					<h3 className="text-xl font-semibold mb-2">No Access Rules</h3>
+					<h3 className="text-xl font-semibold mb-2">No Access policies</h3>
 					<p className="text-muted-foreground mb-4">
-						Add your first access rule to get started.
+						Add your first access policy to get started.
 					</p>
 				</div>
 			</Card>
@@ -48,30 +48,35 @@ const AccessRuleList: React.FC<AccessRuleListProps> = ({
 	}
 	return (
 		<div className="space-y-4">
-			{rules.map((rule) => {
+			{policies.map((policy) => {
 				let criteria = {};
 				let access = {};
 				try {
-					criteria = JSON.parse(rule.criteria);
+					criteria = JSON.parse(policy.criteria);
 				} catch {}
 				try {
-					access = JSON.parse(rule.access);
+					access = JSON.parse(policy.access);
 				} catch {}
-				const isExpanded = expandedRuleId === rule.id;
+				const isExpanded = expandedPolicyId === policy.id;
 				return (
 					<Collapsible
-						key={rule.id}
+						key={policy.id}
 						open={isExpanded}
-						onOpenChange={(open) => setExpandedRuleId(open ? rule.id : null)}
+						onOpenChange={(open) =>
+							setExpandedPolicyId(open ? policy.id : null)
+						}
 					>
 						<Card className="p-4">
 							<CardHeader className="flex flex-row items-center justify-between">
 								<div>
 									<CardTitle className="text-base">
-										{rule.criteriaType}
+										{policy.criteriaType}
 									</CardTitle>
 									<CardDescription>
-										Created: {new Date(rule.createdAt).toLocaleString()}
+										Created:{" "}
+										{policy.createdAt instanceof Date
+											? policy.createdAt.toLocaleString()
+											: new Date(policy.createdAt).toLocaleString()}
 									</CardDescription>
 								</div>
 								<CardAction>
@@ -115,4 +120,4 @@ const AccessRuleList: React.FC<AccessRuleListProps> = ({
 	);
 };
 
-export default AccessRuleList;
+export default AccessPolicyList;

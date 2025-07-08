@@ -1,14 +1,87 @@
-import jwt from "@tsndr/cloudflare-worker-jwt";
-
+import { DurableObject, type DurableObjectId } from "cloudflare:workers";
 import { authorizeUcan } from "@geist-filecoin/auth";
 import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
+import type { Env } from "@livestore/sync-cf/cf-worker";
+import jwt from "@tsndr/cloudflare-worker-jwt";
 import { Router, cors, error, json } from "itty-router";
+
+export class Policies extends DurableObject<Env> {
+	private policies: any[] = [];
+	private storage: any;
+
+	constructor(state: any, env: any) {
+		super(state, env);
+		this.storage = state.storage;
+		console.log(this.storage.sql);
+
+		this.init();
+	}
+
+	init() {
+		this.storage.sql.exec(`CREATE TABLE IF NOT EXISTS policies(
+			policyId TEXT PRIMARY KEY,
+			criteriaType  TEXT,
+			criteria  TEXT,
+			access  TEXT
+		  )`);
+	}
+
+	increment() {}
+
+	async getAllPolicies() {
+		this.policies = this.storage.sql.exec("SELECT * FROM policies;").toArray();
+
+		console.log("getAllPolicies", this.policies);
+
+		return this.policies.map((policy: any) => {
+			return {
+				...policy,
+				criteria: JSON.parse(policy.criteria),
+				access: JSON.parse(policy.access),
+			};
+		});
+	}
+
+	async addPolicies(policies: AccessPolicy[]) {
+		if (policies.length === 0) return;
+
+		const values = policies
+			.map((policy) => {
+				const { criteriaType, criteria, access } = policy;
+				const policyId = crypto.randomUUID();
+
+				return [
+					policyId,
+					criteriaType,
+					JSON.stringify(criteria).replace(/"/g, '""'),
+					JSON.stringify(access).replace(/"/g, '""'),
+				];
+			})
+			.map((values) => `( ${values.map((value) => `"${value}"`).join(",")} )`)
+			.join(",");
+
+		await this.storage.sql.exec(
+			`INSERT OR REPLACE INTO policies (policyId, criteriaType, criteria, access) VALUES ${values}
+			`,
+		);
+	}
+}
 
 const { preflight, corsify } = cors({
 	origin: "*",
 	credentials: true,
 	allowMethods: ["GET", "POST", "OPTIONS"],
 });
+
+export const getId = (request: Request, env: any): DurableObjectId => {
+	return env.POLICIES.idFromName(new URL(request.url).pathname);
+};
+
+export const getPolicyDO = async (request: Request, env: any) => {
+	const id: DurableObjectId = getId(request, env);
+	const policy = await env.POLICIES.get(id);
+	return policy;
+};
 
 // Custom error handler that logs errors
 const errorHandler = (error: Error, request: Request) => {
@@ -110,23 +183,10 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 		},
 	};
 
+	const policyDO = await getPolicyDO(request, env);
+
 	// TODO load policies
-	const policies = [
-		{
-			policyType: "env",
-			policyCriteria: {
-				whitelistEnvKey: "GEIST_USER",
-				subject: did,
-			},
-			tokenType,
-			policyAccess: {
-				metadata: {
-					spaceId,
-				},
-				claims: ["access/claim", "upload/list", "upload/add", "space/info"],
-			},
-		},
-	];
+	const policies = await policyDO.getAllPolicies();
 
 	console.log("authorize input", input, policies);
 
@@ -159,23 +219,31 @@ router.get("/websocket", async (request: Request, env: any) => {
 	return await env.WORKER_LIVESTORE.fetch(request, env);
 });
 
+router.post("/api/iam", async (request: Request, env: any) => {
+	const { policies } = await request.json();
+	console.log("iam add policies", policies);
+	const id: DurableObjectId = env.POLICIES.idFromName(
+		new URL(request.url).pathname,
+	);
+
+	const policy = await env.POLICIES.get(id);
+
+	// Add policies with their IDs for upsert functionality
+	await policy.addPolicies(policies);
+
+	return new Response(JSON.stringify({ message: "Policies stored" }), {
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+});
+
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	const { did, tokenType } = await request.json();
 
-	const policies = [
-		{
-			policyType: "env",
-			policyCriteria: {
-				whitelistEnvKey: "GEIST_USER",
-				subject: did,
-			},
-			tokenType,
-			policyAccess: {
-				metadata: {},
-				claims: ["admin:iam"],
-			},
-		},
-	];
+	const policyDO = await getPolicyDO(request, env);
+
+	const policies = await policyDO.getAllPolicies();
 
 	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET");
 

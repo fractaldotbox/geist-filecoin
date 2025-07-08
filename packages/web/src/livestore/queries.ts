@@ -103,21 +103,19 @@ export const latestStorageAuthorizationForSpace$ = (spaceId: string) =>
 		{ label: `latestStorageAuthorizationForSpace-${spaceId}` },
 	);
 
-// Query for all access rules
-export const allAccessRules$ = queryDb(
-	(get) => tables.accessRules.orderBy("createdAt", "desc"),
-	{ label: "allAccessRules" },
+export const allAccessPolicys$ = queryDb(
+	(get) => tables.AccessPolicys.orderBy("createdAt", "desc"),
+	{ label: "allAccessPolicys" },
 );
 
-// Query for access rules by space
-export const accessRulesBySpace$ = (spaceId: string) =>
+export const AccessPolicysBySpace$ = (spaceId: string) =>
 	queryDb(
-		(get) => tables.accessRules.where({ spaceId }).orderBy("createdAt", "desc"),
-		{ label: `accessRulesBySpace-${spaceId}` },
+		(get) =>
+			tables.AccessPolicys.where({ spaceId }).orderBy("createdAt", "desc"),
+		{ label: `AccessPolicysBySpace-${spaceId}` },
 	);
 
-// Query for a specific access rule
-export const accessRuleById$ = (id: string) =>
-	queryDb((get) => tables.accessRules.where({ id }).first(), {
-		label: `accessRuleById-${id}`,
+export const AccessPolicyById$ = (id: string) =>
+	queryDb((get) => tables.AccessPolicys.where({ id }).first(), {
+		label: `AccessPolicyById-${id}`,
 	});

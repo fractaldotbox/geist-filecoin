@@ -20,16 +20,13 @@ export default function AccessControlPage() {
 
 	return (
 		<div className="container mx-auto p-6">
-			<div>Access Control</div>
 			<div className="mb-6">
-				<SpaceBreadcrumb
-					spaces={spaces}
-					currentSpaceId={uiState.currentSpaceId}
-					contentType={contentTypeName}
-				/>
-				<h1 className="text-2xl font-bold">Edit Content</h1>
+				<h1 className="text-2xl font-bold">Access Control</h1>
 			</div>
-			<AccessControlPanel />
+
+			<div className="mx-auto p-6">
+				<AccessControlPanel />
+			</div>
 		</div>
 	);
 }

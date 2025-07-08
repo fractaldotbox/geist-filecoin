@@ -1,9 +1,11 @@
+import type { StorageProviderCredentialConfig } from "@geist-filecoin/domain";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useStore } from "@livestore/react";
 import { Root as Collapsible } from "@radix-ui/react-collapsible";
 import { Copy, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { useSpaceStore } from "../components/react/hooks/useSpaceStore";
 import { Badge } from "../components/react/ui/badge";
@@ -86,18 +88,13 @@ export default function SpacesPage() {
 		// Validate required fields on submit
 		let validationError = "";
 
-		if (data.storageProvider === "storacha") {
+		if (data.storageProvider === StorageProvider.Storacha) {
 			if (!data.spaceKey?.trim()) {
 				validationError = "Space Key is required for Storacha";
 				form.setError("spaceKey", { message: validationError });
 				return;
 			}
-			if (!data.spaceProof?.trim()) {
-				validationError = "Space Proof is required for Storacha";
-				form.setError("spaceProof", { message: validationError });
-				return;
-			}
-		} else if (data.storageProvider === "s3") {
+		} else if (data.storageProvider === StorageProvider.S3) {
 			if (!data.apiKey?.trim()) {
 				validationError = "API Key is required for S3";
 				form.setError("apiKey", { message: validationError });
@@ -105,36 +102,63 @@ export default function SpacesPage() {
 			}
 		}
 
+		// Show immediate success feedback
+		toast.success("Space created successfully!", {
+			description: "Your content space has been created and is now active.",
+		});
+
+		// Reset form and close immediately for better UX
+		form.reset();
+		setShowCreateForm(false);
+
 		const id = `space-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 		// Create credentials based on storage provider
-		let storageProviderCredentials = "";
-		if (data.storageProvider === "storacha") {
+		let storageProviderCredentials: StorageProviderCredentialConfig[] = [];
+		if (data.storageProvider === StorageProvider.Storacha) {
 			// For storacha, combine spaceKey and email into credentials
-			storageProviderCredentials = JSON.stringify({
-				spaceKey: data.spaceKey?.trim() || "",
-			});
-		} else if (data.storageProvider === "s3") {
+			storageProviderCredentials = [
+				{
+					type: "value",
+					key: "agentKey",
+					value: data.spaceKey?.trim() || "",
+				},
+				{
+					type: "value",
+					key: "spaceProof",
+					value: data.spaceProof?.trim() || "",
+				},
+			];
+		} else if (data.storageProvider === StorageProvider.S3) {
 			// For S3, use the API key directly
-			storageProviderCredentials = data.apiKey?.trim() || "";
+			storageProviderCredentials = [
+				{
+					type: "value",
+					key: "apiKey",
+					value: data.apiKey?.trim() || "",
+				},
+			];
 		}
 
-		await createSpace({
-			id,
-			name: data.name.trim(),
-			description: data.description?.trim() || "",
-			storageProvider: data.storageProvider,
-			storageProviderCredentials,
-			spaceProof:
-				data.storageProvider === "storacha"
-					? data.spaceProof?.trim() || ""
-					: "",
-			isActive: true,
-		});
-
-		// Reset form and close
-		form.reset();
-		setShowCreateForm(false);
+		try {
+			await createSpace({
+				id,
+				name: data.name.trim(),
+				description: data.description?.trim() || "",
+				storageProvider: data.storageProvider,
+				storageProviderId: "",
+				storageProviderCredentials,
+			});
+		} catch (error) {
+			console.error("Failed to create space:", error);
+			// Show error toast
+			toast.error("Failed to create space", {
+				description:
+					"There was an error creating your content space. Please try again.",
+			});
+			// Reopen form on error so user can retry
+			setShowCreateForm(true);
+		}
 	};
 
 	const handleDeleteSpace = async (spaceId: string) => {

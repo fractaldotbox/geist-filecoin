@@ -20,6 +20,13 @@ binding = "DB"
 database_name = "geist-demo"
 database_id = "${LIVESTORE_CF_SYNC_DATABASE_ID}"
 
+[[durable_objects.bindings]]
+name = "POLICIES"
+class_name = "Policies"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Policies"]
 
 [[services]]
 binding = "WORKER_LIVESTORE"
