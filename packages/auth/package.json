@@ -20,7 +20,7 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		
+
 		"build:gql": "graphql-codegen --config codegen.ts",
 		"lint": "biome check --fix",
 		"test": "vitest",
