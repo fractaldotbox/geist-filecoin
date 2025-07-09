@@ -4,6 +4,8 @@ import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import type { Env } from "@livestore/sync-cf/cf-worker";
 import jwt from "@tsndr/cloudflare-worker-jwt";
 import { Router, cors, error, json } from "itty-router";
+import type { IRequest } from "itty-router";
+import { initStorachaClient, listAllFiles, createGatewayUrl } from "@geist-filecoin/storage";
 
 export class Policies extends DurableObject<Env> {
 	private policies: any[] = [];
@@ -213,6 +215,92 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 			},
 		});
 	}
+});
+
+router.get('/api/health', async (request: Request) => {
+	return new Response(JSON.stringify({ status: "ok" }), {
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+});
+
+router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => {
+	const resourceId = request.params.resourceId;
+	const version = request.query.version;
+
+	if (!resourceId) {
+		return new Response(JSON.stringify({ error: "Resource ID is required" }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
+
+	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
+
+	const { client, space } = await initStorachaClient({
+		keyString: agentKeyString,
+		proofString,
+	});
+
+	const uploadList = await listAllFiles({ client, spaceDid: space.did() });
+	
+	// Sort by updatedAt descending (newest first)
+	const sortedUploads = uploadList.sort((a, b) => 
+		new Date(b.updatedAt || b.insertedAt).getTime() - new Date(a.updatedAt || a.insertedAt).getTime()
+	);
+
+	const resourceFileName = `${resourceId}.json`;
+	const foundResources: any[] = [];
+
+	// Fetch resources from newest to oldest uploads
+	for (const upload of sortedUploads) {
+		try {
+			const cid = upload.root.toString();
+			const resourceUrl = `${createGatewayUrl(cid)}${resourceFileName}`;
+			const response = await fetch(resourceUrl);
+
+			if (response.ok) {
+				const resourceData = await response.json();
+				const mode = resourceData.meta.mode || 'replace';
+
+				foundResources.push({
+					data: resourceData.data,
+					meta: {
+						...resourceData.meta,
+						cid,
+						updatedAt: upload.updatedAt,
+						insertedAt: upload.insertedAt,
+						gatewayUrl: resourceUrl,
+					},
+				});
+
+				// Stop if latestOnly requested or replace mode
+				if (version === 'latestOnly' || mode === 'replace') {
+					break;
+				}
+			}
+		} catch (error) {
+			console.warn(`Could not fetch resource from upload ${upload.root}:`, error);
+		}
+	}
+
+	if (!foundResources.length) {
+		return new Response(JSON.stringify({ 
+			error: "Resource not found",
+			resourceId,
+		}), {
+			status: 404,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
+
+	return new Response(JSON.stringify({ 
+		resourceId, 
+		resources: foundResources,
+	}), {
+		headers: { "Content-Type": "application/json" },
+	});
 });
 
 router.get("/websocket", async (request: Request, env: any) => {
