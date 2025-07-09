@@ -44,9 +44,6 @@ importers:
       graphql-request:
         specifier: ^7.1.0
         version: 7.2.0(graphql@16.11.0)
-      ky:
-        specifier: ^1.8.1
-        version: 1.8.1
       viem:
         specifier: ^2.26.2
         version: 2.31.0(typescript@5.8.3)(zod@3.25.62)

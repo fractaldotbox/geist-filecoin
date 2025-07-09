@@ -21,7 +21,7 @@
 	"scripts": {
 		"build": "tsc",
 
-		"build:gql": "graphql-codegen --config codegen.ts",
+		"build:gql": "graphql-codegen --config src/gql-config.ts",
 		"lint": "biome check --fix",
 		"test": "vitest",
 		"test:ui": "vitest --ui"
@@ -33,8 +33,7 @@
 		"@noble/hashes": "^1.6.1",
 		"@web3-storage/w3up-client": "^16.5.2",
 		"viem": "^2.26.2",
-		"graphql-request": "^7.1.0",
-		"ky": "^1.8.1"
+		"graphql-request": "^7.1.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
