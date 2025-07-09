@@ -12,8 +12,6 @@ export const processorsBycriteriaType = {
 	eas: checkEasCriteria,
 };
 
-// union topkens / claims
-// TODO aggregate by spaceId
 export const processPolicies = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
@@ -70,34 +68,3 @@ export const authorizeUcan = async (
 
 	return delegation;
 };
-
-// export const authorize = async (policies: AccessPolicy[], input: AuthInput, config: {
-// 	serverAgentKeyString: string;
-// 	proofString: string;
-// })=>{
-
-// 	const byTokenType = createClaimsGenerationRequest(accessByTokenType, input);
-
-// 	const tokenByTokenType = new Map<string, any>();
-
-// 	const ucanRequest = byTokenType.ucan;
-
-// 	console.log('ucanRequest', byTokenType, ucanRequest)
-
-// 	if(ucanRequest){
-// 		const { delegation, client, space } = await createUserDelegation({
-// 			userDid: input.subject,
-// 			serverAgentKeyString: config.serverAgentKeyString,
-// 			proofString: config.proofString,
-// 		});
-
-// 		tokenByTokenType.set("ucan", {
-// 			delegation,
-// 			client,
-// 			space,
-// 		})
-
-// 	}
-
-// 	return tokenByTokenType;
-// }
