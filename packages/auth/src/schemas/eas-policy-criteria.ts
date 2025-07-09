@@ -1,8 +1,9 @@
 import { gql, rawRequest } from "graphql-request";
 import { decodeAbiParameters, parseAbiParameters } from "viem";
-import { base, mainnet, optimism, sepolia } from "viem/chains";
+import { base, baseSepolia, mainnet, optimism, sepolia } from "viem/chains";
 import type { AuthInput } from "./input";
 
+// note schema index is not indexed
 export const EAS_POLICY_SCHEMA = {
 	title: "EAS Policy",
 	type: "object",
@@ -15,24 +16,18 @@ export const EAS_POLICY_SCHEMA = {
 				"0xebadd94211a4f129fd1803e6120cc0d68612a89f742f0008cd765302ea101dfb",
 			],
 		},
-		schemaId: {
-			type: "string",
-			description: "Schema ID",
-			examples: ["3383"],
-		},
 		chainId: {
 			type: "string",
 			description: "Chain ID",
 			examples: ["11155111"],
 		},
-		//  use the indexed field
-		field: {
-			type: "string",
-			description: "field of attestation contains the DID",
-			examples: ["recipient"],
+		fieldIndex: {
+			type: "number",
+			description: "index of encoded data containing the DID",
+			examples: ["0"],
 		},
 	},
-	required: ["schemaUid", "field", "chainId"],
+	required: ["schemaUid", "fieldIndex", "chainId"],
 };
 
 export const EAS_CONFIG_BY_CHAIN_ID = {
@@ -55,6 +50,11 @@ export const EAS_CONFIG_BY_CHAIN_ID = {
 		eas: "0xF095fE4b23958b08D38e52d5d5674bBF0C03cbF6",
 		graphqlEndpoint: "https://base.easscan.org/graphql",
 		easscanUrl: "https://base.easscan.org",
+	},
+	[baseSepolia.id]: {
+		eas: "0xAd64A04c20dDBbA7cBb0EcAe4823095B4adA5c57",
+		graphqlEndpoint: "https://base-sepolia.easscan.org/graphql",
+		easscanUrl: "https://base-sepolia.easscan.org",
 	},
 } as Record<
 	number,
@@ -88,14 +88,44 @@ const allAttestationsByQuery = gql`
   }
 `;
 
+const checkIsAttestationMatchingSubject = (
+	attestation: any,
+	fieldIndex: number,
+	subject: string,
+): boolean => {
+	// Parse the schema definition to get ABI parameters
+	const schemaDefinition = attestation.schema.schema;
+	const abiParameters = parseAbiParameters(schemaDefinition);
+
+	// Ensure we have an array of ABI parameters
+	const parametersArray = Array.isArray(abiParameters)
+		? abiParameters
+		: [abiParameters];
+
+	if (parametersArray.length < fieldIndex + 1) {
+		console.log(
+			"fieldIndex is out of bounds",
+			fieldIndex,
+			parametersArray.length,
+		);
+		return false;
+	}
+
+	// Decode the attestation data
+	const decodedData = decodeAbiParameters(parametersArray, attestation.data);
+
+	const fieldValue = decodedData[fieldIndex];
+
+	return fieldValue === subject;
+};
+
 export const checkEasCriteria = async (policyConfig: any, input: AuthInput) => {
-	const { schemaUid, field, chainId } = policyConfig;
+	const { schemaUid, fieldIndex, chainId } = policyConfig;
 	const { subject } = input;
 
 	const config = EAS_CONFIG_BY_CHAIN_ID[Number(chainId)];
 	if (!config) return false;
 
-	console.log("config", config);
 	try {
 		type AttestationResponse = { attestations?: Record<string, any>[] };
 		const { data } = await rawRequest<AttestationResponse>(
@@ -104,62 +134,21 @@ export const checkEasCriteria = async (policyConfig: any, input: AuthInput) => {
 			{
 				where: {
 					schemaId: {
-						in: [
-							"0xebadd94211a4f129fd1803e6120cc0d68612a89f742f0008cd765302ea101dfb",
-						],
+						in: [schemaUid],
 					},
 				},
 			},
 		);
 
-		const attestation = data?.attestations?.[0];
-		console.log("onchain results", data);
+		return data?.attestations?.some((attestation) => {
+			if (!attestation?.data) return false;
 
-		// TODO use fixed schema directly
-		const schema = attestation?.schema?.schema;
-
-		if (!attestation) return false;
-
-		// For metadata fields (recipient, attester, etc.), check directly
-		// if (["recipient", "attester", "schemaId"].includes(field)) {
-		// 	if (attestation[field] && attestation[field] === subject) {
-		// 		return true;
-		// 	}
-		// 	return false;
-		// }
-
-		// For schema data fields, decode the attestation data using viem
-		if (attestation.data && schema) {
-			try {
-				// Parse the schema definition to get ABI parameters
-				const schemaDefinition = attestation.schema.schema;
-				const abiParameters = parseAbiParameters(schemaDefinition);
-
-				// Ensure we have an array of ABI parameters
-				const parametersArray = Array.isArray(abiParameters)
-					? abiParameters
-					: [abiParameters];
-
-				// Decode the attestation data
-				const decodedData = decodeAbiParameters(
-					parametersArray,
-					attestation.data,
-				);
-				console.log("decoded attestation data", decodedData);
-
-				// TODO use abi param to pick index
-
-				const fieldValue = decodedData[0];
-
-				console.log("fieldValue", fieldValue, subject);
-				return fieldValue === subject;
-			} catch (error) {
-				console.error("Failed to decode attestation data:", error);
-				return false;
-			}
-		}
-
-		return false;
+			return checkIsAttestationMatchingSubject(
+				attestation,
+				fieldIndex,
+				subject,
+			);
+		});
 	} catch (e) {
 		console.error("Error fetching attestation:", e);
 		return false;

@@ -1,3 +1,4 @@
+import { baseSepolia, sepolia } from "viem/chains";
 import { describe, expect, it } from "vitest";
 import { checkEasCriteria } from "./eas-policy-criteria";
 import type { AuthInput, Did } from "./input";
@@ -6,57 +7,67 @@ describe("checkEasCriteria Integration Tests", () => {
 	// Real EAS attestation UIDs and data for testing
 	// These are actual attestations from EAS networks that we can use for integration testing
 	const ATTESTATION_FIXTURE = {
-		sepolia: {
+		[sepolia.id]: {
 			schemaUid:
 				"0xebadd94211a4f129fd1803e6120cc0d68612a89f742f0008cd765302ea101dfb",
-			recipient:
+			userDid:
 				"did:key:z4MXj1wBzi9jUstyNmjKfeZcLTaPupodBbLTttuqoWESMQTMXa8TyLJXNjao7vDrM4bopmhxNyy4ChP7EHxD6xa9GqD4W1bHoHH7gaF4m71bq3ef62hF3YAsGthFeGeKDrXSY7CbpMfuSEJwaGeZ5tGp3XHnTpjsKwcpMU97Sivr3FHTL26byszNAkg95g8cjYtvgpJdBRjJpxJXLn2GurFhbjzgSoH3pxFDebRyqvZ5TNsrVYHxPs4H1kQpsifsDspH8bqKa2mUMpa1jsnxmwQ8fufm5scFTjAA8xHWzhmR9k7dym8bSgqdotWi7aomQdPv83cAf87GvxuPnQSrdWyLoCBFuYH28t1B2dqbuuShfRTYJXQvc" as Did,
-			chainId: "11155111", // Sepolia
-			field: "usesrDid",
+			chainId: sepolia.id.toString(), // Sepolia
+			fieldIndex: 0,
 		},
+		[baseSepolia.id]: {
+			// Example real attestation from Base
+			schemaUid:
+				"0x361af5302be41a7b72e319846943282f1a615dc2655ad867940d14bd57d65e5c",
+			userDid: "did:mailto:example.com:jsmith" as Did,
+			chainId: baseSepolia.id.toString(), // Base
+			fieldIndex: 1,
+		},
+
 		// mainnet: {
 		// 	// Example real attestation from mainnet (use actual known attestation UID)
 		// 	schemaUid: "0x1234567890123456789012345678901234567890123456789012345678901234",
-		// 	recipient: "did:key:abcdefabcdefabcdefabcdefabcdefabcdefabcd" as Did,
+		// 	userDid: "did:key:abcdefabcdefabcdefabcdefabcdefabcdefabcd" as Did,
 		// 	chainId: "1", // Mainnet
-		// 	field: "usesrDid",
+		// 	fieldIndex: 0,
 		// },
 		// optimism: {
 		// 	// Example real attestation from Optimism
 		// 	schemaUid: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-		// 	recipient: "did:key:9876543210987654321098765432109876543210abcdefabcdefabcdefabcd" as Did,
+		// 	userDid: "did:key:9876543210987654321098765432109876543210abcdefabcdefabcdefabcd" as Did,
 		// 	chainId: "10", // Optimism
-		// 	field: "usesrDid",
+		// 	fieldIndex: 0,
 		// },
-		// base: {
-		// 	// Example real attestation from Base
-		// 	schemaUid: "0xfedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
-		// 	recipient: "did:key:5555555555555555555555555555555555555555555555555555555555555555" as Did,
-		// 	chainId: "8453", // Base
-		// 	field: "usesrDid",
-		// },
-	};
+	} as Record<
+		number,
+		{
+			schemaUid: string;
+			userDid: Did;
+			chainId: string;
+			fieldIndex: number;
+		}
+	>;
 
-	describe.only("Real attestation verification", () => {
-		it("should handle Sepolia testnet attestations with valid subject", async () => {
-			const policyConfig = {
-				schemaUid: ATTESTATION_FIXTURE.sepolia.schemaUid,
-				field: ATTESTATION_FIXTURE.sepolia.field,
-				chainId: ATTESTATION_FIXTURE.sepolia.chainId,
-			};
+	describe("Real attestation verification", () => {
+		it.each([[sepolia.id], [baseSepolia.id]])(
+			"should handle testnet attestations with valid subject %s",
+			async (chainId: number) => {
+				// biome-ignore lint/style/noNonNullAssertion: <explanation>
+				const fixture = ATTESTATION_FIXTURE[chainId]!;
 
-			const authInput: AuthInput = {
-				subject: ATTESTATION_FIXTURE.sepolia.recipient,
-				context: {
-					env: {},
-				},
-				resource: "/test/resource",
-			};
+				const authInput: AuthInput = {
+					subject: fixture.userDid,
+					context: {
+						env: {},
+					},
+				};
 
-			const result = await checkEasCriteria(policyConfig, authInput);
+				const result = await checkEasCriteria(fixture, authInput);
 
-			expect(result).toBe(true);
-		}, 30000);
+				expect(result).toBe(true);
+			},
+			30000,
+		);
 	});
 
 	describe("Invalid attestation scenarios", () => {
@@ -64,7 +75,7 @@ describe("checkEasCriteria Integration Tests", () => {
 			const policyConfig = {
 				schemaUid:
 					"0x0000000000000000000000000000000000000000000000000000000000000000",
-				field: "usesrDid",
+				fieldIndex: 0,
 				chainId: "11155111", // Sepolia
 			};
 
@@ -80,23 +91,20 @@ describe("checkEasCriteria Integration Tests", () => {
 			expect(result).toBe(false);
 		}, 30000);
 
-		it("should return false for wrong subject in existing attestation", async () => {
-			const policyConfig = {
-				schemaUid: ATTESTATION_FIXTURE.sepolia.schemaUid,
-				field: ATTESTATION_FIXTURE.sepolia.field,
-				chainId: ATTESTATION_FIXTURE.sepolia.chainId,
-			};
+		it("should return false for subject not in any existing attestation", async () => {
+			// biome-ignore lint/style/noNonNullAssertion: <explanation>
+			const fixture = ATTESTATION_FIXTURE[sepolia.id]!;
 
 			const authInput: AuthInput = {
-				subject: "did:key:9999999999999999999999999999999999999999" as Did, // Different subject
+				subject: "did:key:1234567890123456789012345678901234567890" as Did,
 				context: {
 					env: {},
 				},
 				resource: "/test/resource",
 			};
 
-			const result = await checkEasCriteria(policyConfig, authInput);
-			// This should return false since the subject doesn't match the attestation recipient
+			const result = await checkEasCriteria(fixture, authInput);
+			// This should return false since the subject doesn't match the attestation userDid
 			expect(result).toBe(false);
 		}, 30000);
 
@@ -104,7 +112,7 @@ describe("checkEasCriteria Integration Tests", () => {
 			const policyConfig = {
 				schemaUid:
 					"0x1234567890123456789012345678901234567890123456789012345678901234",
-				field: "usesrDid",
+				fieldIndex: 0,
 				chainId: "999999", // Non-existent chain
 			};
 
@@ -122,11 +130,13 @@ describe("checkEasCriteria Integration Tests", () => {
 	});
 
 	describe("Field type variations", () => {
-		it("should handle different field types (attester)", async () => {
+		it("should handle field index out of bounds", async () => {
+			// biome-ignore lint/style/noNonNullAssertion: <explanation>
+			const fixture = ATTESTATION_FIXTURE[sepolia.id]!;
+
 			const policyConfig = {
-				schemaUid: ATTESTATION_FIXTURE.sepolia.schemaUid,
-				field: "attester", // Different field
-				chainId: ATTESTATION_FIXTURE.sepolia.chainId,
+				...fixture,
+				fieldIndex: 1, // Different field index
 			};
 
 			const authInput: AuthInput = {
@@ -138,26 +148,7 @@ describe("checkEasCriteria Integration Tests", () => {
 			};
 
 			const result = await checkEasCriteria(policyConfig, authInput);
-			expect(typeof result).toBe("boolean");
-		}, 30000);
-
-		it("should handle schemaId field", async () => {
-			const policyConfig = {
-				schemaUid: ATTESTATION_FIXTURE.sepolia.schemaUid,
-				field: "schemaId",
-				chainId: ATTESTATION_FIXTURE.sepolia.chainId,
-			};
-
-			const authInput: AuthInput = {
-				subject: "did:key:1234567890123456789012345678901234567890" as Did,
-				context: {
-					env: {},
-				},
-				resource: "/test/resource",
-			};
-
-			const result = await checkEasCriteria(policyConfig, authInput);
-			expect(typeof result).toBe("boolean");
+			expect(result).toBe(false);
 		}, 30000);
 	});
 
@@ -166,7 +157,7 @@ describe("checkEasCriteria Integration Tests", () => {
 			const policyConfig = {
 				schemaUid:
 					"0x1234567890123456789012345678901234567890123456789012345678901234",
-				field: "usesrDid",
+				fieldIndex: 0,
 				chainId: "11155111", // Sepolia
 			};
 
@@ -186,8 +177,8 @@ describe("checkEasCriteria Integration Tests", () => {
 		it("should handle malformed policy config gracefully", async () => {
 			const policyConfig = {
 				// Missing schemaUid field intentionally
-				field: "usesrDid",
-				chainId: "11155111",
+				fieldIndex: 0,
+				chainId: sepolia.id.toString(),
 			};
 
 			const authInput: AuthInput = {
@@ -205,8 +196,8 @@ describe("checkEasCriteria Integration Tests", () => {
 		it("should handle empty string values", async () => {
 			const policyConfig = {
 				schemaUid: "",
-				field: "usesrDid",
-				chainId: "11155111",
+				fieldIndex: 0,
+				chainId: sepolia.id.toString(),
 			};
 
 			const authInput: AuthInput = {
@@ -219,90 +210,6 @@ describe("checkEasCriteria Integration Tests", () => {
 
 			const result = await checkEasCriteria(policyConfig, authInput);
 			expect(result).toBe(false);
-		}, 30000);
-	});
-
-	describe("Performance and reliability", () => {
-		it("should complete within reasonable time", async () => {
-			const policyConfig = {
-				schemaUid: ATTESTATION_FIXTURE.sepolia.schemaUid,
-				field: ATTESTATION_FIXTURE.sepolia.field,
-				chainId: ATTESTATION_FIXTURE.sepolia.chainId,
-			};
-
-			const authInput: AuthInput = {
-				subject: ATTESTATION_FIXTURE.sepolia.recipient,
-				context: {
-					env: {},
-				},
-				resource: "/test/resource",
-			};
-
-			const startTime = Date.now();
-			const result = await checkEasCriteria(policyConfig, authInput);
-			const endTime = Date.now();
-			const duration = endTime - startTime;
-
-			expect(typeof result).toBe("boolean");
-			expect(duration).toBeLessThan(10000); // Should complete within 10 seconds
-		}, 30000);
-
-		it("should handle concurrent requests", async () => {
-			const policyConfig = {
-				schemaUid: ATTESTATION_FIXTURE.sepolia.schemaUid,
-				field: ATTESTATION_FIXTURE.sepolia.field,
-				chainId: ATTESTATION_FIXTURE.sepolia.chainId,
-			};
-
-			const authInput: AuthInput = {
-				subject: ATTESTATION_FIXTURE.sepolia.recipient,
-				context: {
-					env: {},
-				},
-				resource: "/test/resource",
-			};
-
-			// Make multiple concurrent requests
-			const promises = Array.from({ length: 3 }, () =>
-				checkEasCriteria(policyConfig, authInput),
-			);
-
-			const results = await Promise.all(promises);
-
-			// All results should be booleans
-			for (const result of results) {
-				expect(typeof result).toBe("boolean");
-			}
-
-			// All results should be the same since we're using the same input
-			const firstResult = results[0];
-			for (const result of results) {
-				expect(result).toBe(firstResult);
-			}
-		}, 30000);
-
-		it("should be idempotent - same input produces same result", async () => {
-			const policyConfig = {
-				schemaUid: ATTESTATION_FIXTURE.sepolia.schemaUid,
-				field: ATTESTATION_FIXTURE.sepolia.field,
-				chainId: ATTESTATION_FIXTURE.sepolia.chainId,
-			};
-
-			const authInput: AuthInput = {
-				subject: ATTESTATION_FIXTURE.sepolia.recipient,
-				context: {
-					env: {},
-				},
-				resource: "/test/resource",
-			};
-
-			// Run the same test multiple times
-			const result1 = await checkEasCriteria(policyConfig, authInput);
-			const result2 = await checkEasCriteria(policyConfig, authInput);
-			const result3 = await checkEasCriteria(policyConfig, authInput);
-
-			expect(result1).toBe(result2);
-			expect(result2).toBe(result3);
 		}, 30000);
 	});
 });

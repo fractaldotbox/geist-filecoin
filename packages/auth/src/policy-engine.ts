@@ -12,8 +12,6 @@ export const processorsBycriteriaType = {
 	eas: checkEasCriteria,
 };
 
-// union topkens / claims
-// TODO aggregate by spaceId
 export const processPolicies = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
