@@ -27,37 +27,3 @@ export const CLAIMS_SCHEMA = {
 		],
 	},
 };
-
-export const createClaimsGenerationRequest = (
-	accessByTokenType: Record<string, Access>,
-	input: AuthInput,
-) => {
-	return Object.fromEntries(
-		Object.keys(accessByTokenType).map((tokenType) => {
-			const access = accessByTokenType[tokenType] || {
-				claims: [],
-				metadata: {},
-			};
-
-			const { claims, metadata } = access;
-
-			console.log("tokenType", tokenType);
-			if (tokenType === "ucan") {
-				return [
-					tokenType,
-					{
-						spaceId: metadata.spaceId,
-						claims,
-					},
-				];
-			}
-
-			return [
-				tokenType,
-				{
-					claims,
-				},
-			];
-		}),
-	);
-};

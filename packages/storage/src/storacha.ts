@@ -182,6 +182,7 @@ export type DelegationFlowParams = {
 	userDid: string;
 	serverAgentKeyString: string;
 	proofString?: string;
+	capabilities?: ServiceAbility[];
 };
 
 export type DelegationFlowResult = {
@@ -200,6 +201,7 @@ export const createUserDelegation = async ({
 	userDid,
 	serverAgentKeyString,
 	proofString = "",
+	capabilities = ["space/info", "upload/list", "upload/add"],
 }: DelegationFlowParams): Promise<DelegationFlowResult> => {
 	// Initialize the server client
 	const { client, space } = await initStorachaClient({
@@ -215,7 +217,7 @@ export const createUserDelegation = async ({
 		},
 		{
 			userDid,
-			capabilities: ["space/info", "upload/list", "upload/add"],
+			capabilities,
 		},
 	);
 
