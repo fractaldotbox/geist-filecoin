@@ -50,8 +50,9 @@ interface StorachaUpload {
 export const useDelegateAccount = (options: {
 	client: Client | null;
 	spaceDid: string;
+	agentDid: string | null;
 }) => {
-	const { client, spaceDid } = options;
+	const { client, spaceDid, agentDid } = options;
 
 	const [delegation, setDelegation] = useState<Delegation<Capabilities> | null>(
 		null,
@@ -63,15 +64,11 @@ export const useDelegateAccount = (options: {
 	 * Delegate to client/agent, not the account did
 	 */
 
+	// TODO delegate after account init complted
 	useEffect(() => {
 		(async () => {
-			if (!client || !spaceDid) {
-				return;
-			}
-
-			const did = client.did();
-
-			if (!did) {
+			console.log("useDelegateAccount ", "agent", agentDid, "space", spaceDid);
+			if (!client || !spaceDid || !agentDid) {
 				return;
 			}
 
@@ -82,9 +79,10 @@ export const useDelegateAccount = (options: {
 			isDelegationRequestInProgress.current = true;
 
 			try {
+				console.log("request delegation", agentDid, spaceDid);
 				const delegationResults = await requestDelegation({
 					spaceId: spaceDid,
-					did,
+					did: agentDid,
 				});
 
 				if (!delegationResults.ok) {
@@ -100,7 +98,7 @@ export const useDelegateAccount = (options: {
 				isDelegationRequestInProgress.current = false;
 			}
 		})();
-	}, [client, spaceDid, delegation]);
+	}, [client, spaceDid, agentDid, delegation]);
 
 	return {
 		client,
