@@ -12,8 +12,6 @@ export class Policies extends DurableObject<Env> {
 	constructor(state: any, env: any) {
 		super(state, env);
 		this.storage = state.storage;
-		console.log(this.storage.sql);
-
 		this.init();
 	}
 
@@ -26,14 +24,14 @@ export class Policies extends DurableObject<Env> {
 		  )`);
 	}
 
-	increment() {}
-
 	async getAllPolicies() {
-		this.policies = this.storage.sql.exec("SELECT * FROM policies;").toArray();
+		const allPolicies = this.storage.sql
+			.exec("SELECT * FROM policies;")
+			.toArray();
 
-		console.log("getAllPolicies", this.policies);
+		console.log("DO getAllPolicies", allPolicies);
 
-		return this.policies.map((policy: any) => {
+		return allPolicies.map((policy: any) => {
 			return {
 				...policy,
 				criteria: JSON.parse(policy.criteria),
@@ -45,6 +43,7 @@ export class Policies extends DurableObject<Env> {
 	async addPolicies(policies: AccessPolicy[]) {
 		if (policies.length === 0) return;
 
+		console.log("DO addPolicies", policies);
 		const values = policies
 			.map((policy) => {
 				const { criteriaType, criteria, access } = policy;
@@ -60,7 +59,7 @@ export class Policies extends DurableObject<Env> {
 			.map((values) => `( ${values.map((value) => `"${value}"`).join(",")} )`)
 			.join(",");
 
-		await this.storage.sql.exec(
+		this.storage.sql.exec(
 			`INSERT OR REPLACE INTO policies (policyId, criteriaType, criteria, access) VALUES ${values}
 			`,
 		);
@@ -74,7 +73,7 @@ const { preflight, corsify } = cors({
 });
 
 export const getId = (request: Request, env: any): DurableObjectId => {
-	return env.POLICIES.idFromName(new URL(request.url).pathname);
+	return env.POLICIES.idFromName("geist-policies");
 };
 
 export const getPolicyDO = async (request: Request, env: any) => {
@@ -185,7 +184,6 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 
 	const policyDO = await getPolicyDO(request, env);
 
-	// TODO load policies
 	const policies = await policyDO.getAllPolicies();
 
 	console.log("authorize input", input, policies);
@@ -222,14 +220,10 @@ router.get("/websocket", async (request: Request, env: any) => {
 router.post("/api/iam", async (request: Request, env: any) => {
 	const { policies } = await request.json();
 	console.log("iam add policies", policies);
-	const id: DurableObjectId = env.POLICIES.idFromName(
-		new URL(request.url).pathname,
-	);
-
-	const policy = await env.POLICIES.get(id);
+	const policyDO = await getPolicyDO(request, env);
 
 	// Add policies with their IDs for upsert functionality
-	await policy.addPolicies(policies);
+	await policyDO.addPolicies(policies);
 
 	return new Response(JSON.stringify({ message: "Policies stored" }), {
 		headers: {

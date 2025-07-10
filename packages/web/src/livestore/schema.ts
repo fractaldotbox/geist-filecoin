@@ -107,6 +107,10 @@ export const tables = {
 			formData: Schema.String, // JSON string
 			isSubmitting: Schema.Boolean,
 			uploadProgress: Schema.Number,
+			// Login dialog UI state
+			isLoginDialogOpen: Schema.Boolean,
+			currentUserDid: Schema.String,
+			currentLoginEmail: Schema.String,
 		}),
 		default: {
 			id: SessionIdSymbol,
@@ -116,6 +120,9 @@ export const tables = {
 				formData: "{}",
 				isSubmitting: false,
 				uploadProgress: 0,
+				isLoginDialogOpen: false,
+				currentUserDid: "",
+				currentLoginEmail: "",
 			},
 		},
 	}),
