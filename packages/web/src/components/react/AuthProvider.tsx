@@ -1,9 +1,6 @@
-import apiClient from "@/lib/api-client";
 import { authWithEmail } from "@geist-filecoin/storage";
 import { useStore } from "@livestore/react";
-import type { EmailAddress } from "@web3-storage/w3up-client/types";
-import ky from "ky";
-import { set } from "node_modules/@web3-storage/w3up-client/dist/src/capability/plan";
+import type { DidMailto, EmailAddress } from "@web3-storage/w3up-client/types";
 import {
 	createContext,
 	useCallback,
@@ -74,14 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		if (client) {
 			(async () => {
-				const account = client.accounts();
-				const existingAccount = account[uiState.currentUserDid as EmailAddress];
+				const accounts = client.accounts();
+				const existingAccount = (accounts as any)[uiState.currentUserDid];
 				if (existingAccount) {
-					console.log(
-						"existing account",
-						uiState.currentUserDid,
-						existingAccount,
-					);
 					setUser({
 						did: existingAccount.did(),
 						delegation: new ArrayBuffer(0),
@@ -98,16 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			setLoginStatus({ state: LoginState.Loading });
 
 			// Initialize client if not already initialized
-			const storachaClient = client;
-			// if (!storachaClient) {
-			// 	storachaClient = await initializeClient();
-			// }
-
 			setLoginStatus({ state: LoginState.Pending });
-			const account = await authWithEmail(
-				storachaClient,
-				email as EmailAddress,
-			);
+			const account = await authWithEmail(client, email as EmailAddress);
 
 			if (!account) {
 				return;
@@ -129,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				...uiState,
 				currentUserDid: user.did,
 			});
-			setClient(storachaClient);
+			setClient(client);
 			setAgentDid(account?.model?.id);
 
 			setLoginStatus({ state: LoginState.Success });
