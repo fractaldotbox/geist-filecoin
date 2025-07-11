@@ -4,7 +4,8 @@ compatibility_date = "2025-05-08"
 compatibility_flags = ["nodejs_compat"]
 
 secrets_store_secrets = [
-  { binding = "STORACHA_AGENT_KEY_STRING", store_id= "d2267c5ce2614745a2735d712daf194e", secret_name = "STORACHA_AGENT_KEY_STRING" },
+  { binding = "STORACHA_AGENT_KEY_STRING", store_id = "d2267c5ce2614745a2735d712daf194e", secret_name = "STORACHA_AGENT_KEY_STRING" },
+  { binding = "ENCRYPTION_KEY", store_id = "d2267c5ce2614745a2735d712daf194e", secret_name = "ENCRYPTION_KEY" }
 ]
 
 kv_namespaces = [

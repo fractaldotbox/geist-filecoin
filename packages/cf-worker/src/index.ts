@@ -6,6 +6,11 @@ import jwt from "@tsndr/cloudflare-worker-jwt";
 import { Router, cors, error, json } from "itty-router";
 import type { IRequest } from "itty-router";
 import { initStorachaClient, listAllFiles, createGatewayUrl } from "@geist-filecoin/storage";
+import { gcm } from '@noble/ciphers/aes.js';
+import { utf8ToBytes, bytesToUtf8 } from '@noble/ciphers/utils.js';
+import { randomBytes } from '@noble/ciphers/webcrypto.js';
+import { Buffer } from 'node:buffer';
+import * as jose from 'jose';
 
 export class Policies extends DurableObject<Env> {
 	private policies: any[] = [];
@@ -225,6 +230,29 @@ router.get('/api/health', async (request: Request) => {
 	});
 });
 
+router.get('/api/init/generateKey', async (request: Request, env: any) => {
+	const keyBytes = 32;
+	const key = randomBytes(keyBytes);
+
+	const base64Key = Buffer.from(key).toString('base64');
+
+	return new Response(JSON.stringify({ key: base64Key }), {
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+});
+
+router.get('/api/test', async (request: Request, env: any) => {
+	const encryptionKey = await env.ENCRYPTION_KEY.get();
+	console.log("Encryption Key:", encryptionKey);
+	return new Response(JSON.stringify({ message: "Test endpoint", encryptionKey }), {
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+});
+
 router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => {
 	const resourceId = request.params.resourceId;
 	const version = request.query.version;
@@ -235,6 +263,22 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 			headers: { "Content-Type": "application/json" },
 		});
 	}
+
+	// Get encryption key from environment for decryption
+	const encryptionKeyBase64 = await env.ENCRYPTION_KEY.get();
+	if (!encryptionKeyBase64) {
+		return new Response(JSON.stringify({ error: "Encryption key not configured" }), {
+			status: 500,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
+
+	// Convert base64 key to secret key for jose
+	const keyBytes = new Uint8Array(Buffer.from(encryptionKeyBase64, 'base64'));
+	const secretKey = await jose.importJWK({
+		kty: 'oct',
+		k: jose.base64url.encode(keyBytes)
+	});
 
 	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
 
@@ -250,7 +294,7 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 		new Date(b.updatedAt || b.insertedAt).getTime() - new Date(a.updatedAt || a.insertedAt).getTime()
 	);
 
-	const resourceFileName = `${resourceId}.json`;
+	const resourceFileName = `${resourceId}.encrypted.json`;
 	const foundResources: any[] = [];
 
 	// Fetch resources from newest to oldest uploads
@@ -261,23 +305,35 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 			const response = await fetch(resourceUrl);
 
 			if (response.ok) {
-				const resourceData = await response.json();
-				const mode = resourceData.meta.mode || 'replace';
+				// The file content is the JWE string directly, not wrapped in JSON
+				const jweString = await response.text();
+				
+				try {
+					// Decrypt the JWE using jose
+					const { plaintext } = await jose.compactDecrypt(jweString, secretKey);
+					const decryptedJson = new TextDecoder().decode(plaintext);
+					const decryptedData = JSON.parse(decryptedJson);
 
-				foundResources.push({
-					data: resourceData.data,
-					meta: {
-						...resourceData.meta,
-						cid,
-						updatedAt: upload.updatedAt,
-						insertedAt: upload.insertedAt,
-						gatewayUrl: resourceUrl,
-					},
-				});
+					const mode = decryptedData.meta?.mode || 'replace';
 
-				// Stop if latestOnly requested or replace mode
-				if (version === 'latestOnly' || mode === 'replace') {
-					break;
+					foundResources.push({
+						data: decryptedData.data,
+						meta: {
+							...decryptedData.meta,
+							cid,
+							updatedAt: upload.updatedAt,
+							insertedAt: upload.insertedAt,
+							gatewayUrl: resourceUrl,
+						},
+					});
+
+					// Stop if latestOnly requested or replace mode
+					if (version === 'latestOnly' || mode === 'replace') {
+						break;
+					}
+				} catch (decryptError) {
+					console.warn(`Could not decrypt resource from upload ${upload.root}:`, decryptError);
+					// If decryption fails, skip this resource
 				}
 			}
 		} catch (error) {
@@ -302,6 +358,120 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 		headers: { "Content-Type": "application/json" },
 	});
 });
+
+router.post('/api/encrypt', async (request: Request, env: any) => {
+	try {
+		const body = await request.json();
+
+		if (!body || (typeof body === 'object' && Object.keys(body).length === 0)) {
+			return new Response(JSON.stringify({ error: "Request body is required" }), {
+				status: 400,
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+
+		// Get encryption key from environment
+		const encryptionKeyBase64 = await env.ENCRYPTION_KEY.get();
+		if (!encryptionKeyBase64) {
+			return new Response(JSON.stringify({ error: "Encryption key not configured" }), {
+				status: 500,
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+
+		// Convert base64 key to secret key for jose
+		const keyBytes = new Uint8Array(Buffer.from(encryptionKeyBase64, 'base64'));
+		const secretKey = await jose.importJWK({
+			kty: 'oct',
+			k: jose.base64url.encode(keyBytes)
+		});
+
+		// Encrypt using jose CompactEncrypt - encrypt the entire body
+		const jwe = await new jose.CompactEncrypt(
+			new TextEncoder().encode(JSON.stringify(body))
+		)
+			.setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+			.encrypt(secretKey);
+
+		return new Response(JSON.stringify({
+			jwe: jwe,
+			success: true
+		}), {
+			headers: { "Content-Type": "application/json" },
+		});
+
+	} catch (error) {
+		console.error('Encryption error:', error);
+		const errorMessage = error instanceof Error ? error.message : "Unknown encryption error";
+		return new Response(JSON.stringify({ 
+			error: errorMessage,
+			success: false
+		}), {
+			status: 500,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
+});
+
+router.post('/api/decrypt', async (request: Request, env: any) => {
+	try {
+		const body = await request.json();
+		const { jwe } = body;
+
+		if (!jwe) {
+			return new Response(JSON.stringify({ 
+				error: "JWE is required" 
+			}), {
+				status: 400,
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+
+		// Get encryption key from environment
+		const encryptionKeyBase64 = await env.ENCRYPTION_KEY.get();
+		if (!encryptionKeyBase64) {
+			return new Response(JSON.stringify({ error: "Encryption key not configured" }), {
+				status: 500,
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+
+		// Convert base64 key to secret key for jose
+		const keyBytes = new Uint8Array(Buffer.from(encryptionKeyBase64, 'base64'));
+		const secretKey = await jose.importJWK({
+			kty: 'oct',
+			k: jose.base64url.encode(keyBytes)
+		});
+
+		// Decrypt using jose compactDecrypt
+		const { plaintext, protectedHeader } = await jose.compactDecrypt(jwe, secretKey);
+		const decryptedData = new TextDecoder().decode(plaintext);
+
+		// Parse the decrypted JSON back to object
+		const decryptedBody = JSON.parse(decryptedData);
+
+		return new Response(JSON.stringify({
+			data: decryptedBody,
+			protectedHeader: protectedHeader,
+			success: true
+		}), {
+			headers: { "Content-Type": "application/json" },
+		});
+
+	} catch (error) {
+		console.error('Decryption error:', error);
+		const errorMessage = error instanceof Error ? error.message : "Unknown decryption error";
+		return new Response(JSON.stringify({ 
+			error: errorMessage,
+			success: false
+		}), {
+			status: 500,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
+});
+
+
 
 router.get("/websocket", async (request: Request, env: any) => {
 	return await env.WORKER_LIVESTORE.fetch(request, env);
