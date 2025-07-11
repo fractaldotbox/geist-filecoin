@@ -1,24 +1,19 @@
-import {
-	createDelegationWithCapabilities,
-	createUserDelegation,
-} from "@geist-filecoin/storage";
+import { createUserDelegation } from "@geist-filecoin/storage";
+import type { ServiceAbility } from "@web3-storage/w3up-client/dist/src/types";
 import type { Access, AccessPolicy, AuthInput } from "./schemas/access-policy";
 import { checkEasCriteria } from "./schemas/eas-policy-criteria";
 import { checkEnvCriteria } from "./schemas/env-policy-criteria";
-import { createClaimsGenerationRequest } from "./schemas/token-claims";
 
 export const processorsBycriteriaType = {
 	env: checkEnvCriteria,
 	eas: checkEasCriteria,
 };
 
-// union topkens / claims
-// TODO aggregate by spaceId
 export const processPolicies = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
 ): Promise<Record<string, Access>> => {
-	console.log(input, "policies", policies[0]?.access);
+	console.log(input, "policies", policies);
 
 	const accessByTokenType: Record<string, Access> = {};
 
@@ -59,6 +54,12 @@ export const authorizeUcan = async (
 		return null;
 	}
 
+	const capabilities = (accessByTokenType.ucan?.claims as ServiceAbility[]) || [
+		"space/info",
+		"upload/list",
+		"upload/add",
+	];
+
 	// TODO find the relevant proof with spaceId
 	// const spaceId = input.context?.spaceId;
 
@@ -66,38 +67,8 @@ export const authorizeUcan = async (
 		userDid: input.subject,
 		serverAgentKeyString: config.serverAgentKeyString,
 		proofString: config.proofString,
+		capabilities,
 	});
 
 	return delegation;
 };
-
-// export const authorize = async (policies: AccessPolicy[], input: AuthInput, config: {
-// 	serverAgentKeyString: string;
-// 	proofString: string;
-// })=>{
-
-// 	const byTokenType = createClaimsGenerationRequest(accessByTokenType, input);
-
-// 	const tokenByTokenType = new Map<string, any>();
-
-// 	const ucanRequest = byTokenType.ucan;
-
-// 	console.log('ucanRequest', byTokenType, ucanRequest)
-
-// 	if(ucanRequest){
-// 		const { delegation, client, space } = await createUserDelegation({
-// 			userDid: input.subject,
-// 			serverAgentKeyString: config.serverAgentKeyString,
-// 			proofString: config.proofString,
-// 		});
-
-// 		tokenByTokenType.set("ucan", {
-// 			delegation,
-// 			client,
-// 			space,
-// 		})
-
-// 	}
-
-// 	return tokenByTokenType;
-// }

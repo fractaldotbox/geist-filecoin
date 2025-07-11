@@ -1,6 +1,7 @@
 import { useStore } from "@livestore/react";
 import { Folder } from "lucide-react";
 import { firstSpace$ } from "../../livestore/queries";
+import { AccountMenu } from "./AccountMenu";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
 
@@ -43,6 +44,7 @@ export function Navigation({ onSpacesClick }: NavigationProps) {
 						<span className="max-w-32 truncate">{truncatedDisplayText}</span>
 					</Button>
 					<ThemeToggle />
+					<AccountMenu />
 				</div>
 			</div>
 		</div>

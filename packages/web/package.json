@@ -13,8 +13,8 @@
 	},
 	"dependencies": {
 		"@geist-filecoin/auth": "workspace:*",
-		"@geist-filecoin/storage": "workspace:*",
 		"@geist-filecoin/domain": "workspace:*",
+		"@geist-filecoin/storage": "workspace:*",
 		"@hookform/resolvers": "^5.0.1",
 		"@lighthouse-web3/kavach": "^0.2.1",
 		"@lighthouse-web3/sdk": "^0.3.7",
@@ -24,6 +24,7 @@
 		"@livestore/react": "^0.3.1",
 		"@livestore/sync-cf": "^0.3.1",
 		"@livestore/wa-sqlite": "1.0.5-dev.2",
+		"@radix-ui/react-avatar": "^1.1.10",
 		"@radix-ui/react-collapsible": "^1.1.11",
 		"@radix-ui/react-dialog": "^1.1.11",
 		"@radix-ui/react-dropdown-menu": "^2.1.12",
