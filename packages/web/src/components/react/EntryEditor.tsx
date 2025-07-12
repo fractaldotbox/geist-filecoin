@@ -194,18 +194,23 @@ async function uploadFile(
 
 export function EntryEditor({
 	entryId,
+	contentTypeId,
 }: {
 	entryId?: string;
+	contentTypeId?: string;
 }) {
-	console.log("EntryEditor", entryId);
+	console.log("EntryEditor", entryId, contentTypeId);
 
 	const [isLoaded, setIsLoaded] = useState(false);
 
 	const { store, createEntry } = useLiveStore();
-	const entry = store.useQuery(entryById$(entryId || ""));
+	
+	// Only query for entry if we have an entryId (editing existing entry)
+	const entry = entryId ? store.useQuery(entryById$(entryId)) : null;
 
-	// Use LiveStore-based content type hooks and entry creation
-	const contentTypeData = useContentType(entry.contentTypeId);
+	// Use contentTypeId from props for new entries, or from entry for existing entries
+	const targetContentTypeId = contentTypeId || entry?.contentTypeId;
+	const contentTypeData = useContentType(targetContentTypeId || "");
 
 	// Get active space and its storage authorization
 	const activeSpace = store.useQuery(firstSpace$);
@@ -431,7 +436,7 @@ export function EntryEditor({
 				...values,
 				// TODO allow configure per schema
 				name: values.title as string,
-				contentTypeId: entry.contentTypeId,
+				contentTypeId: targetContentTypeId || "",
 				media: { url: url, cid: cid },
 			});
 
