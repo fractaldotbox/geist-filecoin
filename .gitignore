@@ -4,3 +4,5 @@ node_modules/
 .turbo
 .wrangler/
 dist/
+.next/
+.dev.vars*

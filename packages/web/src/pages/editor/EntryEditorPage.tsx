@@ -6,16 +6,22 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 
 export default function EntryEditorPage() {
-	const { id } = useParams();
+	const { id, "content-type-id": contentTypeId } = useParams();
 	const { store } = useStore();
 	const spaces = store.useQuery(allSpaces$);
 	const [uiState, setUiState] = useUiState();
 	const entries = store.useQuery(allEntries$);
 
+	// Determine if we're creating a new entry or editing an existing one
+	const isNewEntry = Boolean(contentTypeId);
+	const entryId = isNewEntry ? undefined : id;
+
 	const entry = useMemo(() => entries.find((e) => e.id === id), [entries, id]);
-	const contentTypeName = entry?.contentTypeId
-		? entry.contentTypeId.charAt(0).toUpperCase() + entry.contentTypeId.slice(1)
-		: undefined;
+	const contentTypeName = isNewEntry 
+		? (contentTypeId ? contentTypeId.charAt(0).toUpperCase() + contentTypeId.slice(1) : undefined)
+		: entry?.contentTypeId
+			? entry.contentTypeId.charAt(0).toUpperCase() + entry.contentTypeId.slice(1)
+			: undefined;
 
 	return (
 		<div className="container mx-auto p-6">
@@ -25,9 +31,15 @@ export default function EntryEditorPage() {
 					currentSpaceId={uiState.currentSpaceId}
 					contentType={contentTypeName}
 				/>
-				<h1 className="text-2xl font-bold">Edit Content</h1>
+				<h1 className="text-2xl font-bold">
+					{isNewEntry ? "Create Content" : "Edit Content"}
+				</h1>
 			</div>
-			<EntryEditor entryId={id as string} />
+			{/* Pass both entryId and contentTypeId to EntryEditor */}
+			<EntryEditor 
+				entryId={entryId} 
+				contentTypeId={isNewEntry ? contentTypeId : undefined} 
+			/>
 		</div>
 	);
 }
