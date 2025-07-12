@@ -227,7 +227,7 @@ export default function ContentEntriesPage() {
 								</p>
 							</div>
 							<div className="flex items-center gap-2">
-								<Link to="/editor/content-type/select">
+								<Link to={`/editor/space/${uiState.currentSpaceId}/content-type/select`}>
 									<Button>
 										<FilePlus className="w-4 h-4 mr-2" />
 										Create Entry
@@ -447,7 +447,7 @@ export default function ContentEntriesPage() {
 											? "No content matches your current filters. Try adjusting your search criteria."
 											: "Your space is ready but doesn't have any content entries yet."}
 									</p>
-									<Link to="/editor/content-type/select">
+									<Link to={`/editor/space/${uiState.currentSpaceId}/content-type/select`}>
 										<Button>Create Your First Entry</Button>
 									</Link>
 								</div>
