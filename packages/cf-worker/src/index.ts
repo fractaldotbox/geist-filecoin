@@ -163,16 +163,16 @@ export const loadStorachaSecrets = async (env: any) => {
 // better off separate 2 requests from very beginning
 
 router.post("/api/auth/ucan", async (request: Request, env: any) => {
-	const { did, spaceId, tokenType } = await request.json();
+	const { agentDid, spaceId, tokenType } = await request.json();
 
 	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
 
-	if (!did) {
+	if (!agentDid) {
 		throw new Error("did is not set");
 	}
 
 	const input = {
-		subject: did,
+		subject: agentDid,
 		tokenType,
 		context: {
 			spaceId,
@@ -233,7 +233,7 @@ router.post("/api/iam", async (request: Request, env: any) => {
 });
 
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
-	const { did, tokenType } = await request.json();
+	const { agentDid, tokenType } = await request.json();
 
 	const policyDO = await getPolicyDO(request, env);
 
@@ -241,16 +241,16 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 
 	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET");
 
-	console.log("auth for user", did);
+	console.log("auth for user", agentDid);
 
-	if (!did) {
+	if (!agentDid) {
 		throw new Error("did is not set");
 	}
 
 	const jwt = await authorizeJWT(
 		policies,
 		{
-			subject: did,
+			subject: agentDid,
 		},
 		jwtSecret,
 	);

@@ -1,10 +1,9 @@
 import { getShortForm, truncate } from "@/lib/utils/string";
 import { Copy, LogIn, User } from "lucide-react";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useUiState } from "../../livestore/queries";
 import { LoginState, useAuth } from "./AuthProvider";
-import { useLiveStore } from "./hooks/useLiveStore";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
@@ -40,12 +39,12 @@ interface LoginFormData {
 }
 
 export function AccountMenu() {
-	// Get user and login functionality from AuthProvider
-	const { user, loginStatus, login, resetLoginStatus } = useAuth();
-	console.log("user", user);
+	// Get login functionality from AuthProvider
+	const { loginStatus, login, resetLoginStatus } = useAuth();
 
 	const [uiState, setUiState] = useUiState();
-	const { setUiState: setUiStateFromLiveStore } = useLiveStore();
+
+	console.log("AccountMenu", uiState?.currentUserDid, uiState);
 
 	const form = useForm<LoginFormData>({
 		defaultValues: {
@@ -56,18 +55,18 @@ export function AccountMenu() {
 	// Auto-close dialog when login is successful
 	useEffect(() => {
 		if (loginStatus.state === LoginState.Success) {
-			setUiStateFromLiveStore({ isLoginDialogOpen: false });
+			setUiState({ isLoginDialogOpen: false });
 			resetLoginStatus();
-			setUiStateFromLiveStore({ currentLoginEmail: "" });
+			setUiState({ currentLoginEmail: "" });
 			form.reset();
 		}
-	}, [loginStatus.state, setUiStateFromLiveStore, resetLoginStatus, form]);
+	}, [loginStatus.state, setUiState, resetLoginStatus, form]);
 
 	// Copy DID to clipboard
 	const copyDid = async () => {
-		if (user?.did) {
+		if (uiState?.currentUserDid) {
 			try {
-				await navigator.clipboard.writeText(user.did);
+				await navigator.clipboard.writeText(uiState.currentUserDid);
 			} catch (error) {
 				console.error("Failed to copy DID:", error);
 			}
@@ -77,14 +76,14 @@ export function AccountMenu() {
 	// Handle login form submission
 	const onSubmit = async (data: LoginFormData) => {
 		// Store the email in UI state
-		setUiStateFromLiveStore({ currentLoginEmail: data.email });
+		setUiState({ currentLoginEmail: data.email });
 		await login(data.email);
 		form.reset();
 	};
 
 	// Open login dialog
 	const openLoginDialog = () => {
-		setUiStateFromLiveStore({ isLoginDialogOpen: true });
+		setUiState({ isLoginDialogOpen: true });
 	};
 
 	// Reset states when dialog closes
@@ -94,17 +93,17 @@ export function AccountMenu() {
 			return;
 		}
 
-		setUiStateFromLiveStore({ isLoginDialogOpen: open });
+		setUiState({ isLoginDialogOpen: open });
 		if (!open) {
 			resetLoginStatus();
-			setUiStateFromLiveStore({ currentLoginEmail: "" });
+			setUiState({ currentLoginEmail: "" });
 			form.reset();
 		}
 	};
 
 	return (
 		<>
-			{user?.did ? (
+			{uiState?.currentUserDid ? (
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<button
@@ -126,7 +125,7 @@ export function AccountMenu() {
 							className="font-mono text-xs flex items-center justify-between cursor-pointer"
 							onClick={copyDid}
 						>
-							<span>{getShortForm(user.did, 10)}</span>
+							<span>{getShortForm(uiState.currentUserDid, 10)}</span>
 							<Copy className="h-3 w-3 text-muted-foreground" />
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />

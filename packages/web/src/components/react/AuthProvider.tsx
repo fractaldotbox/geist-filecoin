@@ -45,18 +45,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+export const DID_LOCALSTORAGE_KEY = "geist.user.did";
+
 // Auth provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const { store } = useStore();
-	const {
-		client,
-		agentDid: clientId,
-		initializeClient,
-		setClient,
-		setAgentDid,
-	} = useStorachaContext();
-
-	const [user, setUser] = useState<AuthUser | null>(null);
+	const { client, initializeClient, setClient } = useStorachaContext();
 
 	const [uiState, setUiState] = useUiState();
 	const [isLoading, setIsLoading] = useState(true);
@@ -70,16 +64,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
 		if (client) {
+			if (uiState.currentUserDid) {
+				return;
+			}
 			(async () => {
+				// Check localStorage for existing user DID
+				const storedDidFromLocalStorage =
+					localStorage.getItem(DID_LOCALSTORAGE_KEY);
+
 				const accounts = client.accounts();
-				const existingAccount = (accounts as any)[uiState.currentUserDid];
-				if (existingAccount) {
-					setUser({
-						did: existingAccount.did(),
-						delegation: new ArrayBuffer(0),
-					});
-					setAgentDid(uiState.currentUserDid);
+
+				const existingDid = uiState.currentUserDid || storedDidFromLocalStorage;
+
+				// First, try to recover from localStorage
+				if (existingDid) {
+					const existingAccount = (accounts as any)[existingDid];
+					if (existingAccount) {
+						const user = {
+							did: existingAccount.did(),
+							delegation: new ArrayBuffer(0),
+						};
+						setUiState({
+							...uiState,
+							currentUserDid: user.did,
+						});
+					}
 				}
+
+				setIsLoading(false);
 			})();
 		}
 	}, [client]);
@@ -88,6 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const login = async (email: string) => {
 		try {
 			setLoginStatus({ state: LoginState.Loading });
+
+			// Check if client is available
+			if (!client) {
+				throw new Error("Client not initialized");
+			}
 
 			// Initialize client if not already initialized
 			setLoginStatus({ state: LoginState.Pending });
@@ -106,21 +123,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 			console.log("Login success with account", user);
 
-			// TODO merge user and ui state
-			setUser(user);
+			localStorage.setItem(DID_LOCALSTORAGE_KEY, user.did);
+
+			// client?.addProof(account?.model?.proofs?.[0]?.token);
 
 			setUiState({
 				...uiState,
 				currentUserDid: user.did,
 			});
 			setClient(client);
-			setAgentDid(account?.model?.id);
 
 			setLoginStatus({ state: LoginState.Success });
 		} catch (error) {
 			console.error("Login failed:", error);
-
-			setUser(null);
 			setLoginStatus({
 				state: LoginState.Error,
 				error: error instanceof Error ? error.message : "Login failed",
@@ -134,9 +149,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	};
 
 	const value: AuthContextType = {
-		user,
 		isLoading,
-		isAuthenticated: !!user,
+		isAuthenticated: !!uiState.currentUserDid,
 		error,
 		loginStatus,
 		login,

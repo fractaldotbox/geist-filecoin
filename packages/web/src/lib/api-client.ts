@@ -1,4 +1,5 @@
 import type { AccessPolicy } from "@geist-filecoin/auth";
+import type { DID } from "@w3ui/react";
 import ky, { type KyInstance } from "ky";
 
 const API_BASE_URL =
@@ -31,26 +32,26 @@ export const apiClient: KyInstance = ky.create({
 export const auth = {
 	authorizeUcan: async ({
 		spaceId,
-		did,
+		agentDid,
 	}: {
 		spaceId: string;
-		did: string;
+		agentDid: DID;
 	}): Promise<ArrayBuffer> => {
 		return apiClient
 			.post("api/auth/ucan", {
-				json: { spaceId, did },
+				json: { spaceId, agentDid },
 			})
 			.arrayBuffer();
 	},
 	authorizeJWT: async ({
-		did,
+		agentDid,
 	}: {
-		did: string;
+		agentDid: string;
 		tokenType: string;
 	}): Promise<any> => {
 		return apiClient
 			.post("api/auth/jwt", {
-				json: { did },
+				json: { agentDid },
 			})
 			.json();
 	},

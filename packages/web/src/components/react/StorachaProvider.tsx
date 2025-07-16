@@ -51,6 +51,14 @@ interface StorachaProviderProps {
 	children: ReactNode;
 }
 
+function b64EncodeUnicode(bytes: Uint8Array) {
+	// Convert the Uint8Array to a "binary string"
+	const binaryString = String.fromCharCode(...bytes);
+
+	// Base64 encode the binary string
+	return btoa(binaryString);
+}
+
 export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 	children,
 }) => {
@@ -109,26 +117,34 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 			activeSpace &&
 			delegationCommittedRef.current !== delegationResults.root.cid.toString()
 		) {
-			const authId = crypto.randomUUID();
+			(async () => {
+				const archive = await delegationResults.archive();
+				console.log("archive", archive);
 
-			createStorachaStorageAuthorization({
-				id: authId,
-				spaceId: activeSpace.id,
-				delegationCid: delegationResults.root.cid.toString(),
-				// TODO consider store the original CAR array buffer
-				delegationData: JSON.stringify(delegationResults.toJSON()),
-				clientDid: delegationResults.audience.did(),
-				isActive: true,
-				authorizedAt: new Date(),
-				expiresAt: delegationResults.expiration
-					? new Date(delegationResults.expiration * 1000)
-					: undefined,
-			});
+				if (!archive?.ok) {
+					return;
+				}
+				const authId = crypto.randomUUID();
 
-			setDelegation(delegationResults);
+				createStorachaStorageAuthorization({
+					id: authId,
+					spaceId: activeSpace.id,
+					delegationCid: delegationResults.root.cid.toString(),
+					delegationData: b64EncodeUnicode(archive.ok),
 
-			// Mark this delegation as committed to avoid duplicate events
-			delegationCommittedRef.current = delegationResults.root.cid.toString();
+					clientDid: delegationResults.audience.did(),
+					isActive: true,
+					authorizedAt: new Date(),
+					expiresAt: delegationResults.expiration
+						? new Date(delegationResults.expiration * 1000)
+						: undefined,
+				});
+
+				setDelegation(delegationResults);
+
+				// Mark this delegation as committed to avoid duplicate events
+				delegationCommittedRef.current = delegationResults.root.cid.toString();
+			})();
 		}
 	}, [delegationResults, activeSpace, createStorachaStorageAuthorization]);
 
