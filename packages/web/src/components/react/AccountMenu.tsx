@@ -4,7 +4,6 @@ import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useUiState } from "../../livestore/queries";
 import { LoginState, useAuth } from "./AuthProvider";
-import { useLiveStore } from "./hooks/useLiveStore";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {

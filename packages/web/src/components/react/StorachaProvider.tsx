@@ -130,7 +130,6 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 					id: authId,
 					spaceId: activeSpace.id,
 					delegationCid: delegationResults.root.cid.toString(),
-					// TODO consider store the original CAR array buffer
 					delegationData: b64EncodeUnicode(archive.ok),
 
 					clientDid: delegationResults.audience.did(),
