@@ -107,8 +107,6 @@ export const useDelegateAccount = (options: {
 
 				client.addProof(delegationResults.ok);
 				client.addSpace(delegationResults.ok);
-				// const space = await client.addSpace(delegationResults.ok);
-				// await client.setCurrentSpace(space.did());
 			} finally {
 				isDelegationRequestInProgress.current = false;
 			}
