@@ -74,8 +74,7 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 			console.log("init client accounts", storachaClient.accounts());
 
 			setClient(storachaClient);
-			// TODO use default did for read only use cases
-			// setAgentDid(storachaClient.did());
+			setAgentDid(storachaClient.did());
 
 			return storachaClient;
 		} catch (error) {

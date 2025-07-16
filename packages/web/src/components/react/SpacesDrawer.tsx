@@ -88,7 +88,6 @@ interface SpacesDrawerProps {
 export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 	const { store } = useStore();
 	const { createSpace, updateSpace, deleteSpace } = useSpaceStore();
-	const { setUiState: setUiStateFromLiveStore } = useLiveStore();
 	const spaces = store.useQuery(allSpaces$);
 	const [uiState, setUiState] = useUiState();
 	const currentSpaceId = uiState?.currentSpaceId || "";
@@ -120,9 +119,9 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 
 		const targetSpaceId = spaces?.[0]?.id;
 		if (targetSpaceId && targetSpaceId !== uiState?.currentSpaceId) {
-			setUiStateFromLiveStore({ currentSpaceId: targetSpaceId });
+			setUiState({ currentSpaceId: targetSpaceId });
 		}
-	}, [uiState?.currentSpaceId, setUiStateFromLiveStore, spaces?.[0]?.id]);
+	}, [uiState?.currentSpaceId, setUiState, spaces?.[0]?.id]);
 
 	const watchedStorageProvider = form.watch("storageProvider");
 
@@ -156,7 +155,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 		const id = `space-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 		// Deactivate all existing spaces before creating the new active space
-		await setUiStateFromLiveStore({ currentSpaceId: id });
+		await setUiState({ currentSpaceId: id });
 
 		// Create credentials based on storage provider
 		let storageProviderCredentials: StorageProviderCredentialConfig[] = [];
@@ -218,7 +217,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 
 	const handleSetActiveSpace = async (targetSpaceId: string) => {
 		// Set the target space as active
-		await setUiStateFromLiveStore({ currentSpaceId: targetSpaceId });
+		await setUiState({ currentSpaceId: targetSpaceId });
 
 		// Close the drawer and redirect to content-types page
 		onClose();
@@ -461,7 +460,7 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 													<Badge variant="secondary">
 														{
 															STORAGE_PROVIDER_LABELS[
-																space.storageProvider as StorageProvider
+															space.storageProvider as StorageProvider
 															]
 														}
 													</Badge>
@@ -553,52 +552,52 @@ export function SpacesDrawer({ open, onClose }: SpacesDrawerProps) {
 															<div className="space-y-2 text-xs">
 																{space.storageProvider ===
 																	StorageProvider.Storacha && (
-																	// biome-ignore lint/complexity/noUselessFragments: <explanation>
-																	<>
-																		<div className="flex items-center justify-between">
-																			<span className="text-muted-foreground">
-																				Space Key:
-																			</span>
-																			<div className="flex items-center gap-1">
-																				{/* <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
+																		// biome-ignore lint/complexity/noUselessFragments: <explanation>
+																		<>
+																			<div className="flex items-center justify-between">
+																				<span className="text-muted-foreground">
+																					Space Key:
+																				</span>
+																				<div className="flex items-center gap-1">
+																					{/* <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
 																						{isRevealed
 																							? credentials.spaceKey
 																							: maskCredential(
 																								credentials.spaceKey,
 																							)}
 																					</code> */}
+																				</div>
 																			</div>
-																		</div>
-																	</>
-																)}
+																		</>
+																	)}
 
 																{space.storageProvider ===
 																	StorageProvider.S3 && (
-																	<div className="flex items-center justify-between">
-																		<span className="text-muted-foreground">
-																			API Key:
-																		</span>
-																		<div className="flex items-center gap-1">
-																			<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
-																				{isRevealed
-																					? credentials.apiKey
-																					: maskCredential(credentials.apiKey)}
-																			</code>
-																			{isRevealed && credentials.apiKey && (
-																				<Button
-																					variant="ghost"
-																					size="sm"
-																					onClick={() =>
-																						copyToClipboard(credentials.apiKey)
-																					}
-																					className="h-5 w-5 p-0"
-																				>
-																					<Copy className="w-3 h-3" />
-																				</Button>
-																			)}
+																		<div className="flex items-center justify-between">
+																			<span className="text-muted-foreground">
+																				API Key:
+																			</span>
+																			<div className="flex items-center gap-1">
+																				<code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
+																					{isRevealed
+																						? credentials.apiKey
+																						: maskCredential(credentials.apiKey)}
+																				</code>
+																				{isRevealed && credentials.apiKey && (
+																					<Button
+																						variant="ghost"
+																						size="sm"
+																						onClick={() =>
+																							copyToClipboard(credentials.apiKey)
+																						}
+																						className="h-5 w-5 p-0"
+																					>
+																						<Copy className="w-3 h-3" />
+																					</Button>
+																				)}
+																			</div>
 																		</div>
-																	</div>
-																)}
+																	)}
 															</div>
 														</div>
 													</div>

@@ -38,12 +38,24 @@ importers:
       '@noble/hashes':
         specifier: ^1.6.1
         version: 1.8.0
+      '@ucanto/core':
+        specifier: ^10.4.0
+        version: 10.4.0
+      '@ucanto/principal':
+        specifier: ^9.0.2
+        version: 9.0.2
+      '@ucanto/validator':
+        specifier: ^10.0.0
+        version: 10.0.0
       '@web3-storage/w3up-client':
         specifier: ^16.5.2
         version: 16.5.2
       graphql-request:
         specifier: ^7.1.0
         version: 7.2.0(graphql@16.11.0)
+      install:
+        specifier: ^0.13.0
+        version: 0.13.0
       viem:
         specifier: ^2.26.2
         version: 2.31.0(typescript@5.8.3)(zod@3.25.62)
@@ -5506,6 +5518,13 @@ packages:
       multiformats: 13.3.7
     dev: false
 
+  /@ucanto/interface@11.0.0:
+    resolution: {integrity: sha512-679NmyKXAuh9Zu8BbTNvwmi5gke8RytH7qRvPxpWL/ytKUm/Ea3y1fwGmaCnTbf38GXtVP89eERAsh+p8pSXzA==}
+    dependencies:
+      '@ipld/dag-ucan': 3.4.5
+      multiformats: 13.3.7
+    dev: false
+
   /@ucanto/principal@9.0.2:
     resolution: {integrity: sha512-RE3Rj0oz4wh4C9p2JJZB9+QLd7Fi3lCixrbHgAvEoSyTNpvz6ky8DGNtttmD5j3O94z13qdVdIoSRY6DQZXfAg==}
     dependencies:
@@ -5523,6 +5542,16 @@ packages:
     dependencies:
       '@ucanto/core': 10.4.0
       '@ucanto/interface': 10.3.0
+    dev: false
+
+  /@ucanto/validator@10.0.0:
+    resolution: {integrity: sha512-24inv+3JgjKSNqBEBZt8QcIFes8uh/7Q10mK8RHiKRNgATEjvJd4BvskzSe1y0zM3sKIlcRQBAfX5cqLaps7vA==}
+    dependencies:
+      '@ipld/car': 5.4.2
+      '@ipld/dag-cbor': 9.2.4
+      '@ucanto/core': 10.4.0
+      '@ucanto/interface': 11.0.0
+      multiformats: 13.3.7
     dev: false
 
   /@ucanto/validator@9.1.0:
@@ -9022,6 +9051,11 @@ packages:
       through: 2.3.8
       wrap-ansi: 6.2.0
     dev: true
+
+  /install@0.13.0:
+    resolution: {integrity: sha512-zDml/jzr2PKU9I8J/xyZBQn8rPCAY//UOYNmR01XwNwyfhEWObo2SWfSl1+0tm1u6PhxLwDnfsT/6jB7OUxqFA==}
+    engines: {node: '>= 0.10'}
+    dev: false
 
   /interface-datastore@6.1.1:
     resolution: {integrity: sha512-AmCS+9CT34pp2u0QQVXjKztkuq3y5T+BIciuiHDDtDZucZD8VudosnSdUyXJV6IsRkN5jc4RFDhCk1O6Q3Gxjg==}

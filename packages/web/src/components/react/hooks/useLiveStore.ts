@@ -111,6 +111,7 @@ export const useLiveStore = () => {
 		isLoginDialogOpen?: boolean;
 		currentLoginEmail?: string;
 	}) => {
+		console.log('update ui state', uiState);
 		return store.commit(events.uiStateSet(uiState));
 	};
 

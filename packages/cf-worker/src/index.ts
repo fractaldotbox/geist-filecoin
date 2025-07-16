@@ -4,6 +4,7 @@ import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import type { Env } from "@livestore/sync-cf/cf-worker";
 import jwt from "@tsndr/cloudflare-worker-jwt";
 import { Router, cors, error, json } from "itty-router";
+import { Proof } from "@web3-storage/w3up-client";
 
 export class Policies extends DurableObject<Env> {
 	private policies: any[] = [];
@@ -162,8 +163,62 @@ export const loadStorachaSecrets = async (env: any) => {
 // Overall it's tricky to combine jwt & binary (ucan) token at once
 // better off separate 2 requests from very beginning
 
+export type DID = `did:${string}`;
+
 router.post("/api/auth/ucan", async (request: Request, env: any) => {
-	const { did, spaceId, tokenType } = await request.json();
+	const requestBody = await request.json();
+	const { agentDid, spaceId, accountProof }: { agentDid: DID; spaceId: string; accountProof: string } = requestBody;
+	
+	let parsedProof: any;
+	let tokenType = "ucan"; // Default to ucan for UCAN tokens
+	
+	try {
+		// Try to parse as a serialized UCAN token first
+		parsedProof = await Proof.parse(accountProof);
+		console.log("Successfully parsed accountProof as UCAN token", {
+			audience: parsedProof.audience.did(),
+			issuer: parsedProof.issuer.did(),
+			capabilities: parsedProof.capabilities
+		});
+		
+		// Extract information from the parsed UCAN token
+		const audience = parsedProof.audience.did();
+		const issuer = parsedProof.issuer.did();
+		
+		// Verify that the DID matches the proof's audience or issuer
+		if (audience !== agentDid && issuer !== agentDid) {
+			throw new Error("DID does not match UCAN token audience or issuer");
+		}
+		
+	} catch (error) {
+		console.error("Failed to parse accountProof as UCAN token, trying JSON fallback:", error);
+		
+		// Fallback: try to parse as JSON for backward compatibility
+		try {
+			const proof = JSON.parse(accountProof);
+			
+			// Validate required JSON properties
+			if (!proof.audience?.did || !proof.issuer?.did || !proof.subject?.did) {
+				throw new Error("Invalid JSON proof structure");
+			}
+			
+			const audience = proof.audience.did();
+			const issuer = proof.issuer.did();
+			const subject = proof.subject.did();
+			tokenType = proof.tokenType || "ucan";
+			
+			console.log("Successfully parsed accountProof as JSON", {
+				audience,
+				issuer,
+				subject,
+				tokenType
+			});
+			
+		} catch (jsonError) {
+			console.error("Failed to parse accountProof as JSON:", jsonError);
+			throw new Error("Invalid account proof format - must be either a serialized UCAN token or valid JSON");
+		}
+	}
 
 	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
 
@@ -171,9 +226,8 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 		throw new Error("did is not set");
 	}
 
-	const input = {
+	const input: AuthInput = {
 		subject: did,
-		tokenType,
 		context: {
 			spaceId,
 			env: {
@@ -218,7 +272,8 @@ router.get("/websocket", async (request: Request, env: any) => {
 });
 
 router.post("/api/iam", async (request: Request, env: any) => {
-	const { policies } = await request.json();
+	const requestBody = await request.json();
+	const { policies }: { policies: AccessPolicy[] } = requestBody;
 	console.log("iam add policies", policies);
 	const policyDO = await getPolicyDO(request, env);
 
@@ -233,7 +288,8 @@ router.post("/api/iam", async (request: Request, env: any) => {
 });
 
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
-	const { did, tokenType } = await request.json();
+	const requestBody = await request.json();
+	const { did, tokenType }: { did: string; tokenType?: string } = requestBody;
 
 	const policyDO = await getPolicyDO(request, env);
 

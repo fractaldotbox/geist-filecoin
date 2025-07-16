@@ -1,6 +1,6 @@
 import { getShortForm, truncate } from "@/lib/utils/string";
 import { Copy, LogIn, User } from "lucide-react";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useUiState } from "../../livestore/queries";
 import { LoginState, useAuth } from "./AuthProvider";
@@ -39,13 +39,16 @@ interface LoginFormData {
 	email: string;
 }
 
+
+
 export function AccountMenu() {
 	// Get user and login functionality from AuthProvider
 	const { user, loginStatus, login, resetLoginStatus } = useAuth();
-	console.log("user", user);
 
 	const [uiState, setUiState] = useUiState();
-	const { setUiState: setUiStateFromLiveStore } = useLiveStore();
+
+	console.log("AccountMenu", user, uiState);
+
 
 	const form = useForm<LoginFormData>({
 		defaultValues: {
@@ -56,12 +59,12 @@ export function AccountMenu() {
 	// Auto-close dialog when login is successful
 	useEffect(() => {
 		if (loginStatus.state === LoginState.Success) {
-			setUiStateFromLiveStore({ isLoginDialogOpen: false });
+			setUiState({ isLoginDialogOpen: false });
 			resetLoginStatus();
-			setUiStateFromLiveStore({ currentLoginEmail: "" });
+			setUiState({ currentLoginEmail: "" });
 			form.reset();
 		}
-	}, [loginStatus.state, setUiStateFromLiveStore, resetLoginStatus, form]);
+	}, [loginStatus.state, setUiState, resetLoginStatus, form]);
 
 	// Copy DID to clipboard
 	const copyDid = async () => {
@@ -77,14 +80,14 @@ export function AccountMenu() {
 	// Handle login form submission
 	const onSubmit = async (data: LoginFormData) => {
 		// Store the email in UI state
-		setUiStateFromLiveStore({ currentLoginEmail: data.email });
+		setUiState({ currentLoginEmail: data.email });
 		await login(data.email);
 		form.reset();
 	};
 
 	// Open login dialog
 	const openLoginDialog = () => {
-		setUiStateFromLiveStore({ isLoginDialogOpen: true });
+		setUiState({ isLoginDialogOpen: true });
 	};
 
 	// Reset states when dialog closes
@@ -94,10 +97,10 @@ export function AccountMenu() {
 			return;
 		}
 
-		setUiStateFromLiveStore({ isLoginDialogOpen: open });
+		setUiState({ isLoginDialogOpen: open });
 		if (!open) {
 			resetLoginStatus();
-			setUiStateFromLiveStore({ currentLoginEmail: "" });
+			setUiState({ currentLoginEmail: "" });
 			form.reset();
 		}
 	};

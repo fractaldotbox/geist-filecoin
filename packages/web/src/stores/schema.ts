@@ -47,10 +47,7 @@ export function useContentTypeWithLoading(contentTypeId: string) {
 // Legacy compatibility - export a hook that mimics the old contentTypeStore behavior
 export function useContentTypeStore() {
 	const { store } = useStore();
-	const { setUiState: setUiStateFromLiveStore } = useLiveStore();
-
-	// Get current content type ID from UI state
-	const [uiState, setUiState] = useUiState();
+	const [ uiState, setUiState ] = useUiState();
 
 	const currentContentTypeId = uiState?.currentContentTypeId || "";
 	const contentType = useContentType(currentContentTypeId);
@@ -59,6 +56,6 @@ export function useContentTypeStore() {
 		contentType,
 		currentContentTypeId,
 		setCurrentContentTypeId: (id: string) =>
-			setUiStateFromLiveStore({ currentContentTypeId: id }),
+			setUiState({ currentContentTypeId: id }),
 	};
 }

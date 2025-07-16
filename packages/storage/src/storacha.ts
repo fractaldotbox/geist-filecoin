@@ -78,6 +78,10 @@ export const createClient = async (options: any) => {
 	return client;
 };
 
+
+// create ucan/attest with "did:web:up.storacha.network" to agent did 
+// create * with "ucan:*" to agent did 
+
 export const authWithEmail = async (client: Client, email: EmailAddress) => {
 	const account = await client.login(email);
 	console.log("authWithEmail", account);
