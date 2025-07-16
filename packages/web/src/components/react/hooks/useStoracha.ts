@@ -1,21 +1,25 @@
 import apiClient, { auth } from "@/lib/api-client";
 import type { Client } from "@web3-storage/w3up-client";
 import { extract } from "@web3-storage/w3up-client/delegation";
-import type { Capabilities, Delegation } from "@web3-storage/w3up-client/types";
+import type {
+	Capabilities,
+	DID,
+	Delegation,
+} from "@web3-storage/w3up-client/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useStorachaContext } from "../StorachaProvider";
 
 const requestDelegation = async ({
-	did,
+	agentDid,
 	spaceId,
 }: {
-	did: string;
+	agentDid: DID;
 	spaceId: string;
 }) => {
 	try {
 		const delegationArchive = await apiClient.auth.authorizeUcan({
 			spaceId: spaceId,
-			did,
+			agentDid,
 		});
 
 		if (delegationArchive?.byteLength === 0) {
@@ -25,7 +29,7 @@ const requestDelegation = async ({
 		}
 
 		const delegation = await extract(new Uint8Array(delegationArchive));
-		console.log("request delegation", did, "space:", spaceId);
+		console.log("request delegation", agentDid, "space:", spaceId);
 		if (!delegation.ok) {
 			throw new Error("Failed to extract delegation");
 		}
@@ -63,15 +67,17 @@ export const useDelegateAccount = (options: {
 	 * Delegate to client/agent, not the account did
 	 */
 
+	// TODO delegate after account init complted
 	useEffect(() => {
 		(async () => {
+			console.log(
+				"useDelegateAccount ",
+				"client",
+				client?.did(),
+				"space",
+				spaceDid,
+			);
 			if (!client || !spaceDid) {
-				return;
-			}
-
-			const did = client.did();
-
-			if (!did) {
 				return;
 			}
 
@@ -82,9 +88,12 @@ export const useDelegateAccount = (options: {
 			isDelegationRequestInProgress.current = true;
 
 			try {
+				console.log("request delegation", client?.did(), spaceDid);
+
+				// console.log("request with", client.did(), client.accounts()?.[0], spaceDid)
 				const delegationResults = await requestDelegation({
 					spaceId: spaceDid,
-					did,
+					agentDid: client.did() as DID,
 				});
 
 				if (!delegationResults.ok) {
@@ -92,10 +101,14 @@ export const useDelegateAccount = (options: {
 				}
 
 				// TODO request only if expired
+
+				console.log("delegationResults", delegationResults);
 				setDelegation(delegationResults.ok);
 
-				const space = await client.addSpace(delegationResults.ok);
-				await client.setCurrentSpace(space.did());
+				client.addProof(delegationResults.ok);
+				client.addSpace(delegationResults.ok);
+				// const space = await client.addSpace(delegationResults.ok);
+				// await client.setCurrentSpace(space.did());
 			} finally {
 				isDelegationRequestInProgress.current = false;
 			}
@@ -136,8 +149,10 @@ export const useSpaceFiles = (options: {
 		await storachaClient.addSpace(delegation);
 		await storachaClient.addProof(delegation);
 
-		console.log("loading files from space", currentSpace?.did());
-		console.log("by ", storachaClient.did());
+		console.log("load file from space", currentSpace?.did());
+		console.log("load file by client did", storachaClient.did());
+
+		console.log("load file accounts", storachaClient.accounts());
 
 		return await storachaClient.capability.upload
 			.list({

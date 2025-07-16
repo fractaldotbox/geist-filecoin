@@ -25,7 +25,7 @@ import * as DID from "@ipld/dag-ucan/did";
 import type { ServiceAbility } from "@web3-storage/w3up-client/types";
 
 // import * as DID from "@ipld/dag-ucan/did";
-import { create } from "@web3-storage/w3up-client";
+import { Account, create } from "@web3-storage/w3up-client";
 import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
 
 // enable sync methods
@@ -80,7 +80,7 @@ export const createClient = async (options: any) => {
 
 export const authWithEmail = async (client: Client, email: EmailAddress) => {
 	const account = await client.login(email);
-
+	console.log("authWithEmail", account);
 	return account;
 };
 
@@ -182,6 +182,7 @@ export type DelegationFlowParams = {
 	userDid: string;
 	serverAgentKeyString: string;
 	proofString?: string;
+	capabilities?: ServiceAbility[];
 };
 
 export type DelegationFlowResult = {
@@ -200,6 +201,7 @@ export const createUserDelegation = async ({
 	userDid,
 	serverAgentKeyString,
 	proofString = "",
+	capabilities = ["space/info", "upload/list", "upload/add"],
 }: DelegationFlowParams): Promise<DelegationFlowResult> => {
 	// Initialize the server client
 	const { client, space } = await initStorachaClient({
@@ -215,7 +217,7 @@ export const createUserDelegation = async ({
 		},
 		{
 			userDid,
-			capabilities: ["space/info", "upload/list", "upload/add"],
+			capabilities,
 		},
 	);
 

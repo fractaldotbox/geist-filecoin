@@ -105,6 +105,11 @@ export const useLiveStore = () => {
 		formData?: string;
 		isSubmitting?: boolean;
 		uploadProgress?: number;
+		// to match account did
+		currentUserDid?: string;
+		// Login dialog UI state
+		isLoginDialogOpen?: boolean;
+		currentLoginEmail?: string;
 	}) => {
 		return store.commit(events.uiStateSet(uiState));
 	};
