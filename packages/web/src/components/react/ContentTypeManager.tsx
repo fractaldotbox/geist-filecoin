@@ -53,7 +53,7 @@ export function ContentTypeManager() {
 								<h2 className="text-xl font-semibold">
 									{contentType.name ||
 										contentType.id.charAt(0).toUpperCase() +
-											contentType.id.slice(1)}
+										contentType.id.slice(1)}
 								</h2>
 								<Badge variant="outline">Content Type</Badge>
 							</div>
@@ -64,7 +64,7 @@ export function ContentTypeManager() {
 
 							<div className="flex gap-2">
 								<Link
-									to={`/editor/space/${uiState.currentSpaceId}/entry/${contentType.id}`}
+									to={`/editor/space/${uiState.currentSpaceId}/content-type/${contentType.id}/new`}
 									className="flex-1"
 								>
 									<Button className="w-full">Use Content Type</Button>

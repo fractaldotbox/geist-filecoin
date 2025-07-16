@@ -3,19 +3,19 @@ import SpaceBreadcrumb from "@/components/react/SpaceBreadcrumb";
 import { allEntries$, allSpaces$, useUiState } from "@/livestore/queries";
 import { useStore } from "@livestore/react";
 import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
 export default function EntryEditorPage() {
-	const { id } = useParams();
+	const { entryId, contentTypeId, spaceId } = useParams();
+
+
 	const { store } = useStore();
 	const spaces = store.useQuery(allSpaces$);
 	const [uiState, setUiState] = useUiState();
 	const entries = store.useQuery(allEntries$);
 
-	const entry = useMemo(() => entries.find((e) => e.id === id), [entries, id]);
-	const contentTypeName = entry?.contentTypeId
-		? entry.contentTypeId.charAt(0).toUpperCase() + entry.contentTypeId.slice(1)
-		: undefined;
+	const location = useLocation();
+	// const isNewEntry = location.pathname.includes('/new');
 
 	return (
 		<div className="container mx-auto p-6">
@@ -23,11 +23,11 @@ export default function EntryEditorPage() {
 				<SpaceBreadcrumb
 					spaces={spaces}
 					currentSpaceId={uiState.currentSpaceId}
-					contentType={contentTypeName}
+					contentType={contentTypeId}
 				/>
 				<h1 className="text-2xl font-bold">Edit Content</h1>
 			</div>
-			<EntryEditor entryId={id as string} />
+			<EntryEditor entryId={entryId as string} />
 		</div>
 	);
 }

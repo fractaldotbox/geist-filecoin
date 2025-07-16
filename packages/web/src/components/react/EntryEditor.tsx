@@ -205,7 +205,7 @@ export function EntryEditor({
 	const entry = store.useQuery(entryById$(entryId || ""));
 
 	// Use LiveStore-based content type hooks and entry creation
-	const contentTypeData = useContentType(entry.contentTypeId);
+	const contentTypeData = useContentType(entry?.contentTypeId || '');
 
 	// Get active space and its storage authorization
 	const activeSpace = store.useQuery(firstSpace$);
@@ -226,14 +226,14 @@ export function EntryEditor({
 
 	const contentType = contentTypeData
 		? {
-				type: "object" as const,
-				...contentTypeData,
-				properties: JSON.parse(contentTypeData.properties) as Record<
-					string,
-					ContentTypeField
-				>,
-				required: JSON.parse(contentTypeData.required) as string[],
-			}
+			type: "object" as const,
+			...contentTypeData,
+			properties: JSON.parse(contentTypeData.properties) as Record<
+				string,
+				ContentTypeField
+			>,
+			required: JSON.parse(contentTypeData.required) as string[],
+		}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -342,9 +342,9 @@ export function EntryEditor({
 	// Only set defaultValues after entry is loaded (if editing)
 	const initialDefaultValues = contentType
 		? createDefaultValues(
-				contentType,
-				entryId && entry ? getEntryFormDefaults(contentType, entry) : undefined,
-			)
+			contentType,
+			entryId && entry ? getEntryFormDefaults(contentType, entry) : undefined,
+		)
 		: {};
 
 	const form = useForm<Partial<EntryFormData>>({
@@ -393,6 +393,9 @@ export function EntryEditor({
 
 	// Create entry using LiveStore events instead of direct API calls
 	const onSubmit = async (values: Partial<EntryFormData>) => {
+		if (!entry) {
+			return;
+		}
 		setIsSubmitting(true);
 		setSubmissionResult(undefined); // Reset submission result
 		console.log("debug:", values, typeof values);
