@@ -54,8 +54,9 @@ interface StorachaUpload {
 export const useDelegateAccount = (options: {
 	client: Client | null;
 	spaceDid: string;
+	agentDid: string | null;
 }) => {
-	const { client, spaceDid } = options;
+	const { client, spaceDid, agentDid } = options;
 
 	const [delegation, setDelegation] = useState<Delegation<Capabilities> | null>(
 		null,

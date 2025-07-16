@@ -94,6 +94,7 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 
 	const { delegation: delegationResults } = useDelegateAccount({
 		client,
+		agentDid,
 		spaceDid: activeSpace?.storageProviderId || "",
 	});
 
