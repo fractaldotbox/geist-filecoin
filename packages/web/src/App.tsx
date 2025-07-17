@@ -71,11 +71,11 @@ function App() {
 							element={<ContentTypeEditorPage />}
 						/>
 						<Route
-							path="/editor/space/:spaceId/content-type/:content-type-id/new"
+							path="/editor/space/:spaceId/content-type/:contentTypeId/new"
 							element={<EntryEditorPage />}
 						/>
 						<Route
-							path="/editor/space/:spaceId/entry/:id"
+							path="/editor/space/:spaceId/entry/:entryId"
 							element={<EntryEditorPage />}
 						/>
 					</Routes>

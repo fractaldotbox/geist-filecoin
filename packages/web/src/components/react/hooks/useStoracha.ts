@@ -71,13 +71,6 @@ export const useDelegateAccount = (options: {
 	// TODO delegate after account init complted
 	useEffect(() => {
 		(async () => {
-			console.log(
-				"useDelegateAccount ",
-				"client",
-				client?.did(),
-				"space",
-				spaceDid,
-			);
 			if (!client || !spaceDid) {
 				return;
 			}
@@ -139,11 +132,6 @@ export const useSpaceFiles = (options: {
 			return;
 		}
 
-		console.log(
-			"load files client ready",
-			delegation?.audience.did(),
-			storachaClient.did(),
-		);
 		const currentSpace = await storachaClient.currentSpace();
 		await storachaClient.addSpace(delegation);
 		await storachaClient.addProof(delegation);
