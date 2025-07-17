@@ -132,11 +132,6 @@ export const useSpaceFiles = (options: {
 			return;
 		}
 
-		console.log(
-			"loadf files client ready",
-			delegation?.audience.did(),
-			storachaClient.did(),
-		);
 		const currentSpace = await storachaClient.currentSpace();
 		await storachaClient.addSpace(delegation);
 		await storachaClient.addProof(delegation);
