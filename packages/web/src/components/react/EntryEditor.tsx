@@ -130,7 +130,7 @@ async function uploadDirectory({
 	progressCallback,
 	uploadMode = UploadMode.StorachaDelegated,
 }: {
-	client: Client;
+	client?: Client;
 	files: File[];
 	uploadMode: UploadMode;
 	progressCallback?: (progress: number) => void;
@@ -372,7 +372,7 @@ export function EntryEditor({
 
 	// Create entry using LiveStore events instead of direct API calls
 	const onSubmit = async (values: Partial<EntryFormData>) => {
-		if (!entry || !contentTypeId || !client) {
+		if (!entry || !contentTypeId) {
 			return;
 		}
 		setIsSubmitting(true);
@@ -384,7 +384,7 @@ export function EntryEditor({
 			await simulateProgress();
 
 			if (uploadMode === UploadMode.StorachaDelegated) {
-				if (!storageAuth) {
+				if (!client || !delegation) {
 					throw new Error(
 						"No Storacha storage authorization found for the active space",
 					);
@@ -406,14 +406,14 @@ export function EntryEditor({
 				progressCallback: (progress: number) => {
 					setUploadProgress(progress);
 				},
-				client,
+				client: client || undefined,
 			});
 
 			const entryId = crypto.randomUUID();
 			// Create entry using LiveStore event
 			await createEntry({
 				id: entryId,
-				...values,
+				...entryData,
 				// TODO allow configure per schema
 				name: values.title as string,
 				contentTypeId,
