@@ -12,7 +12,7 @@ export type EntryFormData = {
 
 export type FileFieldValue = {
 	file?: File;
-	url: string;
+	url?: string;
 	cid?: string;
 };
 

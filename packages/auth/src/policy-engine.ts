@@ -39,6 +39,21 @@ export const processPolicies = async (
 	return accessByTokenType;
 };
 
+export const STORACHA_CAPABILITIES_DEFAULT = [
+	"space/info",
+	"space/blob/add",
+	"space/blob/get",
+	"space/blob/delete",
+	"space/blob/update",
+	"space/blob/list",
+	"space/blob/get-url",
+	"space/blob/get-url-signed",
+	"space/blob/get-url-signed-with-expiry",
+	"space/index/add",
+	"upload/list",
+	"upload/add",
+];
+
 export const authorizeUcan = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
@@ -54,11 +69,9 @@ export const authorizeUcan = async (
 		return null;
 	}
 
-	const capabilities = (accessByTokenType.ucan?.claims as ServiceAbility[]) || [
-		"space/info",
-		"upload/list",
-		"upload/add",
-	];
+	const capabilities =
+		(accessByTokenType.ucan?.claims as ServiceAbility[]) ||
+		STORACHA_CAPABILITIES_DEFAULT;
 
 	// TODO find the relevant proof with spaceId
 	// const spaceId = input.context?.spaceId;

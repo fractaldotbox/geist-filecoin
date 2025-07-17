@@ -227,7 +227,9 @@ export default function ContentEntriesPage() {
 								</p>
 							</div>
 							<div className="flex items-center gap-2">
-								<Link to={`/editor/space/${uiState.currentSpaceId}/content-type/select`}>
+								<Link
+									to={`/editor/space/${uiState.currentSpaceId}/content-type/select`}
+								>
 									<Button>
 										<FilePlus className="w-4 h-4 mr-2" />
 										Create Entry
@@ -441,9 +443,9 @@ export default function ContentEntriesPage() {
 									</h4>
 									<p className="text-muted-foreground mb-4">
 										{searchQuery ||
-											selectedStatus !== "all" ||
-											selectedContentTypeId !== "all" ||
-											selectedFilter === "recent"
+										selectedStatus !== "all" ||
+										selectedContentTypeId !== "all" ||
+										selectedFilter === "recent"
 											? "No content matches your current filters. Try adjusting your search criteria."
 											: "Your space is ready but doesn't have any content entries yet."}
 									</p>

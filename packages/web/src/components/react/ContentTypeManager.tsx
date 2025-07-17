@@ -53,7 +53,7 @@ export function ContentTypeManager() {
 								<h2 className="text-xl font-semibold">
 									{contentType.name ||
 										contentType.id.charAt(0).toUpperCase() +
-										contentType.id.slice(1)}
+											contentType.id.slice(1)}
 								</h2>
 								<Badge variant="outline">Content Type</Badge>
 							</div>

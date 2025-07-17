@@ -8,7 +8,6 @@ import { useLocation, useParams } from "react-router-dom";
 export default function EntryEditorPage() {
 	const { entryId, contentTypeId, spaceId } = useParams();
 
-
 	const { store } = useStore();
 	const spaces = store.useQuery(allSpaces$);
 	const [uiState, setUiState] = useUiState();
