@@ -75,7 +75,7 @@ function App() {
 							element={<EntryEditorPage />}
 						/>
 						<Route
-							path="/editor/space/:spaceId/entry/:id"
+							path="/editor/space/:spaceId/entry/:entryId"
 							element={<EntryEditorPage />}
 						/>
 					</Routes>

@@ -156,7 +156,6 @@ async function uploadDirectory({
 		default:
 			throw new Error(`Unknown upload mode: ${uploadMode}`);
 	}
-	console.log("uploadResult", uploadResult);
 
 	return {
 		...uploadResult,
@@ -400,8 +399,11 @@ export function EntryEditor({
 			};
 
 			const file = new File([JSON.stringify(entryData)], "entry.json");
+
+			const files = [file, media?.file as File].filter(Boolean);
+
 			const { url, cid } = await uploadDirectory({
-				files: [file, media?.file as File],
+				files,
 				uploadMode,
 				progressCallback: (progress: number) => {
 					setUploadProgress(progress);
