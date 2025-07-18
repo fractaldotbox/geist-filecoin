@@ -40,6 +40,7 @@ interface AuthContextType {
 	// Login status and functions
 	loginStatus: LoginStatus;
 	login: (email: string) => Promise<void>;
+	loginWithBluesky: (handle?: string) => Promise<void>;
 	resetLoginStatus: () => void;
 }
 
@@ -96,6 +97,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	}, [client]);
 
+	// Check for Bluesky OAuth session on mount
+	useEffect(() => {
+		const urlParams = new URLSearchParams(window.location.search);
+		const sessionId = urlParams.get('bluesky_session');
+
+		if (sessionId && !uiState.currentUserDid) {
+			loginWithBluesky();
+		}
+	}, []);
+
 	// Login function
 	const login = async (email: string) => {
 		try {
@@ -143,6 +154,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	};
 
+	// Bluesky OAuth login function
+	const loginWithBluesky = async (handle?: string) => {
+		try {
+			setLoginStatus({ state: LoginState.Loading });
+
+			// Check if we have a session from URL parameters
+			const urlParams = new URLSearchParams(window.location.search);
+			const sessionId = urlParams.get('bluesky_session');
+
+			// Redirect to OAuth login
+			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+
+			if (sessionId) {
+				// Verify the session with the backend
+				const response = await fetch(`${apiUrl}/api/auth/bluesky/verify`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ sessionId }),
+				});
+
+				if (!response.ok) {
+					throw new Error('Session verification failed');
+				}
+
+				const { jwt, did, handle: userHandle } = await response.json();
+
+				// Store the JWT and user info
+				localStorage.setItem('geist.jwt', jwt);
+				localStorage.setItem(DID_LOCALSTORAGE_KEY, did);
+				localStorage.setItem('geist.user.handle', userHandle);
+
+				setUiState({
+					...uiState,
+					currentUserDid: did,
+				});
+
+				// Clean up URL parameters
+				window.history.replaceState({}, document.title, window.location.pathname);
+
+				setLoginStatus({ state: LoginState.Success });
+			} else {
+
+				const loginUrl = new URL(`${apiUrl}/api/auth/bluesky/login`);
+				if (handle) {
+					loginUrl.searchParams.set('handle', handle);
+				}
+
+				window.location.href = loginUrl.toString();
+			}
+		} catch (error) {
+			console.error('Bluesky login failed:', error);
+			setLoginStatus({
+				state: LoginState.Error,
+				error: error instanceof Error ? error.message : 'Bluesky login failed',
+			});
+		}
+	};
+
 	// Reset login status
 	const resetLoginStatus = () => {
 		setLoginStatus({ state: LoginState.Idle });
@@ -154,6 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		error,
 		loginStatus,
 		login,
+		loginWithBluesky,
 		resetLoginStatus,
 	};
 

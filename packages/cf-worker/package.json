@@ -12,6 +12,8 @@
 		"lint": "biome check --fix"
 	},
 	"dependencies": {
+		"@atproto/jwk-jose": "^0.1.4",
+		"@atproto/oauth": "^0.2.1",
 		"@cloudflare/vite-plugin": "^1.9.0",
 		"@geist-filecoin/auth": "workspace:*",
 		"@geist-filecoin/storage": "workspace:*",
