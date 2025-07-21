@@ -15,6 +15,9 @@
 		"test:e2e:debug": "playwright test --debug"
 	},
 	"dependencies": {
+		"@atproto/jwk-jose": "0.1.9",
+		"@atproto/jwk-webcrypto": "^0.1.9",
+		"@atproto/oauth-client-browser": "^0.3.27",
 		"@geist-filecoin/auth": "workspace:*",
 		"@geist-filecoin/domain": "workspace:*",
 		"@geist-filecoin/storage": "workspace:*",
@@ -48,6 +51,7 @@
 		"jsdom": "^26.1.0",
 		"ky": "^1.8.1",
 		"lucide-react": "^0.503.0",
+		"multiformats": "^13.3.2",
 		"react": "^19.1.0",
 		"react-dom": "^19.1.0",
 		"react-hook-form": "^7.56.1",
@@ -58,6 +62,7 @@
 		"unstorage": "^1.16.0",
 		"vaul": "^1.1.2",
 		"viem": "^2.28.1",
+		"web-locks-polyfill": "^0.0.13",
 		"zod": "^3.24.3"
 	},
 	"devDependencies": {

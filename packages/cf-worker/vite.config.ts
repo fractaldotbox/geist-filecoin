@@ -22,6 +22,14 @@ export default defineConfig({
 	},
 	server: {
 		port: 8787,
+		https: {
+			cert: "../../local_cert.pem",
+			key: "../../local_cert-key.pem",
+		},
 	},
+
 	worker: { format: "es" },
+	define: {
+		global: "globalThis",
+	},
 });

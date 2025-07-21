@@ -9,6 +9,12 @@ import {
 	useState,
 } from "react";
 import type { ReactNode } from "react";
+import {
+	loginWithBluesky as blueskyLogin,
+	clearBlueskySession,
+	getBlueskySession,
+	refreshBlueskyToken,
+} from "../../lib/bluesky-oauth";
 import { firstSpace$, useUiState } from "../../livestore/queries";
 import { useStorachaContext } from "./StorachaProvider";
 
@@ -32,6 +38,13 @@ interface LoginStatus {
 	error?: string;
 }
 
+interface BlueskySession {
+	did: string;
+	handle: string;
+	accessToken: string;
+	refreshToken?: string;
+}
+
 interface AuthContextType {
 	user: AuthUser | null;
 	isLoading: boolean;
@@ -41,6 +54,9 @@ interface AuthContextType {
 	loginStatus: LoginStatus;
 	login: (email: string) => Promise<void>;
 	loginWithBluesky: (handle?: string) => Promise<void>;
+	logout: () => void;
+	setBlueskySession: (session: BlueskySession) => void;
+	clearBlueskyAuth: () => void;
 	resetLoginStatus: () => void;
 }
 
@@ -97,14 +113,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	}, [client]);
 
-	// Check for Bluesky OAuth session on mount
+	// Check for existing Bluesky session on mount and set up periodic refresh
 	useEffect(() => {
-		const urlParams = new URLSearchParams(window.location.search);
-		const sessionId = urlParams.get('bluesky_session');
+		const checkAndRefreshSession = async () => {
+			const existingSession = getBlueskySession();
+			if (existingSession && !uiState.currentUserDid) {
+				setUiState({
+					...uiState,
+					currentUserDid: existingSession.did,
+				});
+				localStorage.setItem("geist.user.handle", existingSession.handle);
+			}
 
-		if (sessionId && !uiState.currentUserDid) {
-			loginWithBluesky();
-		}
+			// Try to refresh token if we have a session
+			if (existingSession) {
+				try {
+					await refreshBlueskyToken();
+				} catch (error) {
+					console.error("Failed to refresh Bluesky token:", error);
+					// If refresh fails, clear the session
+					clearBlueskyAuth();
+				}
+			}
+		};
+
+		checkAndRefreshSession();
+
+		// Set up periodic token refresh (every 30 minutes)
+		const refreshInterval = setInterval(
+			() => {
+				const session = getBlueskySession();
+				if (session) {
+					refreshBlueskyToken().catch((error) => {
+						console.error("Failed to refresh Bluesky token:", error);
+						clearBlueskyAuth();
+					});
+				}
+			},
+			30 * 60 * 1000,
+		); // 30 minutes
+
+		return () => clearInterval(refreshInterval);
+		// biome-ignore lint/correctness/useExhaustiveDependencies: Only run once on mount
 	}, []);
 
 	// Login function
@@ -158,60 +208,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const loginWithBluesky = async (handle?: string) => {
 		try {
 			setLoginStatus({ state: LoginState.Loading });
-
-			// Check if we have a session from URL parameters
-			const urlParams = new URLSearchParams(window.location.search);
-			const sessionId = urlParams.get('bluesky_session');
-
-			// Redirect to OAuth login
-			const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787';
-
-			if (sessionId) {
-				// Verify the session with the backend
-				const response = await fetch(`${apiUrl}/api/auth/bluesky/verify`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({ sessionId }),
-				});
-
-				if (!response.ok) {
-					throw new Error('Session verification failed');
-				}
-
-				const { jwt, did, handle: userHandle } = await response.json();
-
-				// Store the JWT and user info
-				localStorage.setItem('geist.jwt', jwt);
-				localStorage.setItem(DID_LOCALSTORAGE_KEY, did);
-				localStorage.setItem('geist.user.handle', userHandle);
-
-				setUiState({
-					...uiState,
-					currentUserDid: did,
-				});
-
-				// Clean up URL parameters
-				window.history.replaceState({}, document.title, window.location.pathname);
-
-				setLoginStatus({ state: LoginState.Success });
-			} else {
-
-				const loginUrl = new URL(`${apiUrl}/api/auth/bluesky/login`);
-				if (handle) {
-					loginUrl.searchParams.set('handle', handle);
-				}
-
-				window.location.href = loginUrl.toString();
-			}
+			await blueskyLogin(handle);
 		} catch (error) {
-			console.error('Bluesky login failed:', error);
+			console.error("Bluesky login failed:", error);
 			setLoginStatus({
 				state: LoginState.Error,
-				error: error instanceof Error ? error.message : 'Bluesky login failed',
+				error: error instanceof Error ? error.message : "Bluesky login failed",
 			});
 		}
+	};
+
+	// Set Bluesky session data
+	const setBlueskySession = (session: BlueskySession) => {
+		localStorage.setItem(DID_LOCALSTORAGE_KEY, session.did);
+		localStorage.setItem("geist.user.handle", session.handle);
+
+		setUiState({
+			...uiState,
+			currentUserDid: session.did,
+		});
+
+		setLoginStatus({ state: LoginState.Success });
+	};
+
+	// Clear Bluesky authentication
+	const clearBlueskyAuth = () => {
+		clearBlueskySession();
+		localStorage.removeItem(DID_LOCALSTORAGE_KEY);
+		localStorage.removeItem("geist.user.handle");
+
+		setUiState({
+			...uiState,
+			currentUserDid: null,
+		});
 	};
 
 	// Reset login status
@@ -219,13 +248,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setLoginStatus({ state: LoginState.Idle });
 	};
 
+	// Logout function that clears all auth state
+	const logout = () => {
+		clearBlueskyAuth();
+		// Also clear any Storacha auth if needed
+		localStorage.removeItem(DID_LOCALSTORAGE_KEY);
+		setUiState({
+			...uiState,
+			currentUserDid: null,
+		});
+		setLoginStatus({ state: LoginState.Idle });
+	};
+
 	const value: AuthContextType = {
+		user: uiState.currentUserDid
+			? {
+					did: uiState.currentUserDid,
+					delegation: new ArrayBuffer(0),
+				}
+			: null,
 		isLoading,
 		isAuthenticated: !!uiState.currentUserDid,
 		error,
 		loginStatus,
 		login,
 		loginWithBluesky,
+		logout,
+		setBlueskySession,
+		clearBlueskyAuth,
 		resetLoginStatus,
 	};
 

@@ -5,7 +5,6 @@ import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import type { Env } from "@livestore/sync-cf/cf-worker";
 import jwt from "@tsndr/cloudflare-worker-jwt";
 import { Router, cors, error, json } from "itty-router";
-import { setupBlueskyOAuthRoutes } from "./bluesky-oauth";
 
 export class Policies extends DurableObject<Env> {
 	private storage: any;
@@ -130,9 +129,6 @@ export const authorizeJWT = async (
 
 	return token;
 };
-
-// Set up Bluesky OAuth routes
-setupBlueskyOAuthRoutes(router, { authorizeJWT, getPolicyDO });
 
 router.post("/api/upload", async (request: Request) => {
 	console.log("upload");
@@ -269,7 +265,6 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 		},
 	);
 });
-
 
 export default {
 	fetch: (request: Request, env: any, ctx: any) => {

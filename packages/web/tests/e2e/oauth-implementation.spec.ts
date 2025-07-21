@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
-test.describe('OAuth Implementation Tests', () => {
-  test('should validate OAuth flow structure', async ({ page }) => {
-    // Create a mock HTML page that simulates our OAuth implementation
-    const html = `
+test.describe("OAuth Implementation Tests", () => {
+	test("should validate OAuth flow structure", async ({ page }) => {
+		// Create a mock HTML page that simulates our OAuth implementation
+		const html = `
       <html>
         <head>
           <title>Geist Filecoin OAuth Test</title>
@@ -141,33 +141,37 @@ test.describe('OAuth Implementation Tests', () => {
         </body>
       </html>
     `;
-    
-    await page.goto(`data:text/html,${encodeURIComponent(html)}`);
-    
-    // Test initial state
-    await expect(page.locator('h1')).toContainText('Geist Filecoin');
-    await expect(page.locator('#login-btn')).toBeVisible();
-    await expect(page.locator('#login-dialog')).not.toBeVisible();
-    
-    // Test login dialog opening
-    await page.click('#login-btn');
-    await expect(page.locator('#login-dialog')).toBeVisible();
-    await expect(page.locator('.tab[data-tab="storacha"]')).toHaveClass(/active/);
-    
-    // Test tab switching to OAuth
-    await page.click('.tab[data-tab="oauth"]');
-    await expect(page.locator('.tab[data-tab="oauth"]')).toHaveClass(/active/);
-    await expect(page.locator('#oauth-content')).toHaveClass(/active/);
-    
-    // Test Bluesky button
-    await expect(page.locator('#bluesky-btn')).toBeVisible();
-    await expect(page.locator('#bluesky-btn')).toContainText('Continue with Bluesky');
-    await expect(page.locator('#bluesky-btn svg')).toBeVisible();
-  });
 
-  test('should handle OAuth flow simulation', async ({ page }) => {
-    // Use the same HTML structure
-    const html = `
+		await page.goto(`data:text/html,${encodeURIComponent(html)}`);
+
+		// Test initial state
+		await expect(page.locator("h1")).toContainText("Geist Filecoin");
+		await expect(page.locator("#login-btn")).toBeVisible();
+		await expect(page.locator("#login-dialog")).not.toBeVisible();
+
+		// Test login dialog opening
+		await page.click("#login-btn");
+		await expect(page.locator("#login-dialog")).toBeVisible();
+		await expect(page.locator('.tab[data-tab="storacha"]')).toHaveClass(
+			/active/,
+		);
+
+		// Test tab switching to OAuth
+		await page.click('.tab[data-tab="oauth"]');
+		await expect(page.locator('.tab[data-tab="oauth"]')).toHaveClass(/active/);
+		await expect(page.locator("#oauth-content")).toHaveClass(/active/);
+
+		// Test Bluesky button
+		await expect(page.locator("#bluesky-btn")).toBeVisible();
+		await expect(page.locator("#bluesky-btn")).toContainText(
+			"Continue with Bluesky",
+		);
+		await expect(page.locator("#bluesky-btn svg")).toBeVisible();
+	});
+
+	test("should handle OAuth flow simulation", async ({ page }) => {
+		// Use the same HTML structure
+		const html = `
       <html>
         <head>
           <title>OAuth Flow Test</title>
@@ -217,29 +221,33 @@ test.describe('OAuth Implementation Tests', () => {
         </body>
       </html>
     `;
-    
-    await page.goto(`data:text/html,${encodeURIComponent(html)}`);
-    
-    // Start OAuth flow
-    await page.click('#login-btn');
-    await page.click('#bluesky-btn');
-    
-    // Check loading state
-    await expect(page.locator('#bluesky-btn')).toContainText('Connecting...');
-    await expect(page.locator('#bluesky-btn')).toBeDisabled();
-    
-    // Wait for OAuth completion
-    await expect(page.locator('#oauth-success')).toBeVisible();
-    await expect(page.locator('#oauth-success')).toContainText('OAuth flow completed');
-    await expect(page.locator('#login-dialog')).not.toBeVisible();
-    
-    // Check localStorage
-    const sessionId = await page.evaluate(() => localStorage.getItem('oauth.sessionId'));
-    expect(sessionId).toContain('test-session-');
-  });
 
-  test('should handle OAuth error scenarios', async ({ page }) => {
-    const html = `
+		await page.goto(`data:text/html,${encodeURIComponent(html)}`);
+
+		// Start OAuth flow
+		await page.click("#login-btn");
+		await page.click("#bluesky-btn");
+
+		// Check loading state
+		await expect(page.locator("#bluesky-btn")).toContainText("Connecting...");
+		await expect(page.locator("#bluesky-btn")).toBeDisabled();
+
+		// Wait for OAuth completion
+		await expect(page.locator("#oauth-success")).toBeVisible();
+		await expect(page.locator("#oauth-success")).toContainText(
+			"OAuth flow completed",
+		);
+		await expect(page.locator("#login-dialog")).not.toBeVisible();
+
+		// Check localStorage
+		const sessionId = await page.evaluate(() =>
+			localStorage.getItem("oauth.sessionId"),
+		);
+		expect(sessionId).toContain("test-session-");
+	});
+
+	test("should handle OAuth error scenarios", async ({ page }) => {
+		const html = `
       <html>
         <body>
           <button id="login-btn">Login</button>
@@ -272,21 +280,25 @@ test.describe('OAuth Implementation Tests', () => {
         </body>
       </html>
     `;
-    
-    await page.goto(`data:text/html,${encodeURIComponent(html)}`);
-    
-    await page.click('#login-btn');
-    await page.click('#bluesky-btn');
-    
-    // Wait for error
-    await expect(page.locator('#oauth-error')).toBeVisible();
-    await expect(page.locator('#oauth-error')).toContainText('OAuth verification failed');
-    await expect(page.locator('#bluesky-btn')).not.toBeDisabled();
-    await expect(page.locator('#bluesky-btn')).toContainText('Continue with Bluesky');
-  });
 
-  test('should validate OAuth callback handling', async ({ page }) => {
-    const html = `
+		await page.goto(`data:text/html,${encodeURIComponent(html)}`);
+
+		await page.click("#login-btn");
+		await page.click("#bluesky-btn");
+
+		// Wait for error
+		await expect(page.locator("#oauth-error")).toBeVisible();
+		await expect(page.locator("#oauth-error")).toContainText(
+			"OAuth verification failed",
+		);
+		await expect(page.locator("#bluesky-btn")).not.toBeDisabled();
+		await expect(page.locator("#bluesky-btn")).toContainText(
+			"Continue with Bluesky",
+		);
+	});
+
+	test("should validate OAuth callback handling", async ({ page }) => {
+		const html = `
       <html>
         <body>
           <div id="callback-status">Checking OAuth callback...</div>
@@ -319,14 +331,22 @@ test.describe('OAuth Implementation Tests', () => {
         </body>
       </html>
     `;
-    
-    // Test successful callback
-    await page.goto(`data:text/html,${encodeURIComponent(html)}?bluesky_session=test-session-123`);
-    await expect(page.locator('#callback-status')).toContainText('OAuth success with session: test-session-123');
-    await expect(page.locator('#verification-complete')).toBeVisible();
-    
-    // Test error callback
-    await page.goto(`data:text/html,${encodeURIComponent(html)}?error=oauth_failed`);
-    await expect(page.locator('#callback-status')).toContainText('OAuth error: oauth_failed');
-  });
+
+		// Test successful callback
+		await page.goto(
+			`data:text/html,${encodeURIComponent(html)}?bluesky_session=test-session-123`,
+		);
+		await expect(page.locator("#callback-status")).toContainText(
+			"OAuth success with session: test-session-123",
+		);
+		await expect(page.locator("#verification-complete")).toBeVisible();
+
+		// Test error callback
+		await page.goto(
+			`data:text/html,${encodeURIComponent(html)}?error=oauth_failed`,
+		);
+		await expect(page.locator("#callback-status")).toContainText(
+			"OAuth error: oauth_failed",
+		);
+	});
 });

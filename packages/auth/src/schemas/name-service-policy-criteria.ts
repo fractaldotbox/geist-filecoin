@@ -41,7 +41,7 @@ export const checkNameServiceCriteria = async (
 ) => {
 	const { domain, isRootDomainOnly } = policyConfig;
 
-	const name = input.context.name;
+	const name = input.context?.name;
 
 	if (isRootDomainOnly) {
 		return domain === name;

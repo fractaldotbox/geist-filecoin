@@ -40,7 +40,8 @@ interface LoginFormData {
 
 export function AccountMenu() {
 	// Get login functionality from AuthProvider
-	const { loginStatus, login, loginWithBluesky, resetLoginStatus } = useAuth();
+	const { loginStatus, login, loginWithBluesky, logout, resetLoginStatus } =
+		useAuth();
 
 	const [uiState, setUiState] = useUiState();
 
@@ -129,8 +130,7 @@ export function AccountMenu() {
 							<Copy className="h-3 w-3 text-muted-foreground" />
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						{/* <DropdownMenuItem>Settings</DropdownMenuItem>
-						<DropdownMenuItem>Sign out</DropdownMenuItem> */}
+						<DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			) : (
@@ -259,7 +259,7 @@ export function AccountMenu() {
 									</div>
 									<Button
 										variant="outline"
-										onClick={() => loginWithBluesky()}
+										onClick={() => loginWithBluesky("debuggingfuture.com")}
 										disabled={loginStatus.state === LoginState.Loading}
 										className="w-full flex items-center gap-2"
 									>
@@ -267,18 +267,23 @@ export function AccountMenu() {
 											className="w-4 h-4"
 											viewBox="0 0 24 24"
 											fill="currentColor"
+											aria-label="Bluesky logo"
 										>
-											<path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.015.27-.05.395-.099-.385.793-.395 1.533 0 2.327a3.66 3.66 0 0 1-.395-.1c-2.67-.295-5.568.629-6.383 3.364C.378 20.072 0 25.032 0 25.72c0 .69.139 1.861.902 2.204.659.298 1.664.62 4.3-1.24C7.954 24.742 10.913 20.803 12 18.689c1.087 2.114 4.046 6.053 6.798 7.995 2.636 1.86 3.641 1.538 4.3 1.24.763-.343.902-1.515.902-2.204 0-.688-.378-5.648-.624-6.479-.815-2.735-3.713-3.66-6.383-3.364-.136.015-.27.05-.395.099.385-.793.385-1.533 0-2.327.125.05.259.085.395.1 2.67.295 5.568-.629 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.204-.659-.298-1.664-.62-4.3 1.24C16.046 4.747 13.087 8.686 12 10.8z"/>
+											<title>Bluesky</title>
+											<path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.015.27-.05.395-.099-.385.793-.395 1.533 0 2.327a3.66 3.66 0 0 1-.395-.1c-2.67-.295-5.568.629-6.383 3.364C.378 20.072 0 25.032 0 25.72c0 .69.139 1.861.902 2.204.659.298 1.664.62 4.3-1.24C7.954 24.742 10.913 20.803 12 18.689c1.087 2.114 4.046 6.053 6.798 7.995 2.636 1.86 3.641 1.538 4.3 1.24.763-.343.902-1.515.902-2.204 0-.688-.378-5.648-.624-6.479-.815-2.735-3.713-3.66-6.383-3.364-.136.015-.27.05-.395.099.385-.793.385-1.533 0-2.327.125.05.259.085.395.1 2.67.295 5.568-.629 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.204-.659-.298-1.664-.62-4.3 1.24C16.046 4.747 13.087 8.686 12 10.8z" />
 										</svg>
-										{loginStatus.state === LoginState.Loading ? "Connecting..." : "Continue with Bluesky"}
+										{loginStatus.state === LoginState.Loading
+											? "Connecting..."
+											: "Continue with Bluesky"}
 									</Button>
-									
-									{loginStatus.state === LoginState.Error && loginStatus.error && (
-										<div className="text-sm text-red-600 dark:text-red-400 text-center">
-											{loginStatus.error}
-										</div>
-									)}
-									
+
+									{loginStatus.state === LoginState.Error &&
+										loginStatus.error && (
+											<div className="text-sm text-red-600 dark:text-red-400 text-center">
+												{loginStatus.error}
+											</div>
+										)}
+
 									<div className="text-center">
 										<Button
 											variant="ghost"
