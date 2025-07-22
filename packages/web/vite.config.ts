@@ -21,10 +21,6 @@ export default defineConfig({
 	server: {
 		port: process.env.PORT ? Number(process.env.PORT) : 3000,
 		allowedHosts: ["tunnel.geist.network"],
-		// https: {
-		// 	cert: "../../local_cert.pem",
-		// 	key: "../../local_cert-key.pem",
-		// },
 	},
 	worker: { format: "es" },
 	build: {

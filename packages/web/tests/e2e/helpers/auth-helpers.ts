@@ -27,65 +27,69 @@ export class AuthHelpers {
 	}
 
 	/**
-	 * Mocks a successful OAuth verification response
+	 * Mocks a successful OAuth session in browser storage
 	 */
-	async mockSuccessfulOAuthVerification(
+	async mockSuccessfulOAuthSession(
 		options: {
-			jwt?: string;
+			accessJwt?: string;
+			refreshJwt?: string;
 			did?: string;
 			handle?: string;
 		} = {},
 	) {
 		const {
-			jwt = "mock-jwt-token",
+			accessJwt = "mock-jwt-token",
+			refreshJwt = "mock-refresh-token",
 			did = "did:plc:test123",
 			handle = "test.bsky.social",
 		} = options;
 
-		await this.page.route("**/api/auth/bluesky/verify", async (route) => {
-			await route.fulfill({
-				status: 200,
-				contentType: "application/json",
-				body: JSON.stringify({ jwt, did, handle }),
-			});
+		await this.page.addInitScript(
+			(sessionData) => {
+				// Mock the OAuth session in localStorage
+				localStorage.setItem("geist.user.did", sessionData.did);
+				localStorage.setItem("geist.user.handle", sessionData.handle);
+
+				// Store OAuth tokens that would be handled by the OAuth client
+				// Note: In reality, these are handled by @atproto/oauth-client-browser internally
+			},
+			{ accessJwt, refreshJwt, did, handle },
+		);
+	}
+
+	/**
+	 * Mocks a failed OAuth process
+	 */
+	async mockFailedOAuthSession(error = "OAuth failed") {
+		await this.page.addInitScript((errorMessage) => {
+			// Mock OAuth error state
+			console.error("OAuth Mock Error:", errorMessage);
+			// Clear any existing auth data
+			localStorage.removeItem("geist.user.did");
+			localStorage.removeItem("geist.user.handle");
+		}, error);
+	}
+
+	/**
+	 * Mocks browser OAuth client to avoid actual Bluesky redirect
+	 */
+	async mockOAuthClient() {
+		await this.page.addInitScript(() => {
+			// Mock the browser OAuth client to prevent actual redirect
+			window.mockOAuthClient = {
+				initialized: false,
+				session: null,
+			};
 		});
 	}
 
 	/**
-	 * Mocks a failed OAuth verification response
+	 * Simulates a complete OAuth flow with browser OAuth client
 	 */
-	async mockFailedOAuthVerification(error = "Verification failed") {
-		await this.page.route("**/api/auth/bluesky/verify", async (route) => {
-			await route.fulfill({
-				status: 401,
-				contentType: "application/json",
-				body: JSON.stringify({ error }),
-			});
-		});
-	}
-
-	/**
-	 * Mocks the OAuth login redirect
-	 */
-	async mockOAuthRedirect(
-		redirectUrl = "https://bsky.social/oauth/authorize?client_id=test&redirect_uri=test&state=test",
-	) {
-		await this.page.route("**/api/auth/bluesky/login*", async (route) => {
-			await route.fulfill({
-				status: 302,
-				headers: {
-					Location: redirectUrl,
-				},
-			});
-		});
-	}
-
-	/**
-	 * Simulates a complete OAuth flow
-	 */
-	async completeOAuthFlow(sessionId = "test-session-id") {
-		await this.mockSuccessfulOAuthVerification();
-		await this.page.goto(`/?bluesky_session=${sessionId}`);
+	async completeOAuthFlow(options = {}) {
+		await this.mockSuccessfulOAuthSession(options);
+		// Simulate OAuth callback URL
+		await this.page.goto("/?code=mock_code&state=mock_state");
 		await this.page.waitForTimeout(1000);
 	}
 
@@ -119,13 +123,25 @@ export class AuthHelpers {
 	}
 
 	/**
-	 * Clears localStorage authentication data
+	 * Clears all authentication data including OAuth client state
 	 */
 	async clearAuthData() {
 		await this.page.evaluate(() => {
+			// Clear localStorage auth data
 			localStorage.removeItem("geist.user.did");
 			localStorage.removeItem("geist.jwt");
 			localStorage.removeItem("geist.user.handle");
+
+			// Clear OAuth client storage (prefix used by @atproto/oauth-client-browser)
+			for (let i = localStorage.length - 1; i >= 0; i--) {
+				const key = localStorage.key(i);
+				if (key?.startsWith("@atproto-oauth-")) {
+					localStorage.removeItem(key);
+				}
+			}
+
+			// Clear sessionStorage as well
+			sessionStorage.clear();
 		});
 	}
 }

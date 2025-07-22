@@ -17,7 +17,6 @@
 	},
 	"dependencies": {
 		"@atproto-labs/handle-resolver": "^0.3.0",
-		"@atproto/jwk-jose": "0.1.9",
 		"@atproto/jwk-webcrypto": "^0.1.9",
 		"@atproto/oauth-client-browser": "^0.3.27",
 		"@geist-filecoin/auth": "workspace:*",
@@ -48,7 +47,6 @@
 		"@web3-storage/w3up-client": "^16.5.2",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
-		"idb": "^8.0.3",
 		"jsdom": "^26.1.0",
 		"ky": "^1.8.1",
 		"lucide-react": "^0.503.0",
