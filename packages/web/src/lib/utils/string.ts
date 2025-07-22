@@ -1,5 +1,3 @@
-import type { Hex } from "viem";
-
 export type GetShortFormReturnType = string | null;
 
 export const getShortForm = (
