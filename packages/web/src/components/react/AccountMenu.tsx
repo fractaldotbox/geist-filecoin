@@ -41,7 +41,8 @@ interface LoginFormData {
 
 export function AccountMenu() {
 	// Get login functionality from AuthProvider
-	const { loginStatus, login, logout, resetLoginStatus } = useAuth();
+	const { loginStatus, login, logout, resetLoginStatus, setLoginStatus } =
+		useAuth();
 
 	const handle = localStorage.getItem("geist.user.handle") || "";
 
@@ -259,7 +260,10 @@ export function AccountMenu() {
 									</div>
 									<Button
 										variant="outline"
-										onClick={() => loginWithBluesky(handle)}
+										onClick={() => {
+											setLoginStatus(LoginState.Loading);
+											loginWithBluesky(handle);
+										}}
 										disabled={loginStatus.state === LoginState.Loading}
 										className="w-full flex items-center gap-2"
 									>

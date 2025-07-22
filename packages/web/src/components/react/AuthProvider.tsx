@@ -48,6 +48,7 @@ interface AuthContextType {
 	login: (email: string) => Promise<void>;
 	onUserLoginSuccess: (user: AuthUser) => void;
 	logout: () => void;
+	setLoginStatus: (state: LoginState) => void;
 	loginWithBluesky: (handle?: string) => Promise<void>;
 	clearBlueskyAuth: () => void;
 	resetLoginStatus: () => void;
@@ -264,6 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		loginWithBluesky,
 		logout,
 		clearBlueskyAuth,
+		setLoginStatus,
 		resetLoginStatus,
 	};
 

@@ -208,8 +208,6 @@ export const blueskyOAuth = new BlueskyOAuthManager();
 export const loginWithBluesky = (handle?: string) => {
 	return blueskyOAuth.login(handle);
 };
-export const handleBlueskyCallback = (params: URLSearchParams) =>
-	blueskyOAuth.handleCallback(params);
 export const getBlueskySession = () => blueskyOAuth.getCurrentSession();
 export const clearBlueskySession = () => blueskyOAuth.clearSession();
 export const refreshBlueskyToken = () => blueskyOAuth.refreshToken();

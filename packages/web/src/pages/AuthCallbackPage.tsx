@@ -1,17 +1,13 @@
 import { useUiState } from "@/livestore/queries";
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../components/react/AuthProvider";
-import {
-	blueskyOAuth,
-	handleBlueskyCallback,
-	mapBlueskySessionAsUser,
-} from "../lib/bluesky-oauth";
+import { LoginState, useAuth } from "../components/react/AuthProvider";
+import { blueskyOAuth, mapBlueskySessionAsUser } from "../lib/bluesky-oauth";
 
 export function AuthCallbackPage() {
 	const [isProcessing, setIsProcessing] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const { onUserLoginSuccess } = useAuth();
+	const { onUserLoginSuccess, setLoginStatus } = useAuth();
 
 	const [uiState, setUiState] = useUiState();
 	const [params] = useSearchParams();
@@ -22,29 +18,27 @@ export function AuthCallbackPage() {
 		if (isHandlingCallbackRef.current) return;
 		isHandlingCallbackRef.current = true;
 
-		const isMounted = true;
 		const processCallback = async () => {
+			setLoginStatus(LoginState.Loading);
+
+			// queyr params encoded after # and not available as URLSearchParams
 			try {
-				await handleBlueskyCallback(params);
 				const session = await blueskyOAuth.getCurrentSession();
-				if (session && isMounted) {
+				if (session) {
 					onUserLoginSuccess(mapBlueskySessionAsUser(session));
 				}
-
-				if (isMounted) setIsProcessing(false);
 			} catch (error) {
 				console.error("Auth callback error:", error);
-				if (isMounted) {
-					setError(
-						error instanceof Error ? error.message : "Authentication failed",
-					);
-					setIsProcessing(false);
-				}
+				setError(
+					error instanceof Error ? error.message : "Authentication failed",
+				);
+			} finally {
+				setIsProcessing(false);
 			}
 		};
 
 		processCallback();
-	}, [params]);
+	}, []);
 
 	if (isProcessing) {
 		return (
