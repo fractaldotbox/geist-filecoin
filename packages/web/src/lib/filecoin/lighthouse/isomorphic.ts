@@ -6,8 +6,7 @@ import type {
 	IUploadProgressCallback,
 } from "@lighthouse-web3/sdk/dist/types";
 import ky, { type Options, type Progress } from "ky";
-import { http, type Account, createWalletClient } from "viem";
-import { sepolia } from "viem/chains";
+// Removed viem dependency - wallet functionality moved elsewhere
 // import { CID } from 'multiformats/cid'
 
 import fs from "node:fs/promises";
@@ -19,44 +18,45 @@ import path from "node:path";
 export const LIGHTHOUSE_API_ROOT =
 	"https://api.lighthouse.storage/api/lighthouse/";
 
-// Consider model as action insteadz
-export const createLighthouseParams = async ({
-	account,
-	options,
-}: {
-	account: Account;
-	options: {
-		apiKey?: string;
-	};
-}): Promise<[string, string, string]> => {
-	const { apiKey } = options;
-	if (!apiKey) {
-		throw new Error("Lighthouse apiKey required");
-	}
+// Consider model as action instead
+// Note: viem-dependent functions removed - wallet functionality should be handled elsewhere
+// export const createLighthouseParams = async ({
+//   account,
+//   options,
+// }: {
+//   account: Account;
+//   options: {
+//     apiKey?: string;
+//   };
+// }): Promise<[string, string, string]> => {
+//   const { apiKey } = options;
+//   if (!apiKey) {
+//     throw new Error("Lighthouse apiKey required");
+//   }
+//
+//   const signedMessage = await signAuthMessage(account);
+//   return [apiKey, account.address, signedMessage];
+// };
 
-	const signedMessage = await signAuthMessage(account);
-	return [apiKey, account.address, signedMessage];
-};
-
-export const signAuthMessage = async (account: any) => {
-	const client = createWalletClient({
-		account,
-		chain: sepolia,
-		transport: http(),
-	});
-
-	const authMessage = await kavach.getAuthMessage(account.address);
-
-	const { error, message } = authMessage;
-	if (error || !message) {
-		throw new Error(`authMessage error${error}`);
-	}
-
-	return client.signMessage({
-		account,
-		message: message,
-	});
-};
+// export const signAuthMessage = async (account: any) => {
+//   const client = createWalletClient({
+//     account,
+//     chain: sepolia,
+//     transport: http(),
+//   });
+//
+//   const authMessage = await kavach.getAuthMessage(account.address);
+//
+//   const { error, message } = authMessage;
+//   if (error || !message) {
+//     throw new Error(`authMessage error${error}`);
+//   }
+//
+//   return client.signMessage({
+//     account,
+//     message: message,
+//   });
+// };
 
 // Api design issue cannot pass callback when deal params not specified
 

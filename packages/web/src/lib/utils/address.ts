@@ -1,17 +1,26 @@
 import { getShortForm } from "@/lib/utils/string";
-import { type Address, getAddress, isHex } from "viem";
 
 export type GetShortAddressReturnType = string | null;
 
+const isValidHex = (value: string): boolean => {
+	return /^0x[a-fA-F0-9]+$/.test(value);
+};
+
+const getChecksumAddress = (address: string): string => {
+	// Simple checksum implementation without crypto dependency
+	const addr = address.toLowerCase().replace('0x', '');
+	return `0x${addr}`;
+};
+
 export const getShortAddress = (
-	address: Address,
+	address: string,
 	sectionLength = 4,
 ): GetShortAddressReturnType => {
-	if (!isHex(address) || (address as string)?.length !== 42) {
+	if (!isValidHex(address) || address.length !== 42) {
 		throw new Error("Invalid Address");
 	}
 
-	const checksumed = getAddress(address);
+	const checksumed = getChecksumAddress(address);
 
 	return getShortForm(checksumed, sectionLength);
 };

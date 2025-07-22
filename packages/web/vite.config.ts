@@ -21,6 +21,18 @@ export default defineConfig({
 		port: process.env.PORT ? Number(process.env.PORT) : 3000,
 	},
 	worker: { format: "es" },
+	build: {
+		rollupOptions: {
+			output: {
+				manualChunks: {
+					vendor: ['react', 'react-dom', 'react-router-dom'],
+					ui: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+					storage: ['@lighthouse-web3/sdk', '@web3-storage/w3up-client'],
+					livestore: ['@livestore/react', '@livestore/adapter-web', '@livestore/livestore'],
+				},
+			},
+		},
+	},
 	test: {
 		environment: "jsdom",
 		globals: true,
