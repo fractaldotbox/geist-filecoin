@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
+import { cloudflare } from "@cloudflare/vite-plugin";
 import { livestoreDevtoolsPlugin } from "@livestore/devtools-vite";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -11,6 +12,9 @@ export default defineConfig({
 		react(),
 		tailwindcss(),
 		livestoreDevtoolsPlugin({ schemaPath: "./src/livestore/schema.ts" }),
+		cloudflare({
+			configPath: "./wrangler.toml",
+		}),
 	],
 	resolve: {
 		alias: {

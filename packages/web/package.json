@@ -6,6 +6,7 @@
 		"dev": "VITE_LIVESTORE_SYNC_URL=http://localhost:8787 vite --force",
 		"build": "vite build",
 		"preview": "vite preview",
+		"deploy": "wrangler deploy",
 		"lint": "biome check --fix",
 		"test": "vitest",
 		"test:ui": "vitest --ui",
@@ -13,6 +14,7 @@
 		"analyze": "vite-bundle-analyzer dist/stats.json"
 	},
 	"dependencies": {
+		"@cloudflare/vite-plugin": "^1.9.0",
 		"@geist-filecoin/auth": "workspace:*",
 		"@geist-filecoin/domain": "workspace:*",
 		"@geist-filecoin/storage": "workspace:*",
@@ -39,8 +41,10 @@
 		"@types/react-dom": "^19.1.2",
 		"@w3ui/react": "^2.5.5",
 		"@web3-storage/w3up-client": "^16.5.2",
+		"build": "^0.1.4",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
+		"deploy": "^1.0.3",
 		"jsdom": "^26.1.0",
 		"ky": "^1.8.1",
 		"lucide-react": "^0.503.0",

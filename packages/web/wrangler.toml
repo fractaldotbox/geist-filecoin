@@ -1,0 +1,15 @@
+name = "geist-web"
+compatibility_date = "2025-05-08"
+compatibility_flags = ["nodejs_compat"]
+
+workers_dev = false
+
+# Option 1: Custom domain (requires domain setup in Cloudflare)
+routes = [
+   { pattern = "filecoin.geist.network", custom_domain = true }
+ ]
+
+# Option 2: Cloudflare zone route
+# routes = [
+#   { pattern = "example.com/*", zone_name = "example.com" }
+# ]
