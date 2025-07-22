@@ -1,4 +1,5 @@
-import { DurableObject, type DurableObjectId } from "cloudflare:workers";
+import { DurableObject } from "cloudflare:workers";
+import type { DurableObjectId } from "cloudflare:workers";
 import { authorizeUcan } from "@geist-filecoin/auth";
 import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import type { Env } from "@livestore/sync-cf/cf-worker";
@@ -6,7 +7,6 @@ import jwt from "@tsndr/cloudflare-worker-jwt";
 import { Router, cors, error, json } from "itty-router";
 
 export class Policies extends DurableObject<Env> {
-	private policies: any[] = [];
 	private storage: any;
 
 	constructor(state: any, env: any) {
@@ -43,7 +43,6 @@ export class Policies extends DurableObject<Env> {
 	async addPolicies(policies: AccessPolicy[]) {
 		if (policies.length === 0) return;
 
-		console.log("DO addPolicies", policies);
 		const values = policies
 			.map((policy) => {
 				const { criteriaType, criteria, access } = policy;
@@ -112,16 +111,6 @@ const router = Router({
 	finally: [corsify],
 });
 
-router.post("/api/upload", async (request: Request) => {
-	console.log("upload");
-
-	return new Response(JSON.stringify({ message: "Uploaded" }), {
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-});
-
 export const authorizeJWT = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
@@ -140,6 +129,16 @@ export const authorizeJWT = async (
 
 	return token;
 };
+
+router.post("/api/upload", async (request: Request) => {
+	console.log("upload");
+
+	return new Response(JSON.stringify({ message: "Uploaded" }), {
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+});
 
 export const loadStorachaSecrets = async (env: any) => {
 	const agentKeyString = await env.STORACHA_AGENT_KEY_STRING.get();

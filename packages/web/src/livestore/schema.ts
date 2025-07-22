@@ -111,6 +111,11 @@ export const tables = {
 			isLoginDialogOpen: Schema.Boolean,
 			currentUserDid: Schema.String,
 			currentLoginEmail: Schema.String,
+			// Login status
+			loginState: Schema.String,
+			loginError: Schema.optional(Schema.String),
+			// Social login UI state
+			isShowSocialLogins: Schema.Boolean,
 		}),
 		default: {
 			id: SessionIdSymbol,
@@ -123,6 +128,9 @@ export const tables = {
 				isLoginDialogOpen: false,
 				currentUserDid: "",
 				currentLoginEmail: "",
+				loginState: "idle",
+				loginError: undefined,
+				isShowSocialLogins: false,
 			},
 		},
 	}),
