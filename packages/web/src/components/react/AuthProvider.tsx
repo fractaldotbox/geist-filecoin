@@ -48,7 +48,7 @@ interface AuthContextType {
 	login: (email: string) => Promise<void>;
 	onUserLoginSuccess: (user: AuthUser) => void;
 	logout: () => void;
-	setLoginStatus: (state: LoginState) => void;
+	setLoginStatus: (status: LoginState | LoginStatus) => void;
 	loginWithBluesky: (handle?: string) => Promise<void>;
 	clearBlueskyAuth: () => void;
 	resetLoginStatus: () => void;
@@ -67,9 +67,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	const [loginStatus, setLoginStatus] = useState<LoginStatus>({
-		state: LoginState.Idle,
-	});
+	// Use loginStatus directly from uiState
+
+	const setLoginStatus = (status: LoginState | LoginStatus) => {
+		if (typeof status === "string") {
+			setUiState({
+				...uiState,
+				loginState: status,
+				loginError: undefined,
+			});
+		} else {
+			setUiState({
+				...uiState,
+				loginState: status.state,
+				loginError: status.error,
+			});
+		}
+	};
 
 	const onUserLoginSuccess = useCallback(
 		(user: AuthUser) => {
@@ -80,10 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			setUiState({
 				...uiState,
 				currentUserDid: user.did,
+				loginState: LoginState.Success,
+				loginError: undefined,
+				isLoginDialogOpen: false,
 			});
 			setClient(client);
-
-			setLoginStatus({ state: LoginState.Success });
 		},
 		[uiState, setUiState, setClient, client],
 	);
@@ -129,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		const checkAndRefreshSession = async () => {
 			// During logout, avoid re-login right away
 
-			if (loginStatus.state === LoginState.Idle) {
+			if (uiState.loginState === LoginState.Idle) {
 				return;
 			}
 
@@ -169,7 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		); // 30 minutes
 
 		return () => clearInterval(refreshInterval);
-	}, [onUserLoginSuccess, uiState.currentUserDid, loginStatus.state]);
+	}, [onUserLoginSuccess, uiState.currentUserDid, uiState.loginState]);
 
 	// Login function
 	const login = async (email: string) => {
@@ -234,7 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	// Reset login status
 	const resetLoginStatus = () => {
-		setLoginStatus({ state: LoginState.Idle });
+		setLoginStatus(LoginState.Idle);
 	};
 
 	// Logout function that clears all auth state
@@ -243,10 +258,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		// Also clear any Storacha auth if needed
 		localStorage.removeItem(DID_LOCALSTORAGE_KEY);
 		setUiState({
+			...uiState,
 			currentUserDid: "",
+			loginState: LoginState.Idle,
+			loginError: undefined,
 		});
 		console.log("logout", uiState);
-		setLoginStatus({ state: LoginState.Idle });
 	};
 
 	const value: AuthContextType = {
@@ -259,7 +276,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		isLoading,
 		isAuthenticated: !!uiState.currentUserDid,
 		error,
-		loginStatus,
+		loginStatus: {
+			state: uiState.loginState as LoginState,
+			error: uiState.loginError,
+		},
 		onUserLoginSuccess,
 		login,
 		loginWithBluesky,

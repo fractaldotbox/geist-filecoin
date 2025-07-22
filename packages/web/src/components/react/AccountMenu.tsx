@@ -1,7 +1,7 @@
 import { loginWithBluesky } from "@/lib/bluesky-oauth";
 import { getShortForm, truncate } from "@/lib/utils/string";
 import { Copy, LogIn, User } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useUiState } from "../../livestore/queries";
 import { LoginState, useAuth } from "./AuthProvider";
@@ -39,6 +39,10 @@ interface LoginFormData {
 	email: string;
 }
 
+interface BlueskyHandleFormData {
+	handle: string;
+}
+
 export function AccountMenu() {
 	// Get login functionality from AuthProvider
 	const { loginStatus, login, logout, resetLoginStatus, setLoginStatus } =
@@ -51,6 +55,12 @@ export function AccountMenu() {
 	const form = useForm<LoginFormData>({
 		defaultValues: {
 			email: uiState?.currentLoginEmail || "",
+		},
+	});
+
+	const blueskyForm = useForm<BlueskyHandleFormData>({
+		defaultValues: {
+			handle: "",
 		},
 	});
 
@@ -83,6 +93,26 @@ export function AccountMenu() {
 		form.reset();
 	};
 
+	// Handle Bluesky handle form submission
+	const onBlueskySubmit = async (data: BlueskyHandleFormData) => {
+		try {
+			setLoginStatus(LoginState.Loading);
+
+			// Add a delay to ensure loading state renders before redirect
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			await loginWithBluesky(data.handle);
+			// Don't reset form here since we're redirecting
+		} catch (error) {
+			console.error("Bluesky login failed:", error);
+			const errorMessage =
+				error instanceof Error ? error.message : "Failed to connect to Bluesky";
+			setLoginStatus({
+				state: LoginState.Error,
+				error: errorMessage,
+			});
+		}
+	};
+
 	// Open login dialog
 	const openLoginDialog = () => {
 		setUiState({ isLoginDialogOpen: true });
@@ -100,6 +130,8 @@ export function AccountMenu() {
 			resetLoginStatus();
 			setUiState({ currentLoginEmail: "" });
 			form.reset();
+			blueskyForm.reset();
+			setUiState({ isShowSocialLogins: false });
 		}
 	};
 
@@ -258,28 +290,84 @@ export function AccountMenu() {
 											Sign in with your social account
 										</p>
 									</div>
-									<Button
-										variant="outline"
-										onClick={() => {
-											setLoginStatus(LoginState.Loading);
-											loginWithBluesky(handle);
-										}}
-										disabled={loginStatus.state === LoginState.Loading}
-										className="w-full flex items-center gap-2"
-									>
-										<svg
-											className="w-4 h-4"
-											viewBox="0 0 24 24"
-											fill="currentColor"
-											aria-label="Bluesky logo"
+
+									{!uiState?.isShowSocialLogins ? (
+										<Button
+											variant="outline"
+											onClick={() => setUiState({ isShowSocialLogins: true })}
+											disabled={loginStatus.state === LoginState.Loading}
+											className="w-full flex items-center gap-2"
 										>
-											<title>Bluesky</title>
-											<path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.015.27-.05.395-.099-.385.793-.395 1.533 0 2.327a3.66 3.66 0 0 1-.395-.1c-2.67-.295-5.568.629-6.383 3.364C.378 20.072 0 25.032 0 25.72c0 .69.139 1.861.902 2.204.659.298 1.664.62 4.3-1.24C7.954 24.742 10.913 20.803 12 18.689c1.087 2.114 4.046 6.053 6.798 7.995 2.636 1.86 3.641 1.538 4.3 1.24.763-.343.902-1.515.902-2.204 0-.688-.378-5.648-.624-6.479-.815-2.735-3.713-3.66-6.383-3.364-.136.015-.27.05-.395.099.385-.793.385-1.533 0-2.327.125.05.259.085.395.1 2.67.295 5.568-.629 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.204-.659-.298-1.664-.62-4.3 1.24C16.046 4.747 13.087 8.686 12 10.8z" />
-										</svg>
-										{loginStatus.state === LoginState.Loading
-											? "Connecting..."
-											: "Continue with Bluesky"}
-									</Button>
+											<svg
+												className="w-4 h-4"
+												viewBox="0 0 24 24"
+												fill="currentColor"
+												aria-label="Bluesky logo"
+											>
+												<title>Bluesky</title>
+												<path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.015.27-.05.395-.099-.385.793-.395 1.533 0 2.327a3.66 3.66 0 0 1-.395-.1c-2.67-.295-5.568.629-6.383 3.364C.378 20.072 0 25.032 0 25.72c0 .69.139 1.861.902 2.204.659.298 1.664.62 4.3-1.24C7.954 24.742 10.913 20.803 12 18.689c1.087 2.114 4.046 6.053 6.798 7.995 2.636 1.86 3.641 1.538 4.3 1.24.763-.343.902-1.515.902-2.204 0-.688-.378-5.648-.624-6.479-.815-2.735-3.713-3.66-6.383-3.364-.136.015-.27.05-.395.099.385-.793.385-1.533 0-2.327.125.05.259.085.395.1 2.67.295 5.568-.629 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.204-.659-.298-1.664-.62-4.3 1.24C16.046 4.747 13.087 8.686 12 10.8z" />
+											</svg>
+											Continue with Bluesky
+										</Button>
+									) : (
+										<Form {...blueskyForm}>
+											<form
+												onSubmit={blueskyForm.handleSubmit(onBlueskySubmit)}
+												className="space-y-4"
+											>
+												<FormField
+													control={blueskyForm.control}
+													name="handle"
+													rules={{
+														required: "Handle is required",
+														pattern: {
+															value:
+																/^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$/,
+															message: "Invalid handle format",
+														},
+													}}
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel className="flex items-center gap-2">
+																<svg
+																	className="w-4 h-4"
+																	viewBox="0 0 24 24"
+																	fill="currentColor"
+																	aria-label="Bluesky logo"
+																>
+																	<title>Bluesky</title>
+																	<path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.015.27-.05.395-.099-.385.793-.395 1.533 0 2.327a3.66 3.66 0 0 1-.395-.1c-2.67-.295-5.568.629-6.383 3.364C.378 20.072 0 25.032 0 25.72c0 .69.139 1.861.902 2.204.659.298 1.664.62 4.3-1.24C7.954 24.742 10.913 20.803 12 18.689c1.087 2.114 4.046 6.053 6.798 7.995 2.636 1.86 3.641 1.538 4.3 1.24.763-.343.902-1.515.902-2.204 0-.688-.378-5.648-.624-6.479-.815-2.735-3.713-3.66-6.383-3.364-.136.015-.27.05-.395.099.385-.793.385-1.533 0-2.327.125.05.259.085.395.1 2.67.295 5.568-.629 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.204-.659-.298-1.664-.62-4.3 1.24C16.046 4.747 13.087 8.686 12 10.8z" />
+																</svg>
+																Bluesky Handle
+															</FormLabel>
+															<FormControl>
+																<Input
+																	placeholder="your-handle.bsky.social"
+																	type="text"
+																	{...field}
+																	disabled={
+																		loginStatus.state === LoginState.Loading
+																	}
+																/>
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+												<div className="flex justify-end">
+													<Button
+														type="submit"
+														disabled={loginStatus.state === LoginState.Loading}
+														className="w-full"
+													>
+														{loginStatus.state === LoginState.Loading
+															? "Connecting..."
+															: "Continue"}
+													</Button>
+												</div>
+											</form>
+										</Form>
+									)}
 
 									{loginStatus.state === LoginState.Error &&
 										loginStatus.error && (

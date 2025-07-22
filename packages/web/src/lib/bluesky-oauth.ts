@@ -73,14 +73,18 @@ class BlueskyOAuthManager {
 			throw new Error("OAuth client not initialized");
 		}
 
-		try {
-			const identity = handle || "debuggingfuture.com";
+		if (!handle) {
+			throw new Error("Bluesky handle is required");
+		}
 
+		try {
 			// Store current location to return to after auth
 			sessionStorage.setItem("bluesky_redirect_url", window.location.href);
 
 			// Use BrowserOAuthClient's signInRedirect method
-			await this.client.signInRedirect(identity);
+			await this.client.signInRedirect(handle, {
+				display: "popup",
+			});
 		} catch (error) {
 			console.error("OAuth login failed:", error);
 			throw error;

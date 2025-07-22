@@ -38,7 +38,7 @@ export function AuthCallbackPage() {
 		};
 
 		processCallback();
-	}, []);
+	}, [onUserLoginSuccess, setLoginStatus]);
 
 	if (isProcessing) {
 		return (
