@@ -1,3 +1,4 @@
+import { loginWithBluesky } from "@/lib/bluesky-oauth";
 import { getShortForm, truncate } from "@/lib/utils/string";
 import { Copy, LogIn, User } from "lucide-react";
 import { useCallback, useEffect } from "react";
@@ -40,8 +41,9 @@ interface LoginFormData {
 
 export function AccountMenu() {
 	// Get login functionality from AuthProvider
-	const { loginStatus, login, loginWithBluesky, logout, resetLoginStatus } =
-		useAuth();
+	const { loginStatus, login, logout, resetLoginStatus } = useAuth();
+
+	const handle = localStorage.getItem("geist.user.handle") || "";
 
 	const [uiState, setUiState] = useUiState();
 
@@ -257,7 +259,7 @@ export function AccountMenu() {
 									</div>
 									<Button
 										variant="outline"
-										onClick={() => loginWithBluesky("debuggingfuture.com")}
+										onClick={() => loginWithBluesky(handle)}
 										disabled={loginStatus.state === LoginState.Loading}
 										className="w-full flex items-center gap-2"
 									>

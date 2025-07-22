@@ -1,13 +1,19 @@
+import { useUiState } from "@/livestore/queries";
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../components/react/AuthProvider";
-import { handleBlueskyCallback } from "../lib/bluesky-oauth";
+import {
+	blueskyOAuth,
+	handleBlueskyCallback,
+	mapBlueskySessionAsUser,
+} from "../lib/bluesky-oauth";
 
 export function AuthCallbackPage() {
 	const [isProcessing, setIsProcessing] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const { setBlueskySession } = useAuth();
+	const { onUserLoginSuccess } = useAuth();
 
+	const [uiState, setUiState] = useUiState();
 	const [params] = useSearchParams();
 
 	const isHandlingCallbackRef = useRef(false);
@@ -18,13 +24,11 @@ export function AuthCallbackPage() {
 
 		const isMounted = true;
 		const processCallback = async () => {
-			console.log("processCallback", params);
 			try {
-				const authResult = await handleBlueskyCallback(params);
-
-				if (authResult && isMounted) {
-					// Update auth context with Bluesky session
-					setBlueskySession(authResult);
+				await handleBlueskyCallback(params);
+				const session = await blueskyOAuth.getCurrentSession();
+				if (session && isMounted) {
+					onUserLoginSuccess(mapBlueskySessionAsUser(session));
 				}
 
 				if (isMounted) setIsProcessing(false);
@@ -40,7 +44,7 @@ export function AuthCallbackPage() {
 		};
 
 		processCallback();
-	}, [setBlueskySession, params]);
+	}, [params]);
 
 	if (isProcessing) {
 		return (

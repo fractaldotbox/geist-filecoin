@@ -4,7 +4,7 @@ import {
 	XrpcHandleResolver,
 } from "@atproto/oauth-client-browser";
 
-export const HOST = process.env.HOST || "https://tunnel.geist.network/";
+export const HOST = import.meta.env.VITE_HOST || "https://tunnel.geist.network";
 
 class BlueskyOAuthManager {
 	private client: BrowserOAuthClient | null = null;
@@ -75,7 +75,6 @@ class BlueskyOAuthManager {
 
 		try {
 			const identity = handle || "debuggingfuture.com";
-			console.log("Using identity for OAuth:", identity);
 
 			// Store current location to return to after auth
 			sessionStorage.setItem("bluesky_redirect_url", window.location.href);
@@ -90,7 +89,6 @@ class BlueskyOAuthManager {
 
 	async handleCallback(params: URLSearchParams): Promise<OAuthSession | null> {
 		await this.initialize();
-
 		if (!this.client) {
 			throw new Error("OAuth client not initialized");
 		}
@@ -109,7 +107,12 @@ class BlueskyOAuthManager {
 			// Just try to get the current session after callback
 			const result = await this.client.init();
 
-			console.log("result at callback", result);
+			console.log(
+				"result at callback",
+				result,
+				params.get("code"),
+				params.size,
+			);
 			if (result) {
 				this.currentSession = result.session;
 
@@ -203,7 +206,6 @@ export const blueskyOAuth = new BlueskyOAuthManager();
 
 // Helper functions for React components
 export const loginWithBluesky = (handle?: string) => {
-	console.log("loginWithBluesky wrapper called with handle:", handle);
 	return blueskyOAuth.login(handle);
 };
 export const handleBlueskyCallback = (params: URLSearchParams) =>
@@ -213,3 +215,10 @@ export const clearBlueskySession = () => blueskyOAuth.clearSession();
 export const refreshBlueskyToken = () => blueskyOAuth.refreshToken();
 export const makeBlueskyRequest = (url: string, options?: RequestInit) =>
 	blueskyOAuth.makeAuthenticatedRequest(url, options);
+
+export const mapBlueskySessionAsUser = (session: OAuthSession) => {
+	return {
+		did: session.did,
+		delegation: new ArrayBuffer(0),
+	};
+};
