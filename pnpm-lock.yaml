@@ -294,9 +294,6 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      deploy:
-        specifier: ^1.0.3
-        version: 1.0.3
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0
@@ -7466,11 +7463,6 @@ packages:
     resolution: {integrity: sha512-JeMq7fEshyepOWDfcfHK06N3MhyPhz++vtqWhMT5O9A3K42rdsEDpfdVqjaqaAhsw6a+ZqeDvQVtD0hFHQWrzg==}
     engines: {node: '>= 0.6.0'}
     dev: true
-
-  /deploy@1.0.3:
-    resolution: {integrity: sha512-muJVK8p8idCiE+8JaQzvGD+vS3KtoJYx6jLu0Bq36vl7bOJVpm9dZGgoHFi89kI88oHdwa32TUTZ0exYyT0KLQ==}
-    hasBin: true
-    dev: false
 
   /deprecated-decorator@0.1.6:
     resolution: {integrity: sha512-MHidOOnCHGlZDKsI21+mbIIhf4Fff+hhCTB7gtVg4uoIqjcrTZc5v6M+GS2zVI0sV7PqK415rb8XaOSQsQkHOw==}

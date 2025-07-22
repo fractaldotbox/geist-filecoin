@@ -50,7 +50,6 @@
 		"build": "^0.1.4",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
-		"deploy": "^1.0.3",
 		"jsdom": "^26.1.0",
 		"ky": "^1.8.1",
 		"lucide-react": "^0.503.0",
