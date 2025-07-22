@@ -8,7 +8,7 @@ const isValidHex = (value: string): boolean => {
 
 const getChecksumAddress = (address: string): string => {
 	// Simple checksum implementation without crypto dependency
-	const addr = address.toLowerCase().replace('0x', '');
+	const addr = address.toLowerCase().replace("0x", "");
 	return `0x${addr}`;
 };
 

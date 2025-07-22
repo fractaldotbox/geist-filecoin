@@ -28,13 +28,28 @@ export default defineConfig({
 	},
 	worker: { format: "es" },
 	build: {
+		commonjsOptions: {
+			include: [
+				/@atproto\/oauth-client-browser/,
+				/multiformats/,
+				/node_modules/,
+			],
+		},
 		rollupOptions: {
 			output: {
 				manualChunks: {
-					vendor: ['react', 'react-dom', 'react-router-dom'],
-					ui: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
-					storage: ['@lighthouse-web3/sdk', '@web3-storage/w3up-client'],
-					livestore: ['@livestore/react', '@livestore/adapter-web', '@livestore/livestore'],
+					vendor: ["react", "react-dom", "react-router-dom"],
+					ui: [
+						"lucide-react",
+						"@radix-ui/react-dialog",
+						"@radix-ui/react-dropdown-menu",
+					],
+					storage: ["@lighthouse-web3/sdk", "@web3-storage/w3up-client"],
+					livestore: [
+						"@livestore/react",
+						"@livestore/adapter-web",
+						"@livestore/livestore",
+					],
 				},
 			},
 		},
@@ -52,14 +67,5 @@ export default defineConfig({
 	},
 	optimizeDeps: {
 		include: ["multiformats"],
-	},
-	build: {
-		commonjsOptions: {
-			include: [
-				/@atproto\/oauth-client-browser/,
-				/multiformats/,
-				/node_modules/,
-			],
-		},
 	},
 });

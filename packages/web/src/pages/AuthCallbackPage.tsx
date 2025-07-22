@@ -18,6 +18,7 @@ export function AuthCallbackPage() {
 
 		const isMounted = true;
 		const processCallback = async () => {
+			console.log("processCallback", params);
 			try {
 				const authResult = await handleBlueskyCallback(params);
 

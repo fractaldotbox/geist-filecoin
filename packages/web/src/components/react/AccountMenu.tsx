@@ -45,8 +45,6 @@ export function AccountMenu() {
 
 	const [uiState, setUiState] = useUiState();
 
-	console.log("AccountMenu", uiState?.currentUserDid, uiState);
-
 	const form = useForm<LoginFormData>({
 		defaultValues: {
 			email: uiState?.currentLoginEmail || "",

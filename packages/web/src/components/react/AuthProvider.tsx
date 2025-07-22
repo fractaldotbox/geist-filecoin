@@ -11,8 +11,8 @@ import {
 import type { ReactNode } from "react";
 import {
 	loginWithBluesky as blueskyLogin,
+	blueskyOAuth,
 	clearBlueskySession,
-	getBlueskySession,
 	refreshBlueskyToken,
 } from "../../lib/bluesky-oauth";
 import { firstSpace$, useUiState } from "../../livestore/queries";
@@ -116,7 +116,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// Check for existing Bluesky session on mount and set up periodic refresh
 	useEffect(() => {
 		const checkAndRefreshSession = async () => {
-			const existingSession = getBlueskySession();
+			console.log("checkAndRefreshSession");
+			const existingSession = await blueskyOAuth.getCurrentSession();
 			if (existingSession && !uiState.currentUserDid) {
 				setUiState({
 					...uiState,
@@ -141,8 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 		// Set up periodic token refresh (every 30 minutes)
 		const refreshInterval = setInterval(
-			() => {
-				const session = getBlueskySession();
+			async () => {
+				const session = await blueskyOAuth.getCurrentSession();
 				if (session) {
 					refreshBlueskyToken().catch((error) => {
 						console.error("Failed to refresh Bluesky token:", error);
@@ -239,7 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 		setUiState({
 			...uiState,
-			currentUserDid: null,
+			currentUserDid: "",
 		});
 	};
 
@@ -255,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		localStorage.removeItem(DID_LOCALSTORAGE_KEY);
 		setUiState({
 			...uiState,
-			currentUserDid: null,
+			currentUserDid: "",
 		});
 		setLoginStatus({ state: LoginState.Idle });
 	};
