@@ -28,6 +28,8 @@ interface AuthUser {
 
 export enum LoginState {
 	Idle = "idle",
+	// restore session
+	Initialize = "initialize",
 	Loading = "loading",
 	// pending email sent
 	Pending = "pending",
@@ -264,7 +266,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setUiState({
 			...uiState,
 			currentUserDid: "",
-			loginState: LoginState.Loading,
+			loginState: LoginState.Initialize,
 			loginError: undefined,
 		});
 		console.log("logout", uiState);

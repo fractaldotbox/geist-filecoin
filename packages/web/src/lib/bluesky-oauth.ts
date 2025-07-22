@@ -36,7 +36,6 @@ class BlueskyOAuthManager {
 
 	async initialize(): Promise<void> {
 		if (this.client) return;
-		console.log("initialize");
 
 		try {
 			this.client = new BrowserOAuthClient({
