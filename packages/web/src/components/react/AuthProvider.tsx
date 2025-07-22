@@ -13,6 +13,7 @@ import {
 	loginWithBluesky as blueskyLogin,
 	blueskyOAuth,
 	clearBlueskySession,
+	getBlueskyHandle,
 	mapBlueskySessionAsUser,
 	refreshBlueskyToken,
 } from "../../lib/bluesky-oauth";
@@ -150,9 +151,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 			const existingSession = await blueskyOAuth.getCurrentSession();
 			if (existingSession && !uiState.currentUserDid) {
-				const user = mapBlueskySessionAsUser(existingSession);
+				const handle = getBlueskyHandle();
+				const user = mapBlueskySessionAsUser(existingSession, handle);
 				onUserLoginSuccess(user);
-				localStorage.setItem("geist.user.handle", user.did);
+				if (user.handle) {
+					localStorage.setItem("geist.user.handle", user.handle);
+				}
 			}
 
 			// Try to refresh token if we have a session
@@ -260,7 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setUiState({
 			...uiState,
 			currentUserDid: "",
-			loginState: LoginState.Idle,
+			loginState: LoginState.Loading,
 			loginError: undefined,
 		});
 		console.log("logout", uiState);

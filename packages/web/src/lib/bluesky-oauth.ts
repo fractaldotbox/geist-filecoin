@@ -9,6 +9,7 @@ export const HOST = import.meta.env.VITE_HOST || "https://tunnel.geist.network";
 class BlueskyOAuthManager {
 	private client: BrowserOAuthClient | null = null;
 	private currentSession: OAuthSession | null = null;
+	private currentHandle: string | null = null;
 
 	private get clientMetadata() {
 		const origin = window.location.origin;
@@ -80,6 +81,8 @@ class BlueskyOAuthManager {
 		try {
 			// Store current location to return to after auth
 			sessionStorage.setItem("bluesky_redirect_url", window.location.href);
+			// Store the handle for later use
+			sessionStorage.setItem("bluesky_login_handle", handle);
 
 			// Use BrowserOAuthClient's signInRedirect method
 			await this.client.signInRedirect(handle, {
@@ -119,11 +122,14 @@ class BlueskyOAuthManager {
 			);
 			if (result) {
 				this.currentSession = result.session;
+				// Retrieve and store the handle
+				this.currentHandle = sessionStorage.getItem("bluesky_login_handle");
 
-				// Clean up URL
+				// Clean up URL and session storage
 				const redirectUrl =
 					sessionStorage.getItem("bluesky_redirect_url") || "/";
 				sessionStorage.removeItem("bluesky_redirect_url");
+				sessionStorage.removeItem("bluesky_login_handle");
 				window.history.replaceState({}, document.title, redirectUrl);
 
 				return this.currentSession;
@@ -166,6 +172,11 @@ class BlueskyOAuthManager {
 			}
 		}
 		this.currentSession = null;
+		this.currentHandle = null;
+	}
+
+	getCurrentHandle(): string | null {
+		return this.currentHandle;
 	}
 
 	async refreshToken(): Promise<OAuthSession | null> {
@@ -213,14 +224,19 @@ export const loginWithBluesky = (handle?: string) => {
 	return blueskyOAuth.login(handle);
 };
 export const getBlueskySession = () => blueskyOAuth.getCurrentSession();
+export const getBlueskyHandle = () => blueskyOAuth.getCurrentHandle();
 export const clearBlueskySession = () => blueskyOAuth.clearSession();
 export const refreshBlueskyToken = () => blueskyOAuth.refreshToken();
 export const makeBlueskyRequest = (url: string, options?: RequestInit) =>
 	blueskyOAuth.makeAuthenticatedRequest(url, options);
 
-export const mapBlueskySessionAsUser = (session: OAuthSession) => {
+export const mapBlueskySessionAsUser = (
+	session: OAuthSession,
+	handle?: string,
+) => {
 	return {
 		did: session.did,
+		handle: handle || null,
 		delegation: new ArrayBuffer(0),
 	};
 };

@@ -20,7 +20,7 @@ export default defineConfig({
 	},
 	server: {
 		port: process.env.PORT ? Number(process.env.PORT) : 3000,
-		allowedHosts: ["tunnel.geist.network"],
+		allowedHosts: ["filecoin.geist.network", "tunnel.geist.network"],
 	},
 	worker: { format: "es" },
 	build: {
