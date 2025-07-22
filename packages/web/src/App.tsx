@@ -14,6 +14,7 @@ import { Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { DemoModeBanner } from "./components/react/DemoModeBanner";
 import { useDemoMode } from "./components/react/hooks/useDemoMode";
+import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import HomePage from "./pages/HomePage";
 
 // Create context for spaces drawer
@@ -56,6 +57,7 @@ function App() {
 				<Layout>
 					<Routes>
 						<Route path="/" element={<HomePage />} />
+						<Route path="/auth/callback" element={<AuthCallbackPage />} />
 						<Route
 							path="/space/:spaceId/entries"
 							element={<ContentEntriesPage />}

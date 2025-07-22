@@ -79,8 +79,6 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 			const storachaStore = new StoreIndexedDB("storacha-client");
 			const storachaClient = await Client.create({ store: storachaStore });
 
-			console.log("init client accounts", storachaClient.accounts());
-
 			setClient(storachaClient);
 			// TODO use default did for read only use cases
 			// setAgentDid(storachaClient.did());
@@ -109,8 +107,6 @@ export const StorachaProvider: React.FC<StorachaProviderProps> = ({
 	}, []);
 
 	useEffect(() => {
-		console.log("active space", activeSpace);
-
 		// Commit StorachaStorageAuthorized event when delegation becomes available
 		if (
 			delegationResults &&
