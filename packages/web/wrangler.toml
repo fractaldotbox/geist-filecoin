@@ -4,17 +4,15 @@ compatibility_flags = ["nodejs_compat"]
 
 workers_dev = false
 
-# Option 1: Custom domain (requires domain setup in Cloudflare)
 routes = [
-   { pattern = "filecoin.geist.network/auth/callback", custom_domain = true },
-   { pattern = "filecoin.geist.network", custom_domain = true }
+   { pattern = "filecoin.geist.network", zone_name = "geist.network" },
+    { pattern = "filecoin.geist.network/*", zone_name = "geist.network" }
  ]
 
 
 [vars]
 HOST = "https://filecoin.geist.network"
 
-# Option 2: Cloudflare zone route
-# routes = [
-#   { pattern = "example.com/*", zone_name = "example.com" }
-# ]
+
+[observability.logs]
+enabled = false
