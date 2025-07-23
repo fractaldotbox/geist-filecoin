@@ -13,9 +13,7 @@ export interface ClientMetadata {
 	dpop_signing_alg_values_supported: string[];
 }
 
-const HOST = import.meta.env.VITE_HOST || "https://tunnel.geist.network";
-
-export function createClientMetadata(baseUrl: string = HOST): ClientMetadata {
+export function createClientMetadata(baseUrl: string): ClientMetadata {
 	return {
 		client_id: `${baseUrl}/client-metadata.json`,
 		client_name: "Geist Filecoin",

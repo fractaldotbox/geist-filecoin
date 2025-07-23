@@ -5,7 +5,7 @@ import {
 } from "@atproto/oauth-client-browser";
 import { createClientMetadata } from "./client-metadata";
 
-export const HOST = import.meta.env.VITE_HOST || "https://tunnel.geist.network";
+const HOST = import.meta.env.VITE_HOST || "https://filecoin.geist.network";
 
 class BlueskyOAuthManager {
 	private client: BrowserOAuthClient | null = null;
@@ -13,7 +13,7 @@ class BlueskyOAuthManager {
 	private currentHandle: string | null = null;
 
 	private get clientMetadata() {
-		return createClientMetadata();
+		return createClientMetadata(HOST);
 	}
 
 	async initialize(): Promise<void> {

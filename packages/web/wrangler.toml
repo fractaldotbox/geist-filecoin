@@ -9,6 +9,10 @@ routes = [
    { pattern = "filecoin.geist.network", custom_domain = true }
  ]
 
+
+[vars]
+HOST = "filecoin.geist.network"
+
 # Option 2: Cloudflare zone route
 # routes = [
 #   { pattern = "example.com/*", zone_name = "example.com" }
