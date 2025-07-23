@@ -1,6 +1,6 @@
 import { useUiState } from "@/livestore/queries";
 import { useEffect, useRef, useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router";
 import { LoginState, useAuth } from "../components/react/AuthProvider";
 import { blueskyOAuth, mapBlueskySessionAsUser } from "../lib/bluesky-oauth";
 
