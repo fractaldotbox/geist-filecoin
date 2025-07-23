@@ -31,12 +31,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
-import { useStorachaClient } from "./StorachaProvider";
+import { useStorachaContext } from "./StorachaProvider";
 import { MarkdownField } from "./fields/MarkdownField";
 import { useLiveStore } from "./hooks/useLiveStore";
 
-import * as Proof from "@web3-storage/w3up-client/proof";
-import { useParams } from "react-router-dom";
+import type { Entry } from "@geist-filecoin/domain";
+import { uploadFiles } from "@geist-filecoin/storage";
+import type { Client } from "@web3-storage/w3up-client";
+import { useParams } from "react-router";
 
 // Upload mode enum
 export enum UploadMode {
@@ -44,47 +46,27 @@ export enum UploadMode {
 	Server = "server",
 }
 
-/**
- * Uploads a file directly to Storacha using delegated token
- */
-async function uploadFileToStoracha(
-	file: File,
-	delegatedToken: string,
+async function uploadDirectoryToStoracha(
+	files: File[],
 	client: any,
 	progressCallback?: (progress: number) => void,
 ): Promise<{ cid: string; url: string }> {
 	try {
-		if (!delegatedToken) {
-			throw new Error("Storacha delegated token not found");
-		}
-
 		if (!client) {
 			throw new Error("Storacha client not found");
 		}
 
-		// Report initial progress
-		if (progressCallback) {
-			progressCallback(0.1);
-		}
-
-		// Parse the delegated proof
-		const proof = await Proof.parse(delegatedToken);
-		const space = await client.addSpace(proof);
-		await client.setCurrentSpace(space.did());
-
-		if (progressCallback) {
-			progressCallback(0.4);
-		}
+		const cid = await uploadFiles(
+			{
+				client,
+				spaceDid: client.currentSpace()?.did(),
+			},
+			{
+				files,
+			} as any,
+		);
 
 		// Upload the file using the Storacha client
-		const cid = await client.uploadFile(file, {
-			onShardStored: () => {
-				// Update progress as shards are stored
-				if (progressCallback) {
-					progressCallback(0.8);
-				}
-			},
-		});
 
 		if (progressCallback) {
 			progressCallback(1);
@@ -103,14 +85,17 @@ async function uploadFileToStoracha(
 /**
  * Uploads a file to server endpoint
  */
-async function uploadFileWithApi(
-	file: File,
+async function uploadFilesWithApi(
+	files: File[],
 	progressCallback?: (progress: number) => void,
 ): Promise<{ cid: string; url: string }> {
 	try {
 		// Create FormData for file upload
 		const formData = new FormData();
-		formData.append("file", file);
+
+		for (const file of files) {
+			formData.append("file", file);
+		}
 
 		if (progressCallback) {
 			progressCallback(0.5);
@@ -139,57 +124,42 @@ async function uploadFileWithApi(
 	}
 }
 
-// Function to handle file upload before creating entry event
-async function uploadFile(
-	media: FileFieldValue | undefined,
-	uploadMode: UploadMode = UploadMode.StorachaDelegated,
-	progressCallback?: (progress: number) => void,
-	delegatedToken?: string,
-	client?: any,
-): Promise<{ url: string; cid: string }> {
-	console.log("uploadFile", media, uploadMode);
-	// If no media or media doesn't have a file, return empty values
-	if (!media || !media.file) {
-		return {
-			url: media?.url || "",
-			cid: media?.cid || "",
-		};
+async function uploadDirectory({
+	client,
+	files,
+	progressCallback,
+	uploadMode = UploadMode.StorachaDelegated,
+}: {
+	client?: Client;
+	files: File[];
+	uploadMode: UploadMode;
+	progressCallback?: (progress: number) => void;
+}) {
+	let uploadResult: { cid: string; url: string } = {
+		cid: "",
+		url: "",
+	};
+	switch (uploadMode) {
+		case UploadMode.StorachaDelegated:
+			if (!client) {
+				throw new Error("Storacha client is required for Storacha upload");
+			}
+			uploadResult = await uploadDirectoryToStoracha(
+				files,
+				client,
+				progressCallback,
+			);
+			break;
+		case UploadMode.Server:
+			uploadResult = await uploadFilesWithApi(files, progressCallback);
+			break;
+		default:
+			throw new Error(`Unknown upload mode: ${uploadMode}`);
 	}
 
-	try {
-		let uploadResult: { cid: string; url: string };
-
-		// Branch between upload modes
-		switch (uploadMode) {
-			case UploadMode.StorachaDelegated:
-				if (!delegatedToken) {
-					throw new Error("Delegated token is required for Storacha upload");
-				}
-				if (!client) {
-					throw new Error("Storacha client is required for Storacha upload");
-				}
-				uploadResult = await uploadFileToStoracha(
-					media.file,
-					delegatedToken,
-					client,
-					progressCallback,
-				);
-				break;
-			case UploadMode.Server:
-				uploadResult = await uploadFileWithApi(media.file, progressCallback);
-				break;
-			default:
-				throw new Error(`Unknown upload mode: ${uploadMode}`);
-		}
-
-		return {
-			url: uploadResult.url,
-			cid: uploadResult.cid,
-		};
-	} catch (error) {
-		console.error("Upload error:", error);
-		throw error;
-	}
+	return {
+		...uploadResult,
+	};
 }
 
 export function EntryEditor({
@@ -199,18 +169,24 @@ export function EntryEditor({
 	entryId?: string;
 	contentTypeId?: string;
 }) {
-	console.log("EntryEditor", entryId, contentTypeId);
-
+	const { contentTypeId } = useParams();
 	const [isLoaded, setIsLoaded] = useState(false);
 
 	const { store, createEntry } = useLiveStore();
-	
-	// Only query for entry if we have an entryId (editing existing entry)
-	const entry = entryId ? store.useQuery(entryById$(entryId)) : null;
+	const existingEntry = store.useQuery(entryById$(entryId || ""));
 
-	// Use contentTypeId from props for new entries, or from entry for existing entries
-	const targetContentTypeId = contentTypeId || entry?.contentTypeId;
-	const contentTypeData = useContentType(targetContentTypeId || "");
+	const [entry, setEntry] = useState<Entry | null>(null);
+
+	useEffect(() => {
+		if (existingEntry) {
+			setEntry(existingEntry);
+		} else {
+			setEntry({});
+		}
+	}, [existingEntry]);
+
+	// Use LiveStore-based content type hooks and entry creation
+	const contentTypeData = useContentType(contentTypeId || "");
 
 	// Get active space and its storage authorization
 	const activeSpace = store.useQuery(firstSpace$);
@@ -218,8 +194,7 @@ export function EntryEditor({
 		? store.useQuery(latestStorageAuthorizationForSpace$(activeSpace.id))
 		: null;
 
-	// Get Storacha client from context
-	const storachaClient = useStorachaClient();
+	const { delegation, client } = useStorachaContext();
 
 	useEffect(() => {
 		return store.subscribe(allEntries$, {
@@ -398,46 +373,55 @@ export function EntryEditor({
 
 	// Create entry using LiveStore events instead of direct API calls
 	const onSubmit = async (values: Partial<EntryFormData>) => {
+		if (!entry || !contentTypeId) {
+			return;
+		}
 		setIsSubmitting(true);
 		setSubmissionResult(undefined); // Reset submission result
-		console.log("debug:", values, typeof values);
 		try {
 			// TODO extract as space attribute
 			const uploadMode = UploadMode.StorachaDelegated;
 			// Show global progress bar
 			await simulateProgress();
 
-			// Get delegated token from storage authorization if using Storacha mode
-			let delegatedToken: string | undefined;
 			if (uploadMode === UploadMode.StorachaDelegated) {
-				if (!storageAuth || !storageAuth.delegationCid) {
+				if (!client || !delegation) {
 					throw new Error(
 						"No Storacha storage authorization found for the active space",
 					);
 				}
-				delegatedToken = storageAuth.delegationCid;
 			}
 
 			// Handle file upload if needed with specified upload mode
 			const media = values?.media as FileFieldValue | undefined;
-			const { url, cid } = await uploadFile(
-				media,
+
+			const entryData = {
+				...values,
+				media: media?.file?.name,
+			};
+
+			const file = new File([JSON.stringify(entryData)], "entry.json");
+
+			const files = [file, media?.file as File].filter(Boolean);
+
+			const { url, cid } = await uploadDirectory({
+				files,
 				uploadMode,
-				(progress: number) => {
+				progressCallback: (progress: number) => {
 					setUploadProgress(progress);
 				},
-				delegatedToken,
-				storachaClient,
-			);
+				client: client || undefined,
+			});
 
+			const entryId = crypto.randomUUID();
 			// Create entry using LiveStore event
 			await createEntry({
-				id: cid,
-				...values,
+				id: entryId,
+				...entryData,
 				// TODO allow configure per schema
 				name: values.title as string,
-				contentTypeId: targetContentTypeId || "",
-				media: { url: url, cid: cid },
+				contentTypeId,
+				media: { url: url, cid },
 			});
 
 			console.log("Entry created successfully");
@@ -578,7 +562,7 @@ export function EntryEditor({
 		);
 	};
 
-	if (!contentType || (entryId && !entry)) {
+	if (!contentType || !entry) {
 		return <div>Loading...</div>;
 	}
 

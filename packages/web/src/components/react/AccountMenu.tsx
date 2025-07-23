@@ -1,10 +1,10 @@
+import { loginWithBluesky } from "@/lib/bluesky-oauth";
 import { getShortForm, truncate } from "@/lib/utils/string";
 import { Copy, LogIn, User } from "lucide-react";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useUiState } from "../../livestore/queries";
 import { LoginState, useAuth } from "./AuthProvider";
-import { useLiveStore } from "./hooks/useLiveStore";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
@@ -39,13 +39,18 @@ interface LoginFormData {
 	email: string;
 }
 
+interface BlueskyHandleFormData {
+	handle: string;
+}
+
 export function AccountMenu() {
-	// Get user and login functionality from AuthProvider
-	const { user, loginStatus, login, resetLoginStatus } = useAuth();
-	console.log("user", user);
+	// Get login functionality from AuthProvider
+	const { loginStatus, login, logout, resetLoginStatus, setLoginStatus } =
+		useAuth();
+
+	const handle = localStorage.getItem("geist.user.handle") || "";
 
 	const [uiState, setUiState] = useUiState();
-	const { setUiState: setUiStateFromLiveStore } = useLiveStore();
 
 	const form = useForm<LoginFormData>({
 		defaultValues: {
@@ -53,21 +58,27 @@ export function AccountMenu() {
 		},
 	});
 
+	const blueskyForm = useForm<BlueskyHandleFormData>({
+		defaultValues: {
+			handle: "",
+		},
+	});
+
 	// Auto-close dialog when login is successful
 	useEffect(() => {
 		if (loginStatus.state === LoginState.Success) {
-			setUiStateFromLiveStore({ isLoginDialogOpen: false });
+			setUiState({ isLoginDialogOpen: false });
 			resetLoginStatus();
-			setUiStateFromLiveStore({ currentLoginEmail: "" });
+			setUiState({ currentLoginEmail: "" });
 			form.reset();
 		}
-	}, [loginStatus.state, setUiStateFromLiveStore, resetLoginStatus, form]);
+	}, [loginStatus.state, setUiState, resetLoginStatus, form]);
 
 	// Copy DID to clipboard
 	const copyDid = async () => {
-		if (user?.did) {
+		if (uiState?.currentUserDid) {
 			try {
-				await navigator.clipboard.writeText(user.did);
+				await navigator.clipboard.writeText(uiState.currentUserDid);
 			} catch (error) {
 				console.error("Failed to copy DID:", error);
 			}
@@ -77,14 +88,34 @@ export function AccountMenu() {
 	// Handle login form submission
 	const onSubmit = async (data: LoginFormData) => {
 		// Store the email in UI state
-		setUiStateFromLiveStore({ currentLoginEmail: data.email });
+		setUiState({ currentLoginEmail: data.email });
 		await login(data.email);
 		form.reset();
 	};
 
+	// Handle Bluesky handle form submission
+	const onBlueskySubmit = async (data: BlueskyHandleFormData) => {
+		try {
+			setLoginStatus(LoginState.Loading);
+
+			// Add a delay to ensure loading state renders before redirect
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			await loginWithBluesky(data.handle);
+			// Don't reset form here since we're redirecting
+		} catch (error) {
+			console.error("Bluesky login failed:", error);
+			const errorMessage =
+				error instanceof Error ? error.message : "Failed to connect to Bluesky";
+			setLoginStatus({
+				state: LoginState.Error,
+				error: errorMessage,
+			});
+		}
+	};
+
 	// Open login dialog
 	const openLoginDialog = () => {
-		setUiStateFromLiveStore({ isLoginDialogOpen: true });
+		setUiState({ isLoginDialogOpen: true });
 	};
 
 	// Reset states when dialog closes
@@ -94,17 +125,19 @@ export function AccountMenu() {
 			return;
 		}
 
-		setUiStateFromLiveStore({ isLoginDialogOpen: open });
+		setUiState({ isLoginDialogOpen: open });
 		if (!open) {
 			resetLoginStatus();
-			setUiStateFromLiveStore({ currentLoginEmail: "" });
+			setUiState({ currentLoginEmail: "" });
 			form.reset();
+			blueskyForm.reset();
+			setUiState({ isShowSocialLogins: false });
 		}
 	};
 
 	return (
 		<>
-			{user?.did ? (
+			{uiState?.currentUserDid ? (
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<button
@@ -126,12 +159,11 @@ export function AccountMenu() {
 							className="font-mono text-xs flex items-center justify-between cursor-pointer"
 							onClick={copyDid}
 						>
-							<span>{getShortForm(user.did, 10)}</span>
+							<span>{getShortForm(uiState.currentUserDid, 10)}</span>
 							<Copy className="h-3 w-3 text-muted-foreground" />
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						{/* <DropdownMenuItem>Settings</DropdownMenuItem>
-						<DropdownMenuItem>Sign out</DropdownMenuItem> */}
+						<DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			) : (
@@ -252,18 +284,107 @@ export function AccountMenu() {
 							</TabsContent>
 
 							<TabsContent value="oauth" className="space-y-4">
-								<div className="text-center py-6">
-									<p className="text-sm text-muted-foreground mb-4">
-										Social login is coming soon. Please use the Storacha option
-										for now.
-									</p>
-									<Button
-										variant="outline"
-										onClick={() => handleDialogChange(false)}
-										className="w-full"
-									>
-										Close
-									</Button>
+								<div className="space-y-4">
+									<div className="text-center">
+										<p className="text-sm text-muted-foreground mb-4">
+											Sign in with your social account
+										</p>
+									</div>
+
+									{!uiState?.isShowSocialLogins ? (
+										<Button
+											variant="outline"
+											onClick={() => setUiState({ isShowSocialLogins: true })}
+											disabled={loginStatus.state === LoginState.Loading}
+											className="w-full flex items-center gap-2"
+										>
+											<svg
+												className="w-4 h-4"
+												viewBox="0 0 24 24"
+												fill="currentColor"
+												aria-label="Bluesky logo"
+											>
+												<title>Bluesky</title>
+												<path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.015.27-.05.395-.099-.385.793-.395 1.533 0 2.327a3.66 3.66 0 0 1-.395-.1c-2.67-.295-5.568.629-6.383 3.364C.378 20.072 0 25.032 0 25.72c0 .69.139 1.861.902 2.204.659.298 1.664.62 4.3-1.24C7.954 24.742 10.913 20.803 12 18.689c1.087 2.114 4.046 6.053 6.798 7.995 2.636 1.86 3.641 1.538 4.3 1.24.763-.343.902-1.515.902-2.204 0-.688-.378-5.648-.624-6.479-.815-2.735-3.713-3.66-6.383-3.364-.136.015-.27.05-.395.099.385-.793.385-1.533 0-2.327.125.05.259.085.395.1 2.67.295 5.568-.629 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.204-.659-.298-1.664-.62-4.3 1.24C16.046 4.747 13.087 8.686 12 10.8z" />
+											</svg>
+											Continue with Bluesky
+										</Button>
+									) : (
+										<Form {...blueskyForm}>
+											<form
+												onSubmit={blueskyForm.handleSubmit(onBlueskySubmit)}
+												className="space-y-4"
+											>
+												<FormField
+													control={blueskyForm.control}
+													name="handle"
+													rules={{
+														required: "Handle is required",
+														pattern: {
+															value:
+																/^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$/,
+															message: "Invalid handle format",
+														},
+													}}
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel className="flex items-center gap-2">
+																<svg
+																	className="w-4 h-4"
+																	viewBox="0 0 24 24"
+																	fill="currentColor"
+																	aria-label="Bluesky logo"
+																>
+																	<title>Bluesky</title>
+																	<path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.015.27-.05.395-.099-.385.793-.395 1.533 0 2.327a3.66 3.66 0 0 1-.395-.1c-2.67-.295-5.568.629-6.383 3.364C.378 20.072 0 25.032 0 25.72c0 .69.139 1.861.902 2.204.659.298 1.664.62 4.3-1.24C7.954 24.742 10.913 20.803 12 18.689c1.087 2.114 4.046 6.053 6.798 7.995 2.636 1.86 3.641 1.538 4.3 1.24.763-.343.902-1.515.902-2.204 0-.688-.378-5.648-.624-6.479-.815-2.735-3.713-3.66-6.383-3.364-.136.015-.27.05-.395.099.385-.793.385-1.533 0-2.327.125.05.259.085.395.1 2.67.295 5.568-.629 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.204-.659-.298-1.664-.62-4.3 1.24C16.046 4.747 13.087 8.686 12 10.8z" />
+																</svg>
+																Bluesky Handle
+															</FormLabel>
+															<FormControl>
+																<Input
+																	placeholder="your-handle.bsky.social"
+																	type="text"
+																	{...field}
+																	disabled={
+																		loginStatus.state === LoginState.Loading
+																	}
+																/>
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+												<div className="flex justify-end">
+													<Button
+														type="submit"
+														disabled={loginStatus.state === LoginState.Loading}
+														className="w-full"
+													>
+														{loginStatus.state === LoginState.Loading
+															? "Connecting..."
+															: "Continue"}
+													</Button>
+												</div>
+											</form>
+										</Form>
+									)}
+
+									{loginStatus.state === LoginState.Error &&
+										loginStatus.error && (
+											<div className="text-sm text-red-600 dark:text-red-400 text-center">
+												{loginStatus.error}
+											</div>
+										)}
+
+									<div className="text-center">
+										<Button
+											variant="ghost"
+											onClick={() => handleDialogChange(false)}
+											className="text-sm text-muted-foreground"
+										>
+											Cancel
+										</Button>
+									</div>
 								</div>
 							</TabsContent>
 						</Tabs>

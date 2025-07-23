@@ -12,6 +12,7 @@
 		"lint": "biome check --fix"
 	},
 	"dependencies": {
+		"multiformats": "^13.3.2",
 		"@cloudflare/vite-plugin": "^1.9.0",
 		"@geist-filecoin/auth": "workspace:*",
 		"@geist-filecoin/storage": "workspace:*",
@@ -28,5 +29,10 @@
 		"typescript": "^5.8.3",
 		"vite": "^6.3.4",
 		"wrangler": "^4.22.0"
+	},
+	"pnpm": {
+		"overrides": {
+			"multiformats": "13.3.7"
+		}
 	}
 }

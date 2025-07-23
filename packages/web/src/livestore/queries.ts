@@ -33,9 +33,15 @@ export const entriesBySpace$ = (spaceId: string) =>
 
 // Query for a specific entry
 export const entryById$ = (id: string) =>
-	queryDb((get) => tables.entries.where({ id, deletedAt: null }).first(), {
-		label: `entryById-${id}`,
-	});
+	queryDb(
+		(get) =>
+			tables.entries
+				.where({ id, deletedAt: null })
+				.first({ fallback: () => null }),
+		{
+			label: `entryById-${id}`,
+		},
+	);
 
 // Query for all content types
 export const allContentTypes$ = queryDb(
@@ -46,9 +52,12 @@ export const allContentTypes$ = queryDb(
 
 // Query for a specific content type
 export const contentTypeById$ = (id: string) =>
-	queryDb((get) => tables.contentTypes.where({ id }).first(), {
-		label: `contentTypeById-${id}`,
-	});
+	queryDb(
+		(get) => tables.contentTypes.where({ id }).first({ fallback: () => null }),
+		{
+			label: `contentTypeById-${id}`,
+		},
+	);
 
 // Query for all active spaces
 export const allSpaces$ = queryDb(

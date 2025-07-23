@@ -9,6 +9,14 @@ import {
 	useState,
 } from "react";
 import type { ReactNode } from "react";
+import {
+	loginWithBluesky as blueskyLogin,
+	blueskyOAuth,
+	clearBlueskySession,
+	getBlueskyHandle,
+	mapBlueskySessionAsUser,
+	refreshBlueskyToken,
+} from "../../lib/bluesky-oauth";
 import { firstSpace$, useUiState } from "../../livestore/queries";
 import { useStorachaContext } from "./StorachaProvider";
 
@@ -20,6 +28,8 @@ interface AuthUser {
 
 export enum LoginState {
 	Idle = "idle",
+	// restore session
+	Initialize = "initialize",
 	Loading = "loading",
 	// pending email sent
 	Pending = "pending",
@@ -37,57 +47,160 @@ interface AuthContextType {
 	isLoading: boolean;
 	isAuthenticated: boolean;
 	error: string | null;
-	// Login status and functions
 	loginStatus: LoginStatus;
 	login: (email: string) => Promise<void>;
+	onUserLoginSuccess: (user: AuthUser) => void;
+	logout: () => void;
+	setLoginStatus: (status: LoginState | LoginStatus) => void;
+	loginWithBluesky: (handle?: string) => Promise<void>;
+	clearBlueskyAuth: () => void;
 	resetLoginStatus: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+export const DID_LOCALSTORAGE_KEY = "geist.user.did";
+
 // Auth provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const { store } = useStore();
-	const {
-		client,
-		agentDid: clientId,
-		initializeClient,
-		setClient,
-		setAgentDid,
-	} = useStorachaContext();
-
-	const [user, setUser] = useState<AuthUser | null>(null);
+	const { client, initializeClient, setClient } = useStorachaContext();
 
 	const [uiState, setUiState] = useUiState();
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	// Login status
-	const [loginStatus, setLoginStatus] = useState<LoginStatus>({
-		state: LoginState.Idle,
-	});
+	// Use loginStatus directly from uiState
+
+	const setLoginStatus = (status: LoginState | LoginStatus) => {
+		if (typeof status === "string") {
+			setUiState({
+				...uiState,
+				loginState: status,
+				loginError: undefined,
+			});
+		} else {
+			setUiState({
+				...uiState,
+				loginState: status.state,
+				loginError: status.error,
+			});
+		}
+	};
+
+	const onUserLoginSuccess = useCallback(
+		(user: AuthUser) => {
+			console.log("Login success with account", user);
+
+			localStorage.setItem(DID_LOCALSTORAGE_KEY, user.did);
+
+			setUiState({
+				...uiState,
+				currentUserDid: user.did,
+				loginState: LoginState.Success,
+				loginError: undefined,
+				isLoginDialogOpen: false,
+			});
+			setClient(client);
+		},
+		[uiState, setUiState, setClient, client],
+	);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
 		if (client) {
+			if (uiState.currentUserDid) {
+				return;
+			}
 			(async () => {
+				// Check localStorage for existing user DID
+				const storedDidFromLocalStorage =
+					localStorage.getItem(DID_LOCALSTORAGE_KEY);
+
 				const accounts = client.accounts();
-				const existingAccount = (accounts as any)[uiState.currentUserDid];
-				if (existingAccount) {
-					setUser({
-						did: existingAccount.did(),
-						delegation: new ArrayBuffer(0),
-					});
-					setAgentDid(uiState.currentUserDid);
+
+				const existingDid = uiState.currentUserDid || storedDidFromLocalStorage;
+
+				// First, try to recover from localStorage
+				if (existingDid) {
+					const existingAccount = (accounts as any)[existingDid];
+					if (existingAccount) {
+						const user = {
+							did: existingAccount.did(),
+							delegation: new ArrayBuffer(0),
+						};
+						setUiState({
+							...uiState,
+							currentUserDid: user.did,
+						});
+					}
 				}
+
+				setIsLoading(false);
 			})();
 		}
 	}, [client]);
+
+	// Currently for Bluesky only
+
+	useEffect(() => {
+		const checkAndRefreshSession = async () => {
+			// During logout, avoid re-login right away
+
+			if (uiState.loginState === LoginState.Idle) {
+				return;
+			}
+
+			const existingSession = await blueskyOAuth.getCurrentSession();
+			if (existingSession && !uiState.currentUserDid) {
+				const handle = getBlueskyHandle();
+				const user = mapBlueskySessionAsUser(existingSession, handle);
+				onUserLoginSuccess(user);
+				if (user.handle) {
+					localStorage.setItem("geist.user.handle", user.handle);
+				}
+			}
+
+			// Try to refresh token if we have a session
+			if (existingSession) {
+				try {
+					await refreshBlueskyToken();
+				} catch (error) {
+					console.error("Failed to refresh Bluesky token:", error);
+					// If refresh fails, clear the session
+					clearBlueskyAuth();
+				}
+			}
+		};
+
+		checkAndRefreshSession();
+
+		// Set up periodic token refresh (every 30 minutes)
+		const refreshInterval = setInterval(
+			async () => {
+				const session = await blueskyOAuth.getCurrentSession();
+				if (session) {
+					refreshBlueskyToken().catch((error) => {
+						console.error("Failed to refresh Bluesky token:", error);
+						clearBlueskyAuth();
+					});
+				}
+			},
+			30 * 60 * 1000,
+		); // 30 minutes
+
+		return () => clearInterval(refreshInterval);
+	}, [onUserLoginSuccess, uiState.currentUserDid, uiState.loginState]);
 
 	// Login function
 	const login = async (email: string) => {
 		try {
 			setLoginStatus({ state: LoginState.Loading });
+
+			// Check if client is available
+			if (!client) {
+				throw new Error("Client not initialized");
+			}
 
 			// Initialize client if not already initialized
 			setLoginStatus({ state: LoginState.Pending });
@@ -96,31 +209,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			if (!account) {
 				return;
 			}
-			// while it's possible for storacha client to connect to multiple accounts
-			// currently we use the email login did
 
 			const user = {
 				did: account?.model?.id,
 				delegation: new ArrayBuffer(0),
 			};
 
-			console.log("Login success with account", user);
-
-			// TODO merge user and ui state
-			setUser(user);
-
-			setUiState({
-				...uiState,
-				currentUserDid: user.did,
-			});
-			setClient(client);
-			setAgentDid(account?.model?.id);
-
-			setLoginStatus({ state: LoginState.Success });
+			onUserLoginSuccess(user);
+			// while it's possible for storacha client to connect to multiple accounts
+			// currently we use the email login did
 		} catch (error) {
 			console.error("Login failed:", error);
-
-			setUser(null);
 			setLoginStatus({
 				state: LoginState.Error,
 				error: error instanceof Error ? error.message : "Login failed",
@@ -128,18 +227,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	};
 
+	// Bluesky OAuth login function
+	const loginWithBluesky = async (handle?: string) => {
+		try {
+			setLoginStatus({ state: LoginState.Loading });
+			await blueskyLogin(handle);
+		} catch (error) {
+			console.error("Bluesky login failed:", error);
+			setLoginStatus({
+				state: LoginState.Error,
+				error: error instanceof Error ? error.message : "Bluesky login failed",
+			});
+		}
+	};
+
+	// Clear Bluesky authentication
+	const clearBlueskyAuth = () => {
+		clearBlueskySession();
+		localStorage.removeItem(DID_LOCALSTORAGE_KEY);
+		localStorage.removeItem("geist.user.handle");
+
+		setUiState({
+			...uiState,
+			currentUserDid: "",
+		});
+	};
+
 	// Reset login status
 	const resetLoginStatus = () => {
-		setLoginStatus({ state: LoginState.Idle });
+		setLoginStatus(LoginState.Idle);
+	};
+
+	// Logout function that clears all auth state
+	const logout = () => {
+		clearBlueskyAuth();
+		// Also clear any Storacha auth if needed
+		localStorage.removeItem(DID_LOCALSTORAGE_KEY);
+		setUiState({
+			...uiState,
+			currentUserDid: "",
+			loginState: LoginState.Initialize,
+			loginError: undefined,
+		});
+		console.log("logout", uiState);
 	};
 
 	const value: AuthContextType = {
-		user,
+		user: uiState.currentUserDid
+			? {
+					did: uiState.currentUserDid,
+					delegation: new ArrayBuffer(0),
+				}
+			: null,
 		isLoading,
-		isAuthenticated: !!user,
+		isAuthenticated: !!uiState.currentUserDid,
 		error,
-		loginStatus,
+		loginStatus: {
+			state: uiState.loginState as LoginState,
+			error: uiState.loginError,
+		},
+		onUserLoginSuccess,
 		login,
+		loginWithBluesky,
+		logout,
+		clearBlueskyAuth,
+		setLoginStatus,
 		resetLoginStatus,
 	};
 

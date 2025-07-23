@@ -241,13 +241,13 @@ export const createUserDelegation = async ({
 
 	console.log(
 		"delegation created successfully",
-		"by",
+		"agentDid",
 		client.did(),
-		"for",
-		userDid,
 		"with",
 		space.did(),
 	);
+
+	console.log("capabilities", capabilities);
 	return {
 		delegation,
 		client,

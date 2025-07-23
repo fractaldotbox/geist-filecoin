@@ -23,5 +23,9 @@ export default defineConfig({
 	server: {
 		port: 8787,
 	},
+
 	worker: { format: "es" },
+	define: {
+		global: "globalThis",
+	},
 });

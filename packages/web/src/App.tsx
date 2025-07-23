@@ -10,10 +10,11 @@ import ContentTypeSelectPage from "@/pages/editor/ContentTypeSelectPage";
 import EntryEditorPage from "@/pages/editor/EntryEditorPage";
 import { THEME_STORAGE_KEY } from "@/stores/theme";
 import { createContext, useContext, useEffect, useState } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router";
 import { Toaster } from "sonner";
 import { DemoModeBanner } from "./components/react/DemoModeBanner";
 import { useDemoMode } from "./components/react/hooks/useDemoMode";
+import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import HomePage from "./pages/HomePage";
 
 // Create context for spaces drawer
@@ -56,6 +57,7 @@ function App() {
 				<Layout>
 					<Routes>
 						<Route path="/" element={<HomePage />} />
+						<Route path="/auth/callback" element={<AuthCallbackPage />} />
 						<Route
 							path="/space/:spaceId/entries"
 							element={<ContentEntriesPage />}
@@ -71,11 +73,11 @@ function App() {
 							element={<ContentTypeEditorPage />}
 						/>
 						<Route
-							path="/editor/space/:spaceId/content-type/:content-type-id/new"
+							path="/editor/space/:spaceId/content-type/:contentTypeId/new"
 							element={<EntryEditorPage />}
 						/>
 						<Route
-							path="/editor/space/:spaceId/entry/:id"
+							path="/editor/space/:spaceId/entry/:entryId"
 							element={<EntryEditorPage />}
 						/>
 					</Routes>

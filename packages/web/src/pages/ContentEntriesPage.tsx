@@ -49,7 +49,7 @@ import {
 	Search,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import { useSpacesDrawer } from "../App";
 import { useStorachaContext } from "../components/react/StorachaProvider";
 import { StorageProvider } from "../constants/storage-providers";
@@ -227,7 +227,9 @@ export default function ContentEntriesPage() {
 								</p>
 							</div>
 							<div className="flex items-center gap-2">
-								<Link to={`/editor/space/${uiState.currentSpaceId}/content-type/select`}>
+								<Link
+									to={`/editor/space/${uiState.currentSpaceId}/content-type/select`}
+								>
 									<Button>
 										<FilePlus className="w-4 h-4 mr-2" />
 										Create Entry

@@ -1,4 +1,5 @@
-import { DurableObject, type DurableObjectId } from "cloudflare:workers";
+import { DurableObject } from "cloudflare:workers";
+import type { DurableObjectId } from "cloudflare:workers";
 import { authorizeUcan } from "@geist-filecoin/auth";
 import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import type { Env } from "@livestore/sync-cf/cf-worker";
@@ -13,7 +14,6 @@ import { Buffer } from 'node:buffer';
 import * as jose from 'jose';
 
 export class Policies extends DurableObject<Env> {
-	private policies: any[] = [];
 	private storage: any;
 
 	constructor(state: any, env: any) {
@@ -50,7 +50,6 @@ export class Policies extends DurableObject<Env> {
 	async addPolicies(policies: AccessPolicy[]) {
 		if (policies.length === 0) return;
 
-		console.log("DO addPolicies", policies);
 		const values = policies
 			.map((policy) => {
 				const { criteriaType, criteria, access } = policy;
@@ -119,16 +118,6 @@ const router = Router({
 	finally: [corsify],
 });
 
-router.post("/api/upload", async (request: Request) => {
-	console.log("upload");
-
-	return new Response(JSON.stringify({ message: "Uploaded" }), {
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-});
-
 export const authorizeJWT = async (
 	policies: AccessPolicy[],
 	input: AuthInput,
@@ -147,6 +136,16 @@ export const authorizeJWT = async (
 
 	return token;
 };
+
+router.post("/api/upload", async (request: Request) => {
+	console.log("upload");
+
+	return new Response(JSON.stringify({ message: "Uploaded" }), {
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+});
 
 export const loadStorachaSecrets = async (env: any) => {
 	const agentKeyString = await env.STORACHA_AGENT_KEY_STRING.get();
@@ -170,16 +169,16 @@ export const loadStorachaSecrets = async (env: any) => {
 // better off separate 2 requests from very beginning
 
 router.post("/api/auth/ucan", async (request: Request, env: any) => {
-	const { did, spaceId, tokenType } = await request.json();
+	const { agentDid, spaceId, tokenType } = await request.json();
 
 	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
 
-	if (!did) {
+	if (!agentDid) {
 		throw new Error("did is not set");
 	}
 
 	const input = {
-		subject: did,
+		subject: agentDid,
 		tokenType,
 		context: {
 			spaceId,
@@ -491,7 +490,7 @@ router.post("/api/iam", async (request: Request, env: any) => {
 });
 
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
-	const { did, tokenType } = await request.json();
+	const { agentDid, tokenType } = await request.json();
 
 	const policyDO = await getPolicyDO(request, env);
 
@@ -499,16 +498,16 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 
 	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET");
 
-	console.log("auth for user", did);
+	console.log("auth for user", agentDid);
 
-	if (!did) {
+	if (!agentDid) {
 		throw new Error("did is not set");
 	}
 
 	const jwt = await authorizeJWT(
 		policies,
 		{
-			subject: did,
+			subject: agentDid,
 		},
 		jwtSecret,
 	);
