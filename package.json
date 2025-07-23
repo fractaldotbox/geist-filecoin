@@ -16,10 +16,5 @@
 	"packageManager": "pnpm@8.15.4",
 	"engines": {
 		"node": ">=23.0.0"
-	},
-	"pnpm": {
-		"overrides": {
-			"multiformats": "13.3.7"
-		}
 	}
 }

@@ -3,7 +3,7 @@ import SpaceBreadcrumb from "@/components/react/SpaceBreadcrumb";
 import { allEntries$, allSpaces$, useUiState } from "@/livestore/queries";
 import { useStore } from "@livestore/react";
 import { useMemo } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router";
 
 export default function EntryEditorPage() {
 	const { entryId, contentTypeId, spaceId } = useParams();

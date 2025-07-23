@@ -3,7 +3,7 @@ import SpaceBreadcrumb from "@/components/react/SpaceBreadcrumb";
 import { allEntries$, allSpaces$, useUiState } from "@/livestore/queries";
 import { useStore } from "@livestore/react";
 import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import AccessControlPanel from "./AccessControlPanel";
 
 export default function AccessControlPage() {

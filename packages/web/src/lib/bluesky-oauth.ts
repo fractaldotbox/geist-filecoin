@@ -3,8 +3,9 @@ import {
 	type OAuthSession,
 	XrpcHandleResolver,
 } from "@atproto/oauth-client-browser";
+import { createClientMetadata } from "./client-metadata";
 
-export const HOST = import.meta.env.VITE_HOST || "https://tunnel.geist.network";
+const HOST = import.meta.env.VITE_HOST || "https://filecoin.geist.network";
 
 class BlueskyOAuthManager {
 	private client: BrowserOAuthClient | null = null;
@@ -12,26 +13,7 @@ class BlueskyOAuthManager {
 	private currentHandle: string | null = null;
 
 	private get clientMetadata() {
-		const origin = window.location.origin;
-		// Bluesky OAuth requires non-loopback URLs for production
-		const isLocalhost =
-			origin.includes("localhost") || origin.includes("127.0.0.1");
-		const baseUrl = isLocalhost ? HOST : origin;
-
-		return {
-			client_id: `${HOST}/client-metadata.json`,
-			client_name: "Geist Filecoin",
-			client_uri: baseUrl,
-			redirect_uris: [`${HOST}/auth/callback`],
-			grant_types: ["authorization_code", "refresh_token"],
-			response_types: ["code"],
-			scope: "atproto transition:generic",
-			application_type: "web",
-			token_endpoint_auth_method: "none",
-			require_pushed_authorization_requests: false,
-			dpop_bound_access_tokens: true,
-			dpop_signing_alg_values_supported: ["ES256", "RS256"],
-		};
+		return createClientMetadata(HOST);
 	}
 
 	async initialize(): Promise<void> {

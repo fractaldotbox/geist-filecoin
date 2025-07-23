@@ -49,7 +49,7 @@ import {
 	Search,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import { useSpacesDrawer } from "../App";
 import { useStorachaContext } from "../components/react/StorachaProvider";
 import { StorageProvider } from "../constants/storage-providers";

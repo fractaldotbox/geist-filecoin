@@ -6,3 +6,5 @@ node_modules/
 dist/
 
 packages/web/playwright-report/
+
+packages/web/build
