@@ -7,6 +7,6 @@ export default {
 		unstable_viteEnvironmentApi: true,
 	},
 	async prerender() {
-		return ["/", "/client-metadata.json"];
+		return ["/", "/auth/callback", "/client-metadata.json"];
 	},
 } satisfies Config;
