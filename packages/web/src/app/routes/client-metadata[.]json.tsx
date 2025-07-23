@@ -4,7 +4,7 @@ import { createClientMetadata } from "../../lib/client-metadata";
 
 export const loader: RequestHandler = async ({ context }: Route.LoaderArgs) => {
 	const host =
-		(context as any)?.cloudflare?.env?.HOST || "filecoin.geist.network";
+		(context as any)?.cloudflare?.env?.HOST || "https://filecoin.geist.network";
 	const clientMetadata = createClientMetadata(host);
 
 	return new Response(JSON.stringify(clientMetadata, null, 2), {

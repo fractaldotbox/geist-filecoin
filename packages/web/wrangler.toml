@@ -11,7 +11,7 @@ routes = [
 
 
 [vars]
-HOST = "filecoin.geist.network"
+HOST = "https://filecoin.geist.network"
 
 # Option 2: Cloudflare zone route
 # routes = [
