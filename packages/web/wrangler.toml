@@ -6,6 +6,7 @@ workers_dev = false
 
 # Option 1: Custom domain (requires domain setup in Cloudflare)
 routes = [
+   { pattern = "filecoin.geist.network/auth/callback", custom_domain = true },
    { pattern = "filecoin.geist.network", custom_domain = true }
  ]
 
