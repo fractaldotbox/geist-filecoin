@@ -18,7 +18,7 @@ export function createClientMetadata(baseUrl: string): ClientMetadata {
 		client_id: `${baseUrl}/client-metadata.json`,
 		client_name: "Geist Filecoin",
 		client_uri: baseUrl,
-		redirect_uris: [`${baseUrl}/auth/callback`],
+		redirect_uris: [`${baseUrl}/auth/callback/`],
 		grant_types: ["authorization_code", "refresh_token"],
 		response_types: ["code"],
 		scope: "atproto transition:generic",

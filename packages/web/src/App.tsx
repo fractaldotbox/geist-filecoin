@@ -56,7 +56,7 @@ function App() {
 				<Navigation onSpacesClick={openSpacesDrawer} />
 				<Layout>
 					<Routes>
-						<Route path="/" element={<HomePage />} />
+						<Route path="/*" element={<HomePage />} />
 						<Route path="/auth/callback" element={<AuthCallbackPage />} />
 						<Route
 							path="/space/:spaceId/entries"
