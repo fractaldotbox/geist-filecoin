@@ -8,3 +8,4 @@ dist/
 packages/web/playwright-report/
 
 packages/web/build
+packages/web/.react-router/
