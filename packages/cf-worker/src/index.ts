@@ -251,7 +251,6 @@ router.get('/api/test', async (request: Request, env: any) => {
 });
 
 router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => {
-	console.log('hihi');
 	const resourceId = request.params.resourceId;
 	const version = request.query.version;
 	const shouldDecrypt = request.query.decrypt !== 'true';
