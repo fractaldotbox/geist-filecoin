@@ -8,7 +8,7 @@ export default {
       console.log('auth callback', code)
     }
 
-    if (url.pathname === "client-metadata.json") {
+    if (url.pathname === "/client-metadata.json") {
       const baseUrl = url.origin;
       const clientMetadata = 	getClientMetadata(baseUrl);
       return Response.json(clientMetadata);
