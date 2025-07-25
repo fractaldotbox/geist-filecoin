@@ -7,7 +7,7 @@ const blog = defineCollection({
 	loader: {
 		name: 'blog-loader',
 		load: async ({ store, parseData, renderMarkdown }) => {
-			const response = await fetch(`${domain}/blogs`);
+			const response = await fetch(`${domain}/blogs?mode=append`);
 			const data = await response.json();
 			store.clear();
 
@@ -43,7 +43,7 @@ const landing = defineCollection({
 	loader: {
 		name: 'landing-loader',
 		load: async ({ store, parseData }) => {
-			const response = await fetch(`${domain}/landing`);
+			const response = await fetch(`${domain}/landing?mode=replace`);
 			const data = await response.json();
 			store.clear();
 
@@ -81,7 +81,7 @@ const products = defineCollection({
 	loader: {
 		name: 'products-loader',
 		load: async ({ store, parseData }) => {
-			const response = await fetch(`${domain}/products`);
+			const response = await fetch(`${domain}/products?mode=append`);
 			const data = await response.json();
 			store.clear();
 
