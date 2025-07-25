@@ -4,7 +4,7 @@ import { allEntries$, allSpaces$, useUiState } from "@/livestore/queries";
 import { useStore } from "@livestore/react";
 import { AlertCircle, Folder } from "lucide-react";
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useSpacesDrawer } from "../App";
 
 export default function HomePage() {
