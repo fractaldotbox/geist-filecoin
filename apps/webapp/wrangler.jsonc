@@ -8,14 +8,15 @@
 	"main": "worker/index.ts",
 	"compatibility_date": "2025-07-25",
 	"assets": {
-		"not_found_handling": "single-page-application"
+		"not_found_handling": "single-page-application",
+		"run_worker_first": ["/client-metadata.json"]
 	},
 	"observability": {
 		"enabled": true
 	},
 	"routes": [
 		{ "pattern": "filecoin.geist.network", "custom_domain": true }
-	]
+	],
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
@@ -33,7 +34,7 @@
 	 * Environment Variables
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
 	 */
-	// "vars": { "MY_VARIABLE": "production_value" },
+	"vars": { "HOST": "https://filecoin.geist.network" },
 	/**
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
