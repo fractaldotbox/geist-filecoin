@@ -5,4 +5,8 @@ node_modules/
 .wrangler/
 dist/
 
+.next/
+.dev.vars*
+
 packages/web/playwright-report/
+packages/web/build
