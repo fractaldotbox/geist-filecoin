@@ -1,0 +1,64 @@
+{
+	"../../node_modules/.pnpm/@livestore+wa-sqlite@1.0.5-dev.2/node_modules/@livestore/wa-sqlite/dist/wa-sqlite.wasm": {
+		"file": "assets/wa-sqlite-CWx0VZcQ.wasm",
+		"src": "../../node_modules/.pnpm/@livestore+wa-sqlite@1.0.5-dev.2/node_modules/@livestore/wa-sqlite/dist/wa-sqlite.wasm"
+	},
+	"../../node_modules/.pnpm/@react-router+dev@7.7.0_@types+node@22.15.32_react-router@7.7.0_tsx@4.20.3_typescript@5.8.3_vite@6.3.5_wrangler@4.22.0/node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx": {
+		"file": "assets/entry.client-Cp03f9ep.js",
+		"name": "entry.client",
+		"src": "../../node_modules/.pnpm/@react-router+dev@7.7.0_@types+node@22.15.32_react-router@7.7.0_tsx@4.20.3_typescript@5.8.3_vite@6.3.5_wrangler@4.22.0/node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx",
+		"isEntry": true,
+		"imports": ["_chunk-EF7DTUVF-BBWwU0kE.js", "_index-BkZpPgp-.js"]
+	},
+	"_App-DShJULFf.js": {
+		"file": "assets/App-DShJULFf.js",
+		"name": "App",
+		"imports": ["_chunk-EF7DTUVF-BBWwU0kE.js", "_index-BkZpPgp-.js"]
+	},
+	"_chunk-EF7DTUVF-BBWwU0kE.js": {
+		"file": "assets/chunk-EF7DTUVF-BBWwU0kE.js",
+		"name": "chunk-EF7DTUVF"
+	},
+	"_index-BkZpPgp-.js": {
+		"file": "assets/index-BkZpPgp-.js",
+		"name": "index",
+		"imports": ["_chunk-EF7DTUVF-BBWwU0kE.js"]
+	},
+	"src/app/root.tsx?__react-router-build-client-route": {
+		"file": "assets/root-DjMLaJH-.js",
+		"name": "root",
+		"src": "src/app/root.tsx?__react-router-build-client-route",
+		"isEntry": true,
+		"imports": [
+			"_chunk-EF7DTUVF-BBWwU0kE.js",
+			"_index-BkZpPgp-.js",
+			"_App-DShJULFf.js"
+		],
+		"css": ["assets/root-DpfiLXus.css"],
+		"assets": ["assets/wa-sqlite-CWx0VZcQ.wasm"]
+	},
+	"src/app/routes/_index.tsx?__react-router-build-client-route": {
+		"file": "assets/_index-B-Af7KW3.js",
+		"name": "_index",
+		"src": "src/app/routes/_index.tsx?__react-router-build-client-route",
+		"isEntry": true,
+		"imports": [
+			"_chunk-EF7DTUVF-BBWwU0kE.js",
+			"_App-DShJULFf.js",
+			"_index-BkZpPgp-.js"
+		]
+	},
+	"src/app/routes/auth.callback.tsx?__react-router-build-client-route": {
+		"file": "assets/auth.callback-uT842Sar.js",
+		"name": "auth.callback",
+		"src": "src/app/routes/auth.callback.tsx?__react-router-build-client-route",
+		"isEntry": true,
+		"imports": ["_chunk-EF7DTUVF-BBWwU0kE.js"]
+	},
+	"src/app/routes/client-metadata[.]json.tsx?__react-router-build-client-route": {
+		"file": "assets/client-metadata_._json-l0sNRNKZ.js",
+		"name": "client-metadata_._json",
+		"src": "src/app/routes/client-metadata[.]json.tsx?__react-router-build-client-route",
+		"isEntry": true
+	}
+}

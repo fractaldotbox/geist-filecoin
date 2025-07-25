@@ -1,0 +1,59 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"properties": {
+		"title": {
+			"type": "string",
+			"description": "The name of the product"
+		},
+		"slug": {
+			"type": "string",
+			"description": "The URL-friendly version of the product name"
+		},
+		"description": {
+			"type": "string",
+			"description": "A detailed description of the product"
+		},
+		"metaDescription": {
+			"type": "string",
+			"description": "A brief description for SEO purposes"
+		},
+		"price": {
+			"type": "number",
+			"description": "The price of the product"
+		},
+		"currency": {
+			"type": "string",
+			"description": "The currency code (e.g., USD, EUR)"
+		},
+		"features": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			},
+			"description": "List of product features"
+		},
+		"specifications": {
+			"type": "object",
+			"description": "Technical specifications of the product",
+			"additionalProperties": {
+				"type": "string"
+			}
+		},
+		"images": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			},
+			"description": "URLs of product images"
+		}
+	},
+	"required": [
+		"title",
+		"slug",
+		"description",
+		"metaDescription",
+		"price",
+		"currency"
+	]
+}
