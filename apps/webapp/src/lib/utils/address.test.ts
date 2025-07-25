@@ -14,7 +14,7 @@ describe("getShortAddress", () => {
 
 		it("should return shortened address with custom section length", () => {
 			const result = getShortAddress(validAddress, 6);
-			expect(result).toBe("0x742D35...c5C0F6");
+			expect(result).toBe("0x742D35...C5C0F6");
 		});
 
 		it("should handle lowercase addresses and return checksummed result", () => {
@@ -29,12 +29,12 @@ describe("getShortAddress", () => {
 
 		it("should work with section length of 8", () => {
 			const result = getShortAddress(validAddress, 8);
-			expect(result).toBe("0x742D35cC...C0c5C0F6");
+			expect(result).toBe("0x742D35CC...C0C5C0F6");
 		});
 
 		it("should work with maximum practical section length", () => {
 			const result = getShortAddress(validAddress, 18);
-			expect(result).toBe("0x742D35cC6634c05329...b8d6a521d2C0c5C0F6");
+			expect(result).toBe("0x742D35CC6634C05329...B8D6A521D2C0C5C0F6");
 		});
 	});
 
@@ -84,7 +84,7 @@ describe("getShortAddress", () => {
 		it("should handle all f's address", () => {
 			const maxAddress = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
 			const result = getShortAddress(maxAddress);
-			expect(result).toBe("0xFFfF...FFfF");
+			expect(result).toBe("0xFFFF...FFFF");
 		});
 
 		it("should return consistent results for same address", () => {

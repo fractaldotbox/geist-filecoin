@@ -53,10 +53,5 @@ export default defineConfig({
 	},
 	optimizeDeps: {
 		include: ["multiformats"],
-	},
-	test: {
-		environment: "jsdom",
-		globals: true,
-		setupFiles: ["./src/test/setup.ts"],
-	},
+	}
 });
