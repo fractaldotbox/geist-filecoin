@@ -1,0 +1,233 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { getCollection } from 'astro:content';
+
+// Get all products from the collection
+const products = await getCollection('products');
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title="Products - Our Storage Solutions" description="Explore our decentralized storage solutions and enterprise-grade products built on the Filecoin network." />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<!-- Hero Section -->
+			<section class="hero">
+				<div class="hero-content">
+					<h1>Our Products</h1>
+					<p class="hero-subheadline">Discover our cutting-edge decentralized storage solutions</p>
+				</div>
+			</section>
+
+			<!-- Products Grid -->
+			<section class="products">
+				<div class="container">
+					<div class="products-grid">
+						{products.map((product) => (
+							<div class="product-card">
+								<div class="product-image">
+									<img src={product.data.images[0]} alt={product.data.title} />
+								</div>
+								<div class="product-content">
+									<h3>{product.data.title}</h3>
+									<p class="product-description">{product.data.description}</p>
+									<div class="product-price">
+										<span class="price">${product.data.price}</span>
+										<span class="currency">{product.data.currency}</span>
+									</div>
+									<div class="product-features">
+										<h4>Key Features:</h4>
+										<ul>
+											{product.data.features.slice(0, 3).map((feature) => (
+												<li>{feature}</li>
+											))}
+										</ul>
+									</div>
+									<a href={`/products/${product.data.slug}`} class="view-details-btn">
+										View Details
+									</a>
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</section>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	.hero {
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		min-height: 40vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		color: white;
+	}
+
+	.hero-content {
+		max-width: 800px;
+		padding: 2rem;
+	}
+
+	.hero h1 {
+		font-size: 3rem;
+		margin-bottom: 1rem;
+		font-weight: bold;
+		color: white;
+		text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+	}
+
+	.hero-subheadline {
+		font-size: 1.25rem;
+		opacity: 0.9;
+	}
+
+	.products {
+		padding: 4rem 0;
+		background: #f8f9fa;
+	}
+
+	.container {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 0 2rem;
+	}
+
+	.products-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+		gap: 2rem;
+	}
+
+	.product-card {
+		background: white;
+		border-radius: 15px;
+		overflow: hidden;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
+	}
+
+	.product-card:hover {
+		transform: translateY(-5px);
+		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+	}
+
+	.product-image {
+		height: 250px;
+		overflow: hidden;
+	}
+
+	.product-image img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: transform 0.3s ease;
+	}
+
+	.product-card:hover .product-image img {
+		transform: scale(1.05);
+	}
+
+	.product-content {
+		padding: 2rem;
+	}
+
+	.product-content h3 {
+		font-size: 1.5rem;
+		margin-bottom: 1rem;
+		color: #333;
+	}
+
+	.product-description {
+		color: #666;
+		line-height: 1.6;
+		margin-bottom: 1.5rem;
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.product-price {
+		margin-bottom: 1.5rem;
+	}
+
+	.price {
+		font-size: 2rem;
+		font-weight: bold;
+		color: #007acc;
+	}
+
+	.currency {
+		font-size: 1rem;
+		color: #666;
+		margin-left: 0.5rem;
+	}
+
+	.product-features h4 {
+		color: #333;
+		margin-bottom: 0.5rem;
+		font-size: 1rem;
+	}
+
+	.product-features ul {
+		list-style: none;
+		padding: 0;
+		margin-bottom: 1.5rem;
+	}
+
+	.product-features li {
+		color: #666;
+		padding: 0.25rem 0;
+		position: relative;
+		padding-left: 1.5rem;
+	}
+
+	.product-features li::before {
+		content: "✓";
+		position: absolute;
+		left: 0;
+		color: #007acc;
+		font-weight: bold;
+	}
+
+	.view-details-btn {
+		display: inline-block;
+		background: #007acc;
+		color: white;
+		padding: 0.75rem 1.5rem;
+		text-decoration: none;
+		border-radius: 8px;
+		font-weight: bold;
+		transition: background 0.3s ease;
+		width: 100%;
+		text-align: center;
+	}
+
+	.view-details-btn:hover {
+		background: #005a99;
+	}
+
+	@media (max-width: 768px) {
+		.hero h1 {
+			font-size: 2rem;
+		}
+
+		.products-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.product-card {
+			margin: 0 1rem;
+		}
+	}
+</style>
