@@ -10,7 +10,7 @@ import ContentTypeSelectPage from "@/pages/editor/ContentTypeSelectPage";
 import EntryEditorPage from "@/pages/editor/EntryEditorPage";
 import { THEME_STORAGE_KEY } from "@/stores/theme";
 import { createContext, useContext, useEffect, useState } from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { DemoModeBanner } from "./components/react/DemoModeBanner";
 import { useDemoMode } from "./components/react/hooks/useDemoMode";

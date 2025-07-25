@@ -1,5 +1,5 @@
 import type { Space } from "@geist-filecoin/domain";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
