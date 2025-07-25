@@ -251,8 +251,10 @@ router.get('/api/test', async (request: Request, env: any) => {
 });
 
 router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => {
+	console.log('hihi');
 	const resourceId = request.params.resourceId;
 	const version = request.query.version;
+	const shouldDecrypt = request.query.decrypt !== 'true';
 
 	if (!resourceId) {
 		return new Response(JSON.stringify({ error: "Resource ID is required" }), {
@@ -261,21 +263,25 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 		});
 	}
 
-	// Get encryption key from environment for decryption
-	const encryptionKeyBase64 = await env.ENCRYPTION_KEY.get();
-	if (!encryptionKeyBase64) {
-		return new Response(JSON.stringify({ error: "Encryption key not configured" }), {
-			status: 500,
-			headers: { "Content-Type": "application/json" },
+	let secretKey: any = null;
+
+	// Only get encryption key if decryption is needed
+	if (shouldDecrypt) {
+		const encryptionKeyBase64 = await env.ENCRYPTION_KEY.get();
+		if (!encryptionKeyBase64) {
+			return new Response(JSON.stringify({ error: "Encryption key not configured" }), {
+				status: 500,
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+
+		// Convert base64 key to secret key for jose
+		const keyBytes = new Uint8Array(Buffer.from(encryptionKeyBase64, 'base64'));
+		secretKey = await jose.importJWK({
+			kty: 'oct',
+			k: jose.base64url.encode(keyBytes)
 		});
 	}
-
-	// Convert base64 key to secret key for jose
-	const keyBytes = new Uint8Array(Buffer.from(encryptionKeyBase64, 'base64'));
-	const secretKey = await jose.importJWK({
-		kty: 'oct',
-		k: jose.base64url.encode(keyBytes)
-	});
 
 	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
 
@@ -285,14 +291,33 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 	});
 
 	const uploadList = await listAllFiles({ client, spaceDid: space.did() });
-	
+
 	// Sort by updatedAt descending (newest first)
-	const sortedUploads = uploadList.sort((a, b) => 
+	const sortedUploads = uploadList.sort((a, b) =>
 		new Date(b.updatedAt || b.insertedAt).getTime() - new Date(a.updatedAt || a.insertedAt).getTime()
 	);
 
-	const resourceFileName = `${resourceId}.encrypted.json`;
+	const resourceFileName = shouldDecrypt ? `${resourceId}.encrypted.json` : `${resourceId}.json`;
 	const foundResources: any[] = [];
+
+	// Helper function to process resource data
+	const processResourceData = (resourceData: any, upload: any, cid: string, resourceUrl: string) => {
+		const mode = resourceData.meta?.mode || 'replace';
+
+		foundResources.push({
+			data: resourceData.data,
+			meta: {
+				...resourceData.meta,
+				cid,
+				updatedAt: upload.updatedAt,
+				insertedAt: upload.insertedAt,
+				gatewayUrl: resourceUrl,
+			},
+		});
+
+		// Return true if we should stop processing (latestOnly or replace mode)
+		return version === 'latestOnly' || mode === 'replace';
+	};
 
 	// Fetch resources from newest to oldest uploads
 	for (const upload of sortedUploads) {
@@ -302,35 +327,21 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 			const response = await fetch(resourceUrl);
 
 			if (response.ok) {
-				// The file content is the JWE string directly, not wrapped in JSON
-				const jweString = await response.text();
-				
+				const fileContent = await response.text();
+				let resourceData: any;
+
 				try {
-					// Decrypt the JWE using jose
-					const { plaintext } = await jose.compactDecrypt(jweString, secretKey);
-					const decryptedJson = new TextDecoder().decode(plaintext);
-					const decryptedData = JSON.parse(decryptedJson);
-
-					const mode = decryptedData.meta?.mode || 'replace';
-
-					foundResources.push({
-						data: decryptedData.data,
-						meta: {
-							...decryptedData.meta,
-							cid,
-							updatedAt: upload.updatedAt,
-							insertedAt: upload.insertedAt,
-							gatewayUrl: resourceUrl,
-						},
-					});
-
-					// Stop if latestOnly requested or replace mode
-					if (version === 'latestOnly' || mode === 'replace') {
-						break;
+					if (shouldDecrypt) {
+						const { plaintext } = await jose.compactDecrypt(fileContent, secretKey);
+						const decryptedJson = new TextDecoder().decode(plaintext);
+						resourceData = JSON.parse(decryptedJson);
+					} else {
+						resourceData = JSON.parse(fileContent);
 					}
-				} catch (decryptError) {
-					console.warn(`Could not decrypt resource from upload ${upload.root}:`, decryptError);
-					// If decryption fails, skip this resource
+					const shouldStop = processResourceData(resourceData, upload, cid, resourceUrl);
+					if (shouldStop) break;
+				} catch (error) {
+					console.warn(`Could not process resource from upload ${upload.root}:`, error);
 				}
 			}
 		} catch (error) {
@@ -339,7 +350,7 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 	}
 
 	if (!foundResources.length) {
-		return new Response(JSON.stringify({ 
+		return new Response(JSON.stringify({
 			error: "Resource not found",
 			resourceId,
 		}), {
@@ -348,127 +359,13 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 		});
 	}
 
-	return new Response(JSON.stringify({ 
-		resourceId, 
+	return new Response(JSON.stringify({
+		resourceId,
 		resources: foundResources,
 	}), {
 		headers: { "Content-Type": "application/json" },
 	});
 });
-
-router.post('/api/encrypt', async (request: Request, env: any) => {
-	try {
-		const body = await request.json();
-
-		if (!body || (typeof body === 'object' && Object.keys(body).length === 0)) {
-			return new Response(JSON.stringify({ error: "Request body is required" }), {
-				status: 400,
-				headers: { "Content-Type": "application/json" },
-			});
-		}
-
-		// Get encryption key from environment
-		const encryptionKeyBase64 = await env.ENCRYPTION_KEY.get();
-		if (!encryptionKeyBase64) {
-			return new Response(JSON.stringify({ error: "Encryption key not configured" }), {
-				status: 500,
-				headers: { "Content-Type": "application/json" },
-			});
-		}
-
-		// Convert base64 key to secret key for jose
-		const keyBytes = new Uint8Array(Buffer.from(encryptionKeyBase64, 'base64'));
-		const secretKey = await jose.importJWK({
-			kty: 'oct',
-			k: jose.base64url.encode(keyBytes)
-		});
-
-		// Encrypt using jose CompactEncrypt - encrypt the entire body
-		const jwe = await new jose.CompactEncrypt(
-			new TextEncoder().encode(JSON.stringify(body))
-		)
-			.setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
-			.encrypt(secretKey);
-
-		return new Response(JSON.stringify({
-			jwe: jwe,
-			success: true
-		}), {
-			headers: { "Content-Type": "application/json" },
-		});
-
-	} catch (error) {
-		console.error('Encryption error:', error);
-		const errorMessage = error instanceof Error ? error.message : "Unknown encryption error";
-		return new Response(JSON.stringify({ 
-			error: errorMessage,
-			success: false
-		}), {
-			status: 500,
-			headers: { "Content-Type": "application/json" },
-		});
-	}
-});
-
-router.post('/api/decrypt', async (request: Request, env: any) => {
-	try {
-		const body = await request.json();
-		const { jwe } = body;
-
-		if (!jwe) {
-			return new Response(JSON.stringify({ 
-				error: "JWE is required" 
-			}), {
-				status: 400,
-				headers: { "Content-Type": "application/json" },
-			});
-		}
-
-		// Get encryption key from environment
-		const encryptionKeyBase64 = await env.ENCRYPTION_KEY.get();
-		if (!encryptionKeyBase64) {
-			return new Response(JSON.stringify({ error: "Encryption key not configured" }), {
-				status: 500,
-				headers: { "Content-Type": "application/json" },
-			});
-		}
-
-		// Convert base64 key to secret key for jose
-		const keyBytes = new Uint8Array(Buffer.from(encryptionKeyBase64, 'base64'));
-		const secretKey = await jose.importJWK({
-			kty: 'oct',
-			k: jose.base64url.encode(keyBytes)
-		});
-
-		// Decrypt using jose compactDecrypt
-		const { plaintext, protectedHeader } = await jose.compactDecrypt(jwe, secretKey);
-		const decryptedData = new TextDecoder().decode(plaintext);
-
-		// Parse the decrypted JSON back to object
-		const decryptedBody = JSON.parse(decryptedData);
-
-		return new Response(JSON.stringify({
-			data: decryptedBody,
-			protectedHeader: protectedHeader,
-			success: true
-		}), {
-			headers: { "Content-Type": "application/json" },
-		});
-
-	} catch (error) {
-		console.error('Decryption error:', error);
-		const errorMessage = error instanceof Error ? error.message : "Unknown decryption error";
-		return new Response(JSON.stringify({ 
-			error: errorMessage,
-			success: false
-		}), {
-			status: 500,
-			headers: { "Content-Type": "application/json" },
-		});
-	}
-});
-
-
 
 router.get("/websocket", async (request: Request, env: any) => {
 	return await env.WORKER_LIVESTORE.fetch(request, env);
@@ -496,7 +393,7 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 
 	const policies = await policyDO.getAllPolicies();
 
-	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET");
+	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET") || env.DEFAULT_GEIST_JWT_SECRET;
 
 	console.log("auth for user", agentDid);
 
