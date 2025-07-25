@@ -164,10 +164,8 @@ async function uploadDirectory({
 
 export function EntryEditor({
 	entryId,
-	contentTypeId,
 }: {
 	entryId?: string;
-	contentTypeId?: string;
 }) {
 	const { contentTypeId } = useParams();
 	const [isLoaded, setIsLoaded] = useState(false);
