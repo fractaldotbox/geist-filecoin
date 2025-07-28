@@ -20,7 +20,8 @@
 	"pnpm": {
 		"overrides": {
 			"lodash": ">=4.17.21",
-			"axios": ">=0.30.0"
+			"axios": ">=0.30.0",
+			"form-data": ">=2.5.4"
 		}
 	}
 }
