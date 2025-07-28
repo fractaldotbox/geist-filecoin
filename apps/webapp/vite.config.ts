@@ -57,7 +57,7 @@ export default defineConfig({
 						"tailwind-merge",
 						"ky"
 					],
-					'storage-vendor': ["@lighthouse-web3/sdk", "@web3-storage/w3up-client"],
+					'storage-vendor': ["@lighthouse-web3/sdk", "@storacha/client"],
 					'livestore-vendor': [
 						"@livestore/react",
 						"@livestore/adapter-web",

@@ -1,6 +1,6 @@
 import { authWithEmail } from "@geist-filecoin/storage";
 import { useStore } from "@livestore/react";
-import type { DidMailto, EmailAddress } from "@web3-storage/w3up-client/types";
+import type { DidMailto, EmailAddress } from "@storacha/client/types";
 import {
 	createContext,
 	useCallback,

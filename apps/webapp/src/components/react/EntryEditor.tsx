@@ -37,7 +37,7 @@ import { useLiveStore } from "./hooks/useLiveStore";
 
 import type { Entry } from "@geist-filecoin/domain";
 import { uploadFiles } from "@geist-filecoin/storage";
-import type { Client } from "@web3-storage/w3up-client";
+import type { Client } from "@storacha/client";
 import { useParams } from "react-router-dom";
 
 // Upload mode enum

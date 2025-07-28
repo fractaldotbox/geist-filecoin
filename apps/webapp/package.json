@@ -43,7 +43,7 @@
 		"@types/react": "^19.1.2",
 		"@types/react-dom": "^19.1.2",
 		"@w3ui/react": "^2.5.5",
-		"@web3-storage/w3up-client": "^16.5.2",
+		"@storacha/client": "^16.5.2",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"jsdom": "^26.1.0",

@@ -1,14 +1,14 @@
 import {
 	Signer,
 	type DID as W3DID,
-} from "@web3-storage/w3up-client/principal/ed25519";
-import * as Proof from "@web3-storage/w3up-client/proof";
+} from "@storacha/client/principal/ed25519";
+import * as Proof from "@storacha/client/proof";
 import type {
 	Client,
 	EmailAddress,
 	FileLike,
 	ProgressStatus,
-} from "@web3-storage/w3up-client/types";
+} from "@storacha/client/types";
 
 // from ky https://github.com/sindresorhus/ky/blob/1d92c203f7f60df37c03d60360237d8cb9bcb30a/source/types/options.ts#L15C1-L23C3
 export type DownloadProgress = {
@@ -22,11 +22,11 @@ export type DownloadProgress = {
 };
 
 import * as DID from "@ipld/dag-ucan/did";
-import type { ServiceAbility } from "@web3-storage/w3up-client/types";
+import type { ServiceAbility } from "@storacha/client/types";
 
 // import * as DID from "@ipld/dag-ucan/did";
-import { Account, create } from "@web3-storage/w3up-client";
-import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
+import { Account, create } from "@storacha/client";
+import { StoreMemory } from "@storacha/client/stores/memory";
 
 // enable sync methods
 import * as ed from "@noble/ed25519";

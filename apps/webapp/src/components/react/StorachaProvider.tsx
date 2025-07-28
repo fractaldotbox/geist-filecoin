@@ -1,7 +1,7 @@
 import { useStore } from "@livestore/react";
 import { type Capabilities, type Delegation, Provider } from "@w3ui/react";
-import * as Client from "@web3-storage/w3up-client";
-import { StoreIndexedDB } from "@web3-storage/w3up-client/stores/indexeddb";
+import * as Client from "@storacha/client";
+import { StoreIndexedDB } from "@storacha/client/stores/indexeddb";
 import {
 	type ReactNode,
 	createContext,

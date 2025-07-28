@@ -1,5 +1,5 @@
 import type { Entry } from "@geist-filecoin/domain";
-import type { UploadListItem } from "@web3-storage/w3up-client/dist/src/types";
+import type { UploadListItem } from "@storacha/client/types";
 import ky from "ky";
 
 export interface EntryMetadata {
