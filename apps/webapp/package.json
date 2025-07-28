@@ -12,7 +12,7 @@
 		"cf-typegen": "wrangler types",
 		"test": "vitest",
 		"test:ui": "vitest --ui",
-		"analyze": "vite-bundle-analyzer dist/stats.json"
+		"analyze": "ANALYZE=1 pnpm run build"
 	},
 	"dependencies": {
 		"@atproto-labs/handle-resolver": "^0.3.0",
