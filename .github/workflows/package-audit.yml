@@ -1,0 +1,269 @@
+name: Package Vulnerability Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      severity_threshold:
+        description: 'Minimum severity level to report'
+        required: true
+        default: 'moderate'
+        type: choice
+        options:
+          - low
+          - moderate
+          - high
+          - critical
+      fix_vulnerabilities:
+        description: 'Attempt to automatically fix vulnerabilities'
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    # Run every day at 6 AM UTC
+    - cron: '0 6 * * *'
+
+concurrency:
+  group: package-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "23"
+  PNPM_VERSION: "10.13.1"
+
+jobs:
+  audit-packages:
+    name: Audit Package Vulnerabilities
+    runs-on: ubuntu-latest
+    
+    outputs:
+      vulnerabilities-found: ${{ steps.audit.outputs.vulnerabilities-found }}
+      critical-found: ${{ steps.audit.outputs.critical-found }}
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run comprehensive package audit
+        id: audit
+        run: |
+          echo "## 📦 Package Vulnerability Audit Report" > audit-report.md
+          echo "" >> audit-report.md
+          echo "**Scan Date:** $(date -u)" >> audit-report.md
+          echo "**Severity Threshold:** ${{ inputs.severity_threshold || 'moderate' }}" >> audit-report.md
+          echo "" >> audit-report.md
+          
+          vulnerabilities_found=false
+          critical_found=false
+          
+          # Function to run audit for a specific workspace
+          audit_workspace() {
+            local workspace=$1
+            local path=$2
+            
+            echo "### 🔍 Auditing $workspace" >> audit-report.md
+            echo "" >> audit-report.md
+            
+            cd "$path"
+            
+            if pnpm audit --audit-level ${{ inputs.severity_threshold || 'moderate' }} --json > "audit-$workspace.json" 2>&1; then
+              echo "✅ No vulnerabilities found above ${{ inputs.severity_threshold || 'moderate' }} level" >> ../audit-report.md
+            else
+              echo "⚠️ Vulnerabilities detected:" >> ../audit-report.md
+              echo "" >> ../audit-report.md
+              
+              # Parse and format the audit results
+              if [[ -f "audit-$workspace.json" ]]; then
+                # Extract vulnerability details
+                jq -r '.advisories | to_entries[] | "- **\(.value.title)** (ID: \(.key))\n  - Severity: \(.value.severity)\n  - Package: \(.value.module_name)\n  - Vulnerable Versions: \(.value.vulnerable_versions)\n  - Patched Versions: \(.value.patched_versions // "None")\n"' "audit-$workspace.json" >> ../audit-report.md 2>/dev/null || echo "Raw audit output:" >> ../audit-report.md
+                
+                # Check for critical/high vulnerabilities
+                if grep -q '"severity":\s*"critical"\|"severity":\s*"high"' "audit-$workspace.json"; then
+                  critical_found=true
+                fi
+                
+                vulnerabilities_found=true
+              fi
+            fi
+            
+            echo "" >> ../audit-report.md
+            cd - > /dev/null
+          }
+          
+          # Audit root workspace
+          audit_workspace "Root" "."
+          
+          # Audit webapp
+          if [[ -d "apps/webapp" ]]; then
+            audit_workspace "WebApp" "apps/webapp"
+          fi
+          
+          # Audit packages
+          for package_dir in packages/*/; do
+            if [[ -f "$package_dir/package.json" ]]; then
+              package_name=$(basename "$package_dir")
+              audit_workspace "$package_name" "$package_dir"
+            fi
+          done
+          
+          # Set outputs
+          echo "vulnerabilities-found=$vulnerabilities_found" >> $GITHUB_OUTPUT
+          echo "critical-found=$critical_found" >> $GITHUB_OUTPUT
+          
+          # Create summary
+          if [[ "$vulnerabilities_found" == "true" ]]; then
+            echo "" >> audit-report.md
+            echo "## 🚨 Action Required" >> audit-report.md
+            echo "" >> audit-report.md
+            echo "Vulnerabilities were detected in your dependencies. Please review the details above and take appropriate action." >> audit-report.md
+            
+            if [[ "$critical_found" == "true" ]]; then
+              echo "" >> audit-report.md
+              echo "⚠️ **Critical or High severity vulnerabilities found!** Immediate attention required." >> audit-report.md
+            fi
+          else
+            echo "" >> audit-report.md
+            echo "## ✅ All Clear" >> audit-report.md
+            echo "" >> audit-report.md
+            echo "No vulnerabilities found above the specified threshold." >> audit-report.md
+          fi
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: package-audit-results
+          path: |
+            audit-report.md
+            audit-*.json
+          retention-days: 30
+
+      - name: Display audit report
+        if: always()
+        run: |
+          echo "📋 Adding audit report to job summary..."
+          cat audit-report.md >> $GITHUB_STEP_SUMMARY
+
+  auto-fix:
+    name: Auto-fix Vulnerabilities
+    runs-on: ubuntu-latest
+    needs: audit-packages
+    if: inputs.fix_vulnerabilities == true && needs.audit-packages.outputs.vulnerabilities-found == 'true'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Configure git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Attempt to fix vulnerabilities
+        run: |
+          echo "🔧 Attempting to fix vulnerabilities automatically..."
+          
+          # Try to fix vulnerabilities using pnpm
+          if pnpm audit --fix 2>&1 | tee fix-output.txt; then
+            echo "✅ Auto-fix completed successfully"
+          else
+            echo "⚠️ Auto-fix completed with warnings"
+          fi
+          
+          # Check if lockfile was modified
+          if git diff --quiet pnpm-lock.yaml; then
+            echo "No changes made to lockfile"
+            echo "fix-applied=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected in lockfile"
+            echo "fix-applied=true" >> $GITHUB_ENV
+          fi
+
+      - name: Create Pull Request with fixes
+        if: env.fix-applied == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            fix: auto-fix package vulnerabilities
+            
+            Applied automatic fixes for package vulnerabilities detected in audit.
+            
+            🤖 This PR was created automatically by the Package Audit workflow.
+          title: "🔒 Auto-fix package vulnerabilities"
+          body: |
+            ## 🔒 Automated Vulnerability Fixes
+            
+            This PR contains automatic fixes for package vulnerabilities detected during the audit process.
+            
+            ### Changes Made
+            - Updated package dependencies to resolve security vulnerabilities
+            - Modified `pnpm-lock.yaml` to use patched versions
+            
+            ### ⚠️ Important Notes
+            - Please review the changes carefully before merging
+            - Run tests to ensure functionality is not broken
+            - Consider the impact of version updates on your application
+            
+            ### 🤖 Automation Info
+            - Generated by: Package Vulnerability Audit workflow
+            - Trigger: ${{ github.event_name }}
+            - Branch: ${{ github.ref_name }}
+            - Commit: ${{ github.sha }}
+          branch: security/auto-fix-vulnerabilities
+          delete-branch: true
+          reviewers: |
+            @geist-team/developers
+
+  notification:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [audit-packages, auto-fix]
+    if: always() && needs.audit-packages.outputs.critical-found == 'true'
+    
+    steps:
+      - name: Notify on critical vulnerabilities
+        run: |
+          echo "🚨 CRITICAL SECURITY ALERT 🚨"
+          echo ""
+          echo "Critical or high severity vulnerabilities have been detected in your dependencies."
+          echo ""
+          echo "Please check the audit results and take immediate action to resolve these issues."
+          echo ""
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Run ID: ${{ github.run_id }}"
+          
+          # In a real-world scenario, you might want to send notifications to:
+          # - Slack/Discord channels
+          # - Email
+          # - Security team dashboards
+          # - Issue tracking systems

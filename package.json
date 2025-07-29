@@ -4,7 +4,10 @@
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
-		"lint": "turbo run lint"
+		"lint": "turbo run lint",
+		"ci:local": "./scripts/ci-local.sh",
+		"ci:test": "./scripts/test-dagger.sh",
+		"ci:setup": "cd ci && npm install && npm run build"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",

@@ -1,0 +1,117 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.ref }}-${{ inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "23"
+  PNMP_VERSION: "10.13.1"
+
+jobs:
+  deploy:
+    name: Deploy with Dagger
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'production' }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dagger CLI
+        run: |
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.14.0 sh
+          sudo mv bin/dagger /usr/local/bin
+          dagger version
+
+      - name: Setup Dagger module
+        working-directory: ./ci
+        run: |
+          npm install
+          npm run build
+
+      - name: Deploy webapp to Cloudflare Workers
+        run: |
+          dagger call deploy \
+            --source=. \
+            --environment="${{ inputs.environment || 'production' }}" \
+            --cloudflare-api-token="${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            --cloudflare-account-id="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" \
+            --vite-host="${{ vars.VITE_HOST }}" \
+            --vite-livestore-sync-url="${{ vars.VITE_LIVESTORE_SYNC_URL }}" \
+            --vite-livestore-store-id="${{ vars.VITE_LIVESTORE_STORE_ID }}" \
+            --lighthouse-api-key="${{ secrets.LIGHTHOUSE_API_KEY }}" \
+            --geist-jwt-secret="${{ secrets.GEIST_JWT_SECRET }}"
+
+      - name: Deploy LiveStore Sync Worker
+        run: |
+          dagger call deploy-livestore-sync \
+            --source=. \
+            --cloudflare-api-token="${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            --cloudflare-account-id="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+      - name: Run health checks
+        run: |
+          if [[ "${{ inputs.environment }}" == "staging" ]]; then
+            BASE_URL="https://staging.filecoin.geist.network"
+          else
+            BASE_URL="https://filecoin.geist.network"
+          fi
+          
+          dagger call health-check --base-url="$BASE_URL" > health-check-report.md
+
+      - name: Upload health check report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: health-check-report-${{ inputs.environment || 'production' }}
+          path: health-check-report.md
+          retention-days: 7
+
+      - name: Create deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed at**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ inputs.environment }}" == "staging" ]]; then
+            echo "- **URL**: https://staging.filecoin.geist.network" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **URL**: https://filecoin.geist.network" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+    
+    steps:
+      - name: Notify on success
+        if: needs.deploy.result == 'success'
+        run: |
+          echo "✅ Deployment to ${{ inputs.environment || 'production' }} completed successfully"
+          
+      - name: Notify on failure
+        if: needs.deploy.result == 'failure'
+        run: |
+          echo "❌ Deployment to ${{ inputs.environment || 'production' }} failed"
+          exit 1

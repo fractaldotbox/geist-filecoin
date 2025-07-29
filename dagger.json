@@ -1,0 +1,5 @@
+{
+  "name": "geist-filecoin-ci",
+  "sdk": "typescript",
+  "source": "./ci"
+}

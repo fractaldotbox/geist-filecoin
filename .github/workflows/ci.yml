@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      webapp: ${{ steps.changes.outputs.webapp }}
+      packages: ${{ steps.changes.outputs.packages }}
+      root: ${{ steps.changes.outputs.root }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            webapp:
+              - 'apps/webapp/**'
+            packages:
+              - 'packages/**'
+            root:
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+              - 'biome.json'
+
+  ci:
+    name: Run CI Pipeline with Dagger
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.webapp == 'true' || needs.changes.outputs.packages == 'true' || needs.changes.outputs.root == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dagger CLI
+        run: |
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.14.0 sh
+          sudo mv bin/dagger /usr/local/bin
+          dagger version
+
+      - name: Setup Dagger module
+        working-directory: ./ci
+        run: |
+          npm install
+          npm run build
+
+      - name: Run Dagger CI pipeline
+        run: |
+          dagger call pipeline --source=.
+
+  validate:
+    name: Validate CI
+    runs-on: ubuntu-latest
+    needs: [ci]
+    if: always()
+    steps:
+      - name: Check CI result
+        run: |
+          if [[ "${{ needs.ci.result }}" == "failure" ]]; then
+            echo "❌ Dagger CI pipeline failed"
+            exit 1
+          elif [[ "${{ needs.ci.result }}" == "skipped" ]]; then
+            echo "ℹ️  CI pipeline was skipped - no relevant changes detected"
+            exit 0
+          else
+            echo "✅ Dagger CI pipeline passed successfully"
+            exit 0
+          fi

@@ -7,6 +7,10 @@ dist/
 
 .next/
 .dev.vars*
+# Dagger
+ci/node_modules/
+ci/dist/
+.dagger/
 
 packages/web/playwright-report/
 packages/web/build

@@ -1,0 +1,234 @@
+name: Performance Monitoring
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: performance-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "23"
+  PNPM_VERSION: "10.13.1"
+
+jobs:
+  bundle-analysis:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout base branch (for comparison)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build with bundle analysis
+        run: |
+          echo "Building current branch with detailed analysis..."
+          ANALYZE=1 pnpm --filter @geist-filecoin/webapp run build
+          
+          # Copy current build stats
+          if [[ -f "apps/webapp/dist/stats.json" ]]; then
+            cp apps/webapp/dist/stats.json current-stats.json
+          fi
+          
+          # Generate detailed bundle report
+          echo "## 📊 Detailed Bundle Analysis" > detailed-bundle-report.md
+          echo "" >> detailed-bundle-report.md
+          echo "**Build Date**: $(date -u)" >> detailed-bundle-report.md
+          echo "**Branch**: ${{ github.ref_name }}" >> detailed-bundle-report.md
+          echo "**Commit**: ${{ github.sha }}" >> detailed-bundle-report.md
+          echo "" >> detailed-bundle-report.md
+          
+          # Calculate sizes
+          total_size=$(du -sh apps/webapp/dist | cut -f1)
+          js_size=$(du -sch apps/webapp/dist/assets/*.js 2>/dev/null | grep total | cut -f1 || echo "N/A")
+          css_size=$(du -sch apps/webapp/dist/assets/*.css 2>/dev/null | grep total | cut -f1 || echo "N/A")
+          
+          echo "### Bundle Size Breakdown" >> detailed-bundle-report.md
+          echo "- **Total Bundle Size**: $total_size" >> detailed-bundle-report.md
+          echo "- **JavaScript Size**: $js_size" >> detailed-bundle-report.md
+          echo "- **CSS Size**: $css_size" >> detailed-bundle-report.md
+          echo "" >> detailed-bundle-report.md
+          
+          # List all files with sizes
+          echo "### File Details" >> detailed-bundle-report.md
+          echo '```' >> detailed-bundle-report.md
+          find apps/webapp/dist -type f -exec ls -lh {} + | awk '{print $9 ": " $5}' | sort -k2 -hr >> detailed-bundle-report.md
+          echo '```' >> detailed-bundle-report.md
+          
+          # Check for large files (>500KB)
+          echo "" >> detailed-bundle-report.md
+          echo "### Large Files Analysis (>500KB)" >> detailed-bundle-report.md
+          large_files=$(find apps/webapp/dist -type f -size +500k 2>/dev/null)
+          if [[ -n "$large_files" ]]; then
+            echo "⚠️ **Large files detected:**" >> detailed-bundle-report.md
+            echo '```' >> detailed-bundle-report.md
+            find apps/webapp/dist -type f -size +500k -exec ls -lh {} + | awk '{print $9 ": " $5}' >> detailed-bundle-report.md
+            echo '```' >> detailed-bundle-report.md
+            echo "" >> detailed-bundle-report.md
+            echo "Consider code splitting or lazy loading for these files." >> detailed-bundle-report.md
+          else
+            echo "✅ No files larger than 500KB detected." >> detailed-bundle-report.md
+          fi
+
+      - name: Build base branch for comparison
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Building base branch for comparison..."
+          git checkout ${{ github.base_ref }}
+          pnpm install --frozen-lockfile
+          ANALYZE=1 pnpm --filter @geist-filecoin/webapp run build
+          
+          if [[ -f "apps/webapp/dist/stats.json" ]]; then
+            cp apps/webapp/dist/stats.json base-stats.json
+          fi
+          
+          git checkout ${{ github.sha }}
+
+      - name: Analyze bundle size changes
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "## 📦 Bundle Size Analysis" > bundle-analysis.md
+          echo "" >> bundle-analysis.md
+          
+          if [[ -f "current-stats.json" && -f "base-stats.json" ]]; then
+            echo "Analyzing bundle size changes..." >> bundle-analysis.md
+            echo "" >> bundle-analysis.md
+            
+            # Extract bundle sizes (this is a simplified example)
+            current_size=$(du -h apps/webapp/dist | tail -1 | cut -f1)
+            echo "- **Current Bundle Size**: $current_size" >> bundle-analysis.md
+            
+            # In a real implementation, you'd want to use tools like:
+            # - webpack-bundle-analyzer
+            # - bundlesize
+            # - size-limit
+            # For now, we'll just show the directory size
+            
+            echo "" >> bundle-analysis.md
+            echo "### Build Output" >> bundle-analysis.md
+            echo '```' >> bundle-analysis.md
+            ls -la apps/webapp/dist/ >> bundle-analysis.md
+            echo '```' >> bundle-analysis.md
+          else
+            echo "Unable to perform detailed comparison - missing stats files" >> bundle-analysis.md
+          fi
+
+      - name: Upload bundle analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis
+          path: |
+            bundle-analysis.md
+            current-stats.json
+            base-stats.json
+          retention-days: 7
+
+      - name: Comment PR with bundle analysis
+        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            if (fs.existsSync('bundle-analysis.md')) {
+              const bundleAnalysis = fs.readFileSync('bundle-analysis.md', 'utf8');
+              
+              // Find existing comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('📦 Bundle Size Analysis')
+              );
+              
+              const commentBody = bundleAnalysis;
+              
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: commentBody
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: commentBody
+                });
+              }
+            }
+
+  lighthouse-audit:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Start preview server
+        run: |
+          pnpm --filter @geist-filecoin/webapp run preview &
+          echo "Waiting for server to start..."
+          sleep 10
+
+      - name: Run Lighthouse audit
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            http://localhost:4173
+          configPath: '.lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-results
+          path: |
+            .lighthouseci/
+          retention-days: 7

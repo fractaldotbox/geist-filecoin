@@ -1,0 +1,215 @@
+name: Supply Chain Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  attestations: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "23"
+  PNPM_VERSION: "10.13.1"
+
+jobs:
+  provenance:
+    name: Generate Build Provenance
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build with provenance
+        run: |
+          echo "Building with provenance tracking..."
+          pnpm run build
+          
+          # Generate build metadata
+          cat > build-metadata.json << EOF
+          {
+            "buildTime": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
+            "commitSha": "${{ github.sha }}",
+            "ref": "${{ github.ref }}",
+            "actor": "${{ github.actor }}",
+            "workflow": "${{ github.workflow }}",
+            "runId": "${{ github.run_id }}",
+            "nodeVersion": "${{ env.NODE_VERSION }}",
+            "pnpmVersion": "${{ env.PNPM_VERSION }}"
+          }
+          EOF
+
+      - name: Generate attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: |
+            apps/webapp/dist/**
+            packages/*/dist/**
+            build-metadata.json
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          allow-dependencies-licenses: MIT, Apache-2.0, BSD-3-Clause, ISC
+          deny-dependencies-licenses: GPL-2.0, GPL-3.0
+          comment-summary-in-pr: always
+
+  sbom-generation:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0.17.10
+        with:
+          path: ./
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: true
+          upload-release-assets: false
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-report
+          path: sbom.spdx.json
+          retention-days: 30
+
+  license-compliance:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate license report
+        run: |
+          echo "## 📜 License Compliance Report" > license-report.md
+          echo "" >> license-report.md
+          echo "Generated on: $(date -u)" >> license-report.md
+          echo "" >> license-report.md
+          
+          # Use pnpm to list licenses
+          pnpm licenses list --json > licenses.json
+          
+          # Check for problematic licenses
+          if grep -q "GPL" licenses.json; then
+            echo "⚠️ **GPL licenses detected**" >> license-report.md
+            echo "" >> license-report.md
+            grep -A 3 -B 3 "GPL" licenses.json >> license-report.md
+            echo "" >> license-report.md
+          fi
+          
+          echo "### All Dependencies and Licenses:" >> license-report.md
+          echo '```json' >> license-report.md
+          cat licenses.json >> license-report.md
+          echo '```' >> license-report.md
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-compliance-report
+          path: |
+            license-report.md
+            licenses.json
+          retention-days: 30
+
+      - name: Comment license report on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            if (fs.existsSync('license-report.md')) {
+              const licenseReport = fs.readFileSync('license-report.md', 'utf8');
+              
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.body.includes('📜 License Compliance Report')
+              );
+              
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: licenseReport
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: licenseReport
+                });
+              }
+            }
