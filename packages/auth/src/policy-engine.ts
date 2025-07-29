@@ -1,5 +1,5 @@
 import { createUserDelegation } from "@geist-filecoin/storage";
-import type { ServiceAbility } from "@web3-storage/w3up-client/dist/src/types";
+import type { ServiceAbility } from "@storacha/client/types";
 import type { Access, AccessPolicy, AuthInput } from "./schemas/access-policy";
 import { checkEasCriteria } from "./schemas/eas-policy-criteria";
 import { checkEnvCriteria } from "./schemas/env-policy-criteria";

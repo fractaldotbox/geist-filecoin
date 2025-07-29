@@ -1,4 +1,4 @@
-import type { UploadListItem } from "@web3-storage/w3up-client/dist/src/types";
+import type { UploadListItem } from "@storacha/client/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	createEntryDataFromIPFS,

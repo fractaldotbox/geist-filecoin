@@ -10,8 +10,8 @@ import { createEntryDataFromIPFS, listFiles } from "@geist-filecoin/storage";
  */
 import { useStore } from "@livestore/react";
 import type { UploadListItem } from "@w3ui/react";
-import type { Client } from "@web3-storage/w3up-client";
-import type { DID as W3DID } from "@web3-storage/w3up-client/principal/ed25519";
+import type { Client } from "@storacha/client";
+import type { DID as W3DID } from "@storacha/client/principal/ed25519";
 import { StorageProvider } from "../constants/storage-providers";
 
 interface StorachaUpload {
