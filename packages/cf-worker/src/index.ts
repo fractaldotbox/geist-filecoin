@@ -253,7 +253,7 @@ router.get('/api/test', async (request: Request, env: any) => {
 router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => {
 	const resourceId = request.params.resourceId;
 	const version = request.query.version;
-	const shouldDecrypt = request.query.decrypt !== 'true';
+	const shouldDecrypt = request.query.decrypt === 'true';
 
 	if (!resourceId) {
 		return new Response(JSON.stringify({ error: "Resource ID is required" }), {
@@ -296,6 +296,8 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 		new Date(b.updatedAt || b.insertedAt).getTime() - new Date(a.updatedAt || a.insertedAt).getTime()
 	);
 
+	console.log(sortedUploads);
+
 	const resourceFileName = shouldDecrypt ? `${resourceId}.encrypted.json` : `${resourceId}.json`;
 	const foundResources: any[] = [];
 
@@ -323,6 +325,7 @@ router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => 
 		try {
 			const cid = upload.root.toString();
 			const resourceUrl = `${createGatewayUrl(cid)}${resourceFileName}`;
+			console.log(`Fetching resource from upload ${upload.root}: ${resourceUrl}`);
 			const response = await fetch(resourceUrl);
 
 			if (response.ok) {

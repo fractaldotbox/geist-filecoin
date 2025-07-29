@@ -7,21 +7,29 @@ const blog = defineCollection({
 	loader: {
 		name: 'blog-loader',
 		load: async ({ store, parseData, renderMarkdown }) => {
-			const response = await fetch(`${domain}/blogs?mode=append`);
-			const data = await response.json();
+			const response = await fetch(`${domain}/api/resources/blogs?mode=append`);
+			const responseData = await response.json();
 			store.clear();
 
-			for (const blog of data) {
-				const parsedData = await parseData({
-					id: blog.id,
-					data: blog,
-				});
+			// Handle new API response structure
+			if (responseData.resources) {
+				for (const resource of responseData.resources) {
+					// Extract blogs from resource data (could be array or single item)
+					const blogs = Array.isArray(resource.data) ? resource.data : [resource.data];
 
-				store.set({
-					id: blog.id,
-					data: parsedData,
-					rendered: await renderMarkdown(blog.content)
-				})
+					for (const blog of blogs) {
+						const parsedData = await parseData({
+							id: blog.id,
+							data: blog,
+						});
+
+						store.set({
+							id: blog.id,
+							data: parsedData,
+							rendered: await renderMarkdown(blog.content)
+						})
+					}
+				}
 			}
 		}
 	},
@@ -43,19 +51,25 @@ const landing = defineCollection({
 	loader: {
 		name: 'landing-loader',
 		load: async ({ store, parseData }) => {
-			const response = await fetch(`${domain}/landing?mode=replace`);
-			const data = await response.json();
+			const response = await fetch(`${domain}/api/resources/landing?decrypt=false&mode=replace`);
+			const responseData = await response.json();
 			store.clear();
 
-			const parsedData = await parseData({
-				id: 'landing',
-				data: data,
-			});
+			// Handle new API response structure
+			if (responseData.resources && responseData.resources.length > 0) {
+				// Take the first (latest) resource for landing page
+				const landingData = responseData.resources[0].data;
 
-			store.set({
-				id: 'landing',
-				data: parsedData,
-			});
+				const parsedData = await parseData({
+					id: 'landing',
+					data: landingData,
+				});
+
+				store.set({
+					id: 'landing',
+					data: parsedData,
+				});
+			}
 		}
 	},
 	schema: z.object({
@@ -81,20 +95,28 @@ const products = defineCollection({
 	loader: {
 		name: 'products-loader',
 		load: async ({ store, parseData }) => {
-			const response = await fetch(`${domain}/products?mode=append`);
-			const data = await response.json();
+			const response = await fetch(`${domain}/api/resources/products?mode=append`);
+			const responseData = await response.json();
 			store.clear();
 
-			for (const product of data) {
-				const parsedData = await parseData({
-					id: product.slug,
-					data: product,
-				});
+			// Handle new API response structure
+			if (responseData.resources) {
+				for (const resource of responseData.resources) {
+					// Extract products from resource data (could be array or single item)
+					const products = Array.isArray(resource.data) ? resource.data : [resource.data];
 
-				store.set({
-					id: product.slug,
-					data: parsedData,
-				});
+					for (const product of products) {
+						const parsedData = await parseData({
+							id: product.slug,
+							data: product,
+						});
+
+						store.set({
+							id: product.slug,
+							data: parsedData,
+						});
+					}
+				}
 			}
 		}
 	},
