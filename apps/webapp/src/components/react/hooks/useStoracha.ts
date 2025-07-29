@@ -1,11 +1,11 @@
 import apiClient, { auth } from "@/lib/api-client";
-import type { Client } from "@web3-storage/w3up-client";
-import { extract } from "@web3-storage/w3up-client/delegation";
+import type { Client } from "@storacha/client";
+import { extract } from "@storacha/client/delegation";
 import type {
 	Capabilities,
 	DID,
 	Delegation,
-} from "@web3-storage/w3up-client/types";
+} from "@storacha/client/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useStorachaContext } from "../StorachaProvider";
 
