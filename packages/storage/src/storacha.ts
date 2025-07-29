@@ -1,7 +1,4 @@
-import {
-	Signer,
-	type DID as W3DID,
-} from "@storacha/client/principal/ed25519";
+import { Signer, type DID as W3DID } from "@storacha/client/principal/ed25519";
 import * as Proof from "@storacha/client/proof";
 import type {
 	Client,

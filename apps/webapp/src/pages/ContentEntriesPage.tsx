@@ -51,7 +51,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStorachaContext } from "../components/react/StorachaProvider";
-import { StorageProvider } from "../constants/storage-providers";
 import { allEntries$, allSpaces$, useUiState } from "../livestore/queries";
 import { useSync } from "../services/storachaSync";
 
@@ -68,7 +67,6 @@ export default function ContentEntriesPage() {
 	const { store } = useStore();
 	const spaces = store.useQuery(allSpaces$);
 	const entries = store.useQuery(allEntries$);
-	const { openSpacesDrawer } = useSpacesDrawer();
 	const navigate = useNavigate();
 
 	const [uiState, setUiState] = useUiState();
