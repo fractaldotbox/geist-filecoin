@@ -5,6 +5,13 @@ import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import type { Env } from "@livestore/sync-cf/cf-worker";
 import jwt from "@tsndr/cloudflare-worker-jwt";
 import { Router, cors, error, json } from "itty-router";
+import type { IRequest } from "itty-router";
+import { initStorachaClient, listAllFiles, createGatewayUrl } from "@geist-filecoin/storage";
+import { gcm } from '@noble/ciphers/aes.js';
+import { utf8ToBytes, bytesToUtf8 } from '@noble/ciphers/utils.js';
+import { randomBytes } from '@noble/ciphers/webcrypto.js';
+import { Buffer } from 'node:buffer';
+import * as jose from 'jose';
 
 export class Policies extends DurableObject<Env> {
 	private storage: any;
@@ -212,6 +219,133 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 	}
 });
 
+router.get('/api/health', async (request: Request) => {
+	return new Response(JSON.stringify({ status: "ok" }), {
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+});
+
+router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => {
+	const resourceId = request.params.resourceId;
+	const version = request.query.version;
+	const shouldDecrypt = request.query.decrypt === 'true';
+
+	if (!resourceId) {
+		return new Response(JSON.stringify({ error: "Resource ID is required" }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
+
+	let secretKey: any = null;
+
+	// Only get encryption key if decryption is needed
+	if (shouldDecrypt) {
+		const encryptionKeyBase64 = await env.ENCRYPTION_KEY.get();
+		if (!encryptionKeyBase64) {
+			return new Response(JSON.stringify({ error: "Encryption key not configured" }), {
+				status: 500,
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+
+		// Convert base64 key to secret key for jose
+		const keyBytes = new Uint8Array(Buffer.from(encryptionKeyBase64, 'base64'));
+		secretKey = await jose.importJWK({
+			kty: 'oct',
+			k: jose.base64url.encode(keyBytes)
+		});
+	}
+
+	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
+
+	const { client, space } = await initStorachaClient({
+		keyString: agentKeyString,
+		proofString,
+	});
+
+	const uploadList = await listAllFiles({ client, spaceDid: space.did() });
+
+	// Sort by updatedAt descending (newest first)
+	const sortedUploads = uploadList.sort((a, b) =>
+		new Date(b.updatedAt || b.insertedAt).getTime() - new Date(a.updatedAt || a.insertedAt).getTime()
+	);
+
+	console.log(sortedUploads);
+
+	const resourceFileName = shouldDecrypt ? `${resourceId}.encrypted.json` : `${resourceId}.json`;
+	const foundResources: any[] = [];
+
+	// Helper function to process resource data
+	const processResourceData = (resourceData: any, upload: any, cid: string, resourceUrl: string) => {
+		const mode = resourceData.meta?.mode || 'replace';
+
+		foundResources.push({
+			data: resourceData.data,
+			meta: {
+				...resourceData.meta,
+				cid,
+				updatedAt: upload.updatedAt,
+				insertedAt: upload.insertedAt,
+				gatewayUrl: resourceUrl,
+			},
+		});
+
+		// Return true if we should stop processing (latestOnly or replace mode)
+		return version === 'latestOnly' || mode === 'replace';
+	};
+
+	// Fetch resources from newest to oldest uploads
+	for (const upload of sortedUploads) {
+		try {
+			const cid = upload.root.toString();
+			const resourceUrl = `${createGatewayUrl(cid)}${resourceFileName}`;
+			console.log(`Fetching resource from upload ${upload.root}: ${resourceUrl}`);
+			const response = await fetch(resourceUrl);
+
+			if (response.ok) {
+				const fileContent = await response.text();
+				let resourceData: any;
+
+				try {
+					if (shouldDecrypt) {
+						const { plaintext } = await jose.compactDecrypt(fileContent, secretKey);
+						const decryptedJson = new TextDecoder().decode(plaintext);
+						resourceData = JSON.parse(decryptedJson);
+					} else {
+						resourceData = JSON.parse(fileContent);
+					}
+					const shouldStop = processResourceData(resourceData, upload, cid, resourceUrl);
+					if (shouldStop) break;
+				} catch (error) {
+					console.warn(`Could not process resource from upload ${upload.root}:`, error);
+				}
+			}
+		} catch (error) {
+			console.warn(`Could not fetch resource from upload ${upload.root}:`, error);
+		}
+	}
+
+	if (!foundResources.length) {
+		return new Response(JSON.stringify({
+			error: "Resource not found",
+			resourceId,
+		}), {
+			status: 404,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
+
+	return new Response(JSON.stringify({
+		resourceId,
+		resources: foundResources,
+	}), {
+		headers: { "Content-Type": "application/json" },
+	});
+});
+
 router.get("/websocket", async (request: Request, env: any) => {
 	return await env.WORKER_LIVESTORE.fetch(request, env);
 });
@@ -238,7 +372,7 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 
 	const policies = await policyDO.getAllPolicies();
 
-	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET");
+	const jwtSecret = await env.GEIST.get("GEIST_JWT_SECRET") || env.DEFAULT_GEIST_JWT_SECRET;
 
 	console.log("auth for user", agentDid);
 

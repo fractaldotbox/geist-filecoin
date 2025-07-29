@@ -89,6 +89,24 @@ export const listFiles = async ({
 	return await client.capability.upload.list({ cursor: "", size: 25 });
 };
 
+export const listAllFiles = async ({
+	client,
+	spaceDid,
+}: StorachaConfig): Promise<any[]> => {
+	await client.setCurrentSpace(spaceDid);
+	
+	const allFiles: any[] = [];
+	let cursor = "";
+	
+	do {
+		const result = await client.capability.upload.list({ cursor, size: 1 });
+		allFiles.push(...result.results);
+		cursor = result.cursor || "";
+	} while (cursor);
+	
+	return allFiles;
+};
+
 export const uploadFiles = async (
 	config: StorachaConfig,
 	{ files, uploadProgressCallback }: FileParams<FileLike>,
