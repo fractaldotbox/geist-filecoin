@@ -227,29 +227,6 @@ router.get('/api/health', async (request: Request) => {
 	});
 });
 
-router.get('/api/init/generateKey', async (request: Request, env: any) => {
-	const keyBytes = 32;
-	const key = randomBytes(keyBytes);
-
-	const base64Key = Buffer.from(key).toString('base64');
-
-	return new Response(JSON.stringify({ key: base64Key }), {
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-});
-
-router.get('/api/test', async (request: Request, env: any) => {
-	const encryptionKey = await env.ENCRYPTION_KEY.get();
-	console.log("Encryption Key:", encryptionKey);
-	return new Response(JSON.stringify({ message: "Test endpoint", encryptionKey }), {
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-});
-
 router.get('/api/resources/:resourceId', async (request: IRequest, env: any) => {
 	const resourceId = request.params.resourceId;
 	const version = request.query.version;
