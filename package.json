@@ -2,9 +2,10 @@
 	"name": "@geist-filecoin/cms",
 	"private": true,
 	"scripts": {
-		"build": "turbo run build",
+		"build": "turbo run build --filter='!demo-astro-blog'",
 		"dev": "turbo run dev",
-		"lint": "turbo run lint",
+		"lint": "turbo run lint --filter='!demo-astro-blog'",
+		"test": "turbo run test --filter='!demo-astro-blog'",
 		"ci:local": "./scripts/ci-local.sh",
 		"ci:test": "./scripts/test-dagger.sh",
 		"ci:setup": "cd ci && npm install && npm run build"

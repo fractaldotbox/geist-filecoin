@@ -7,10 +7,7 @@
 			"dependsOn": ["^build"],
 			"inputs": ["src/**", "public/**", "*.config.*", "package.json"],
 			"outputs": ["dist/**", ".vite/**"],
-			"env": ["NODE_ENV", "VITE_*"],
-			"filter": {
-				"exclude": ["demo"]
-			}
+			"env": ["NODE_ENV", "VITE_*"]
 		},
 		"lint": {
 			"dependsOn": ["^build"],
@@ -20,10 +17,7 @@
 			"dependsOn": ["build"],
 			"inputs": ["src/**", "test/**", "*.config.*", "package.json"],
 			"outputs": ["coverage/**"],
-			"env": ["NODE_ENV"],
-			"filter": {
-				"exclude": ["demo"]
-			}
+			"env": ["NODE_ENV"]
 		},
 		"test:integration": {
 			"dependsOn": ["build"],
@@ -45,10 +39,7 @@
 			"dependsOn": ["build"],
 			"inputs": ["dist/**", "wrangler.jsonc", "worker/**"],
 			"outputs": [],
-			"cache": false,
-			"filter": {
-				"exclude": ["demo"]
-			}
+			"cache": false
 		}
 	},
 	"remoteCache": {
