@@ -170,7 +170,7 @@ export const initStorachaClient = async ({
 	keyString,
 	proofString,
 	store = new StoreMemory(),
-}: StorachaInitParams) => {
+}: StorachaInitParams): Promise<{ client: Client; space: any }> => {
 	const principal = Signer.parse(keyString);
 	const client = await createClient({
 		principal,

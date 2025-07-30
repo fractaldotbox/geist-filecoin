@@ -16,7 +16,7 @@ const getChecksumAddress = (address: string): string => {
 		const char = addr[i];
 		const digit = Number.parseInt(char, 16);
 
-		if (isNaN(digit)) {
+		if (Number.isNaN(digit)) {
 			result += char;
 		} else if (digit >= 8) {
 			result += char.toUpperCase();
