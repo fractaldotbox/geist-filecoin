@@ -175,6 +175,7 @@ The webapp will be available at `http://localhost:5173`
    ```
 
 ### Storacha Setup
+- Follow below steps to use Storacha as one of the storage provider  
 
 1. **Create account and login**
     - Follow storacha [documentation](https://docs.storacha.network/how-to/create-account/#using-the-cli) 
@@ -182,8 +183,9 @@ The webapp will be available at `http://localhost:5173`
    storacha login your@email.com
    ```
 
-2. **Create space and delegate to agent**
+2. **Create space and delegate to server agent**
 
+- Server (Cloudflare worker) will need to be configured a standalone storacha agent with proof in order to access the space and furhter delegate access to agent at Client side 
    
    Follow the Storacha documentation:
    - [Create Space Guide](https://docs.storacha.network/how-to/create-space/)
