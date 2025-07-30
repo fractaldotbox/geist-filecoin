@@ -1,9 +1,9 @@
 import {
 	Events,
-	makeSchema,
 	Schema,
 	SessionIdSymbol,
 	State,
+	makeSchema,
 } from "@livestore/livestore";
 
 // You can model your state as SQLite tables (https://docs.livestore.dev/reference/state/sqlite-schema)

@@ -12,8 +12,8 @@ import {
 	allSpaces$,
 	useUiState,
 } from "../../livestore/queries";
-import { useLiveStore } from "./hooks/useLiveStore";
 import { useSpacesDrawer } from "./SpacesDrawerProvider";
+import { useLiveStore } from "./hooks/useLiveStore";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";

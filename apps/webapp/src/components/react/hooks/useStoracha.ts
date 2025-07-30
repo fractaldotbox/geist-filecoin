@@ -1,8 +1,8 @@
+import apiClient, { auth } from "@/lib/api-client";
 import type { Client } from "@storacha/client";
 import { extract } from "@storacha/client/delegation";
-import type { Capabilities, Delegation, DID } from "@storacha/client/types";
+import type { Capabilities, DID, Delegation } from "@storacha/client/types";
 import { useCallback, useEffect, useRef, useState } from "react";
-import apiClient, { auth } from "@/lib/api-client";
 import { useStorachaContext } from "../StorachaProvider";
 
 const requestDelegation = async ({

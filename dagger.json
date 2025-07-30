@@ -1,5 +1,8 @@
 {
-  "name": "geist-filecoin-ci",
-  "sdk": "typescript",
-  "source": "./packages/ci"
+	"name": "geist-ci",
+	"engineVersion": "v0.18.14",
+	"sdk": {
+		"source": "typescript"
+	},
+	"source": ".dagger"
 }

@@ -1,22 +1,5 @@
-import { useStore } from "@livestore/react";
-import {
-	AlertCircle,
-	Calendar,
-	Copy,
-	ExternalLink,
-	Eye,
-	FilePlus,
-	FileText,
-	Filter,
-	Folder,
-	MoreHorizontal,
-	RefreshCw,
-	Search,
-} from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useSpaceFiles } from "@/components/react/hooks/useStoracha";
 import SpaceBreadcrumb from "@/components/react/SpaceBreadcrumb";
+import { useSpaceFiles } from "@/components/react/hooks/useStoracha";
 import { Badge } from "@/components/react/ui/badge";
 import {
 	Breadcrumb,
@@ -50,6 +33,23 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/react/ui/table";
+import { useStore } from "@livestore/react";
+import {
+	AlertCircle,
+	Calendar,
+	Copy,
+	ExternalLink,
+	Eye,
+	FilePlus,
+	FileText,
+	Filter,
+	Folder,
+	MoreHorizontal,
+	RefreshCw,
+	Search,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useStorachaContext } from "../components/react/StorachaProvider";
 import { allEntries$, allSpaces$, useUiState } from "../livestore/queries";
 import { useSync } from "../services/storachaSync";

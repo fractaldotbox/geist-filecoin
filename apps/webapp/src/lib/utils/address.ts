@@ -14,7 +14,7 @@ const getChecksumAddress = (address: string): string => {
 	// Simple checksum: uppercase hex digits 8-f, lowercase 0-7
 	for (let i = 0; i < addr.length; i++) {
 		const char = addr[i];
-		const digit = parseInt(char, 16);
+		const digit = Number.parseInt(char, 16);
 
 		if (isNaN(digit)) {
 			result += char;

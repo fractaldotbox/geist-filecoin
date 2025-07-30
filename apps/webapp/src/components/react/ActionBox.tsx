@@ -1,6 +1,6 @@
+import { Button } from "@/components/react/ui/button";
 import type { LucideIcon } from "lucide-react";
 import React from "react";
-import { Button } from "@/components/react/ui/button";
 
 interface ActionBoxProps {
 	icon: LucideIcon;

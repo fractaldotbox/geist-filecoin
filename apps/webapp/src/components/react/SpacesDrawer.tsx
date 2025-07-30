@@ -23,8 +23,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
-	STORAGE_PROVIDER_LABELS,
 	STORAGE_PROVIDERS,
+	STORAGE_PROVIDER_LABELS,
 	StorageProvider,
 } from "../../constants/storage-providers";
 import { allSpaces$, useUiState } from "../../livestore/queries";

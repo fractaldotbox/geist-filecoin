@@ -1,10 +1,10 @@
+import { Button } from "@/components/react/ui/button";
+import { Card } from "@/components/react/ui/card";
+import { allEntries$, allSpaces$, useUiState } from "@/livestore/queries";
 import { useStore } from "@livestore/react";
 import { AlertCircle, Folder } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/react/ui/button";
-import { Card } from "@/components/react/ui/card";
-import { allEntries$, allSpaces$, useUiState } from "@/livestore/queries";
 import { useSpacesDrawer } from "../components/react/SpacesDrawerProvider";
 
 export default function HomePage() {

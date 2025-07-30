@@ -1,10 +1,3 @@
-import {
-	Root as Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@radix-ui/react-collapsible";
-import { ChevronDown, ChevronsUpDown } from "lucide-react";
-import type React from "react";
 import { Button } from "@/components/react/ui/button";
 import {
 	Card,
@@ -14,6 +7,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/react/ui/card";
+import {
+	Root as Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@radix-ui/react-collapsible";
+import { ChevronDown, ChevronsUpDown } from "lucide-react";
+import type React from "react";
 
 type AccessPolicy = {
 	id: string;

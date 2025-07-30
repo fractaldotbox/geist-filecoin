@@ -168,16 +168,7 @@ The webapp will be available at `http://localhost:5173`
    wrangler secret-store create geist-filecoin-secrets
    ```
 
-2. **Configure secrets**
-   ```bash
-   # Storacha agent key
-   wrangler secrets-store secret create $CF_SECRET_STORE_ID \
-     --name STORACHA_AGENT_KEY_STRING \
-     --value $STORACHA_AGENT_KEY_STRING \
-     --scopes=workers
-   ```
-
-3. **Deploy worker**
+2. **Deploy worker**
    ```bash
    cd apps/webapp
    pnpm deploy
@@ -192,12 +183,22 @@ The webapp will be available at `http://localhost:5173`
    ```
 
 2. **Create space and delegate to agent**
+
    
    Follow the Storacha documentation:
    - [Create Space Guide](https://docs.storacha.network/how-to/create-space/)
    - [UCAN Delegation Guide](https://docs.storacha.network/concepts/ucan/#step-by-step-delegation-with-w3cli)
 
-3. **Configure delegation proof via KV**
+3. **Configure secrets**
+   ```bash
+   # Storacha agent key
+   wrangler secrets-store secret create $CF_SECRET_STORE_ID \
+     --name STORACHA_AGENT_KEY_STRING \
+     --value $STORACHA_AGENT_KEY_STRING \
+     --scopes=workers
+   ```
+
+4. **Configure delegation proof via KV**
    ```bash
    wrangler kv key put --namespace-id $KV_NAMESPACE_ID \
      "delegation-proof" $DELEGATION_PROOF_VALUE
