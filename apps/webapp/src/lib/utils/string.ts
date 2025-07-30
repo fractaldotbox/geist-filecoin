@@ -12,7 +12,7 @@ export const getShortForm = (
 		const endSection = addressPart.slice(-sectionLength);
 		return `${prefix}${startSection}...${endSection}`;
 	}
-	
+
 	return [input.slice(0, sectionLength), input.slice(-sectionLength)].join(
 		"...",
 	);

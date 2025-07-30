@@ -1,9 +1,9 @@
 import {
 	Events,
+	makeSchema,
 	Schema,
 	SessionIdSymbol,
 	State,
-	makeSchema,
 } from "@livestore/livestore";
 
 // You can model your state as SQLite tables (https://docs.livestore.dev/reference/state/sqlite-schema)
@@ -16,7 +16,7 @@ export const tables = {
 			contentTypeId: State.SQLite.text({ default: "" }),
 			name: State.SQLite.text({ default: "" }),
 			data: State.SQLite.text({ default: "" }),
-			storageProviderKey: State.SQLite.text({ default: "storacha" }), // Storacha or S3 
+			storageProviderKey: State.SQLite.text({ default: "storacha" }), // Storacha or S3
 			storageProviderMetadata: State.SQLite.text({ default: "{}" }), // JSON string for any storage provider metadata
 			tags: State.SQLite.text({ default: "[]" }), // JSON string
 			publishedAt: State.SQLite.integer({

@@ -1,3 +1,15 @@
+import {
+	CLAIMS_SCHEMA,
+	EAS_POLICY_SCHEMA,
+	ENV_POLICY_SCHEMA,
+} from "@geist-filecoin/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useStore } from "@livestore/react";
+import ky from "ky";
+import { useState } from "react";
+import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import AccessPolicyList from "@/components/react/AccessPolicyList";
 import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import { Button } from "@/components/react/ui/button";
@@ -28,20 +40,7 @@ import {
 } from "@/components/react/ui/select";
 import { Textarea } from "@/components/react/ui/textarea";
 import apiClient from "@/lib/api-client";
-import { useUiState } from "@/livestore/queries";
-import { allAccessPolicys$ } from "@/livestore/queries";
-import {
-	CLAIMS_SCHEMA,
-	EAS_POLICY_SCHEMA,
-	ENV_POLICY_SCHEMA,
-} from "@geist-filecoin/auth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useStore } from "@livestore/react";
-import ky from "ky";
-import { useState } from "react";
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
+import { allAccessPolicys$, useUiState } from "@/livestore/queries";
 
 // --- Utility: Convert JSON Schema to Zod ---
 function jsonSchemaToZod(schema: any) {

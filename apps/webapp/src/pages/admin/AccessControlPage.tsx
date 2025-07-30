@@ -1,9 +1,9 @@
-import { EntryEditor } from "@/components/react/EntryEditor";
-import SpaceBreadcrumb from "@/components/react/SpaceBreadcrumb";
-import { allEntries$, allSpaces$, useUiState } from "@/livestore/queries";
 import { useStore } from "@livestore/react";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
+import { EntryEditor } from "@/components/react/EntryEditor";
+import SpaceBreadcrumb from "@/components/react/SpaceBreadcrumb";
+import { allEntries$, allSpaces$, useUiState } from "@/livestore/queries";
 import AccessControlPanel from "./AccessControlPanel";
 
 export default function AccessControlPage() {

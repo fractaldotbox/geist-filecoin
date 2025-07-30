@@ -1,9 +1,19 @@
+import type { Entry } from "@geist-filecoin/domain";
+import { uploadFiles } from "@geist-filecoin/storage";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Client } from "@storacha/client";
+import ky from "ky";
+import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useForm, useFormState } from "react-hook-form";
+import { useParams } from "react-router-dom";
+import * as z from "zod";
 import {
 	ArrayField,
 	DateField,
 	FileField,
-	TextField,
 	TextareaField,
+	TextField,
 } from "@/components/react/fields";
 import type {
 	EntryFormData,
@@ -24,21 +34,10 @@ import {
 	type ContentTypeField,
 	useContentType,
 } from "@/stores/schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import ky from "ky";
-import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { useForm, useFormState } from "react-hook-form";
-import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
-import { useStorachaContext } from "./StorachaProvider";
 import { MarkdownField } from "./fields/MarkdownField";
 import { useLiveStore } from "./hooks/useLiveStore";
-
-import type { Entry } from "@geist-filecoin/domain";
-import { uploadFiles } from "@geist-filecoin/storage";
-import type { Client } from "@storacha/client";
-import { useParams } from "react-router-dom";
+import { useStorachaContext } from "./StorachaProvider";
 
 // Upload mode enum
 export enum UploadMode {
@@ -162,11 +161,7 @@ async function uploadDirectory({
 	};
 }
 
-export function EntryEditor({
-	entryId,
-}: {
-	entryId?: string;
-}) {
+export function EntryEditor({ entryId }: { entryId?: string }) {
 	const { contentTypeId } = useParams();
 	const [isLoaded, setIsLoaded] = useState(false);
 
@@ -204,14 +199,14 @@ export function EntryEditor({
 
 	const contentType = contentTypeData
 		? {
-			type: "object" as const,
-			...contentTypeData,
-			properties: JSON.parse(contentTypeData.properties) as Record<
-				string,
-				ContentTypeField
-			>,
-			required: JSON.parse(contentTypeData.required) as string[],
-		}
+				type: "object" as const,
+				...contentTypeData,
+				properties: JSON.parse(contentTypeData.properties) as Record<
+					string,
+					ContentTypeField
+				>,
+				required: JSON.parse(contentTypeData.required) as string[],
+			}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -320,9 +315,9 @@ export function EntryEditor({
 	// Only set defaultValues after entry is loaded (if editing)
 	const initialDefaultValues = contentType
 		? createDefaultValues(
-			contentType,
-			entryId && entry ? getEntryFormDefaults(contentType, entry) : undefined,
-		)
+				contentType,
+				entryId && entry ? getEntryFormDefaults(contentType, entry) : undefined,
+			)
 		: {};
 
 	const form = useForm<Partial<EntryFormData>>({
@@ -424,7 +419,7 @@ export function EntryEditor({
 					spaceId: activeSpace?.id,
 					cid,
 				},
-			}
+			};
 			// Create entry using LiveStore event
 			await createEntry(entry);
 

@@ -1,9 +1,8 @@
+import type { Progress } from "ky";
 import {
 	uploadFiles as uploadFilesLighthouse,
 	uploadText,
 } from "@/lib/filecoin/lighthouse/isomorphic";
-
-import type { Progress } from "ky";
 
 export type UploadFilesParams<T> = T & {
 	uploadProgressCallback?: (data: Progress) => void;

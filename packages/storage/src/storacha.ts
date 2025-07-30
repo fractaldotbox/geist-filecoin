@@ -19,15 +19,13 @@ export type DownloadProgress = {
 };
 
 import * as DID from "@ipld/dag-ucan/did";
-import type { ServiceAbility } from "@storacha/client/types";
-
-// import * as DID from "@ipld/dag-ucan/did";
-import { Account, create } from "@storacha/client";
-import { StoreMemory } from "@storacha/client/stores/memory";
-
 // enable sync methods
 import * as ed from "@noble/ed25519";
 import { sha512 } from "@noble/hashes/sha512";
+// import * as DID from "@ipld/dag-ucan/did";
+import { Account, create } from "@storacha/client";
+import { StoreMemory } from "@storacha/client/stores/memory";
+import type { ServiceAbility } from "@storacha/client/types";
 
 export type StorachaInitParams = {
 	keyString: string;

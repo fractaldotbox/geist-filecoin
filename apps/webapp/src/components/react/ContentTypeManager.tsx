@@ -13,11 +13,11 @@ import {
 	useUiState,
 } from "../../livestore/queries";
 import { useLiveStore } from "./hooks/useLiveStore";
+import { useSpacesDrawer } from "./SpacesDrawerProvider";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { useSpacesDrawer } from "./SpacesDrawerProvider";
 
 export function ContentTypeManager() {
 	const { store } = useStore();
@@ -53,7 +53,7 @@ export function ContentTypeManager() {
 								<h2 className="text-xl font-semibold">
 									{contentType.name ||
 										contentType.id.charAt(0).toUpperCase() +
-										contentType.id.slice(1)}
+											contentType.id.slice(1)}
 								</h2>
 								<Badge variant="outline">Content Type</Badge>
 							</div>

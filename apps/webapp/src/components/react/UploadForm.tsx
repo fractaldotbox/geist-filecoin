@@ -1,14 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { DownloadProgress } from "ky";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { type ZodType, z } from "zod";
-
-import type { DownloadProgress } from "ky";
-
-import {
-	uploadFiles as uploadFilesLighthouse,
-	uploadText,
-} from "@/lib/filecoin/lighthouse/isomorphic";
 
 import { FileField } from "@/components/react/fields/FileField";
 import { FileInput } from "@/components/react/fields/FileInput";
@@ -24,7 +19,10 @@ import {
 } from "@/components/react/ui/form";
 import { Progress } from "@/components/react/ui/progress";
 import { Textarea } from "@/components/react/ui/textarea";
-import { toast } from "sonner";
+import {
+	uploadFiles as uploadFilesLighthouse,
+	uploadText,
+} from "@/lib/filecoin/lighthouse/isomorphic";
 
 const lorem = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque semper porttitor massa, non placerat dolor rutrum vel. Morbi eu elit vitae odio hendrerit mollis. Proin at nibh auctor, laoreet ante vel, commodo leo. Sed viverra neque id lectus dictum, non accumsan tortor rhoncus. Fusce consectetur est vitae viverra pellentesque. Nunc pharetra felis libero, at rhoncus est euismod et. Morbi ac ultrices lectus, quis commodo eros. Etiam vestibulum finibus imperdiet. Nulla dictum tempor neque ac varius.
 Duis sed malesuada odio. Aenean fermentum tristique nunc a dictum. Donec posuere varius pharetra. Sed vitae nisi leo. Nam eget velit id erat sagittis molestie. Fusce feugiat turpis nec neque sodales, sit amet lobortis velit tempus. Curabitur nisi quam, consectetur in velit ac, gravida convallis ante. Etiam condimentum, ligula ut pharetra vehicula, odio ligula laoreet sem, et convallis metus mauris ut tellus. Fusce libero risus, vulputate a suscipit commodo, tincidunt vel ex. Duis quis ultrices ex, in feugiat dolor. Nullam ultrices lorem augue, ac pellentesque velit finibus vel.

@@ -1,11 +1,11 @@
-import { glob } from 'astro/loaders';
-import { defineCollection, z } from 'astro:content';
+import { defineCollection, z } from "astro:content";
+import { glob } from "astro/loaders";
 
-const domain = process.env.CF_DOMAIN || 'http://localhost:4003';
+const domain = process.env.CF_DOMAIN || "http://localhost:4003";
 
 const blog = defineCollection({
 	loader: {
-		name: 'blog-loader',
+		name: "blog-loader",
 		load: async ({ store, parseData, renderMarkdown }) => {
 			const response = await fetch(`${domain}/api/resources/blogs?mode=append`);
 			const responseData = await response.json();
@@ -15,7 +15,9 @@ const blog = defineCollection({
 			if (responseData.resources) {
 				for (const resource of responseData.resources) {
 					// Extract blogs from resource data (could be array or single item)
-					const blogs = Array.isArray(resource.data) ? resource.data : [resource.data];
+					const blogs = Array.isArray(resource.data)
+						? resource.data
+						: [resource.data];
 
 					for (const blog of blogs) {
 						const parsedData = await parseData({
@@ -26,32 +28,35 @@ const blog = defineCollection({
 						store.set({
 							id: blog.id,
 							data: parsedData,
-							rendered: await renderMarkdown(blog.content)
-						})
+							rendered: await renderMarkdown(blog.content),
+						});
 					}
 				}
 			}
-		}
+		},
 	},
-	schema: ({ image }) => z.object({
-		id: z.string(),
-		slug: z.string(),
-		title: z.string(),
-		description: z.string(),
-		author: z.string(),
-		publishDate: z.coerce.date(),
-		updatedDate: z.coerce.date().optional(),
-		heroImage: image().optional(),
-		content: z.string(),
-		tags: z.array(z.string()).optional(),
-	})
+	schema: ({ image }) =>
+		z.object({
+			id: z.string(),
+			slug: z.string(),
+			title: z.string(),
+			description: z.string(),
+			author: z.string(),
+			publishDate: z.coerce.date(),
+			updatedDate: z.coerce.date().optional(),
+			heroImage: image().optional(),
+			content: z.string(),
+			tags: z.array(z.string()).optional(),
+		}),
 });
 
 const landing = defineCollection({
 	loader: {
-		name: 'landing-loader',
+		name: "landing-loader",
 		load: async ({ store, parseData }) => {
-			const response = await fetch(`${domain}/api/resources/landing?decrypt=false&mode=replace`);
+			const response = await fetch(
+				`${domain}/api/resources/landing?decrypt=false&mode=replace`,
+			);
 			const responseData = await response.json();
 			store.clear();
 
@@ -61,16 +66,16 @@ const landing = defineCollection({
 				const landingData = responseData.resources[0].data;
 
 				const parsedData = await parseData({
-					id: 'landing',
+					id: "landing",
 					data: landingData,
 				});
 
 				store.set({
-					id: 'landing',
+					id: "landing",
 					data: parsedData,
 				});
 			}
-		}
+		},
 	},
 	schema: z.object({
 		title: z.string(),
@@ -82,20 +87,24 @@ const landing = defineCollection({
 			ctaLink: z.string(),
 			backgroundImage: z.string(),
 		}),
-		features: z.array(z.object({
-			title: z.string(),
-			description: z.string(),
-			icon: z.string(),
-		})),
+		features: z.array(
+			z.object({
+				title: z.string(),
+				description: z.string(),
+				icon: z.string(),
+			}),
+		),
 		metaDescription: z.string(),
-	})
+	}),
 });
 
 const products = defineCollection({
 	loader: {
-		name: 'products-loader',
+		name: "products-loader",
 		load: async ({ store, parseData }) => {
-			const response = await fetch(`${domain}/api/resources/products?mode=append`);
+			const response = await fetch(
+				`${domain}/api/resources/products?mode=append`,
+			);
 			const responseData = await response.json();
 			store.clear();
 
@@ -103,7 +112,9 @@ const products = defineCollection({
 			if (responseData.resources) {
 				for (const resource of responseData.resources) {
 					// Extract products from resource data (could be array or single item)
-					const products = Array.isArray(resource.data) ? resource.data : [resource.data];
+					const products = Array.isArray(resource.data)
+						? resource.data
+						: [resource.data];
 
 					for (const product of products) {
 						const parsedData = await parseData({
@@ -118,7 +129,7 @@ const products = defineCollection({
 					}
 				}
 			}
-		}
+		},
 	},
 	schema: z.object({
 		title: z.string(),
@@ -141,7 +152,7 @@ const products = defineCollection({
 			geographic_distribution: z.string(),
 		}),
 		images: z.array(z.string()),
-	})
+	}),
 });
 
 export const collections = { blog, landing, products };

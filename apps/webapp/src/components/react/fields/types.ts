@@ -1,12 +1,12 @@
-import type { ContentTypeField } from "@/stores/schema";
 import type { ControllerRenderProps } from "react-hook-form";
+import type { ContentTypeField } from "@/stores/schema";
 
 export type EntryFormData = {
 	id: string;
 	[key: string]:
 		| string
 		| string[]
-		| { spaceId?: string, cid?: string }
+		| { spaceId?: string; cid?: string }
 		| undefined;
 };
 

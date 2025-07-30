@@ -1,6 +1,7 @@
 import { authWithEmail } from "@geist-filecoin/storage";
 import { useStore } from "@livestore/react";
 import type { DidMailto, EmailAddress } from "@storacha/client/types";
+import type { ReactNode } from "react";
 import {
 	createContext,
 	useCallback,
@@ -8,7 +9,6 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import type { ReactNode } from "react";
 import {
 	loginWithBluesky as blueskyLogin,
 	blueskyOAuth,

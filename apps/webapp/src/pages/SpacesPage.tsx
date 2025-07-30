@@ -31,8 +31,8 @@ import {
 } from "../components/react/ui/select";
 import { Textarea } from "../components/react/ui/textarea";
 import {
-	STORAGE_PROVIDERS,
 	STORAGE_PROVIDER_LABELS,
+	STORAGE_PROVIDERS,
 	StorageProvider,
 } from "../constants/storage-providers";
 import { allSpaces$ } from "../livestore/queries";
