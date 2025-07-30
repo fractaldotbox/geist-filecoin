@@ -53,7 +53,7 @@ jobs:
           dagger version
 
       - name: Setup Dagger module
-        working-directory: ./ci
+        working-directory: ./dagger
         run: |
           npm install
           npm run build
