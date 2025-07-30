@@ -162,13 +162,17 @@ The webapp will be available at `http://localhost:5173`
    wrangler d1 create geist-filecoin-db
    
    # Create KV namespace
-   wrangler kv:namespace create "geist-filecoin-kv"
+   wrangler kv namespace create "geist-filecoin-kv"
    
    # Create secrets store
    wrangler secret-store create geist-filecoin-secrets
+
    ```
 
-2. **Deploy worker**
+2. **Setup secrets & KV**
+- according to instructions of storage provider below
+
+3. **Deploy worker**
    ```bash
    cd apps/webapp
    pnpm deploy
