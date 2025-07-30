@@ -207,7 +207,7 @@ The webapp will be available at `http://localhost:5173`
 4. **Configure delegation proof via KV**
    ```bash
    wrangler kv key put --namespace-id $KV_NAMESPACE_ID \
-     "delegation-proof" $DELEGATION_PROOF_VALUE
+     "STORACHA_PROOF_STRING" $STORACHA_PROOF_STRING 
    ```
 
 ### Authentication Configuration

@@ -97,7 +97,7 @@ export const listAllFiles = async ({
 	let cursor = "";
 
 	do {
-		const result = await client.capability.upload.list({ cursor, size: 1 });
+		const result = await client.capability.upload.list({ cursor, size: 25 });
 		allFiles.push(...result.results);
 		cursor = result.cursor || "";
 	} while (cursor);

@@ -19,21 +19,26 @@ describe("storacha-entry-mapper", () => {
 
 	describe("fetchIPFSMetadata", () => {
 		it("should fetch metadata successfully from IPFS gateway", async () => {
-			const mockMetadata: any = {
-				name: "Test NFT",
-				description: "A test NFT with metadata",
-				image:
-					"ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu/fuji1.jpg",
-				attributes: [
-					{ trait_type: "Color", value: "Blue" },
-					{ trait_type: "Size", value: "Large" },
-				],
+			const mockIPFSData: any = {
+				metadata: {
+					name: "Test NFT",
+					contentTypeId: "nft-content-type",
+					spaceId: "test-space"
+				},
+				data: {
+					description: "A test NFT with metadata",
+					image: "ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu/fuji1.jpg",
+					attributes: [
+						{ trait_type: "Color", value: "Blue" },
+						{ trait_type: "Size", value: "Large" },
+					],
+				}
 			};
 
 			const { default: ky } = await import("ky");
 			const mockKyGet = vi.mocked(ky.get);
 			mockKyGet.mockResolvedValue({
-				json: vi.fn().mockResolvedValue(mockMetadata),
+				json: vi.fn().mockResolvedValue(mockIPFSData),
 			} as any);
 
 			const gatewayUrl =
@@ -41,7 +46,7 @@ describe("storacha-entry-mapper", () => {
 			const result = await fetchIPFSMetadata(gatewayUrl);
 
 			expect(mockKyGet).toHaveBeenCalledWith(`${gatewayUrl}/entry.json`);
-			expect(result).toEqual(mockMetadata);
+			expect(result).toEqual(mockIPFSData);
 		});
 
 		it("should throw error when metadata fetch fails", async () => {
@@ -60,17 +65,21 @@ describe("storacha-entry-mapper", () => {
 
 	describe("createEntryDataFromIPFS", () => {
 		it("should create EntryData from IPFS metadata", async () => {
-			const mockMetadata: any = {
-				name: "Mountain View",
-				description: "Beautiful mountain landscape",
-				image:
-					"ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4vkuu/fuji1.jpg",
+			const mockIPFSData: any = {
+				metadata: {
+					name: "Mountain View",
+					contentTypeId: "landscape-type",
+				},
+				data: {
+					description: "Beautiful mountain landscape",
+					image: "ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu/fuji1.jpg",
+				}
 			};
 
 			const { default: ky } = await import("ky");
 			const mockKyGet = vi.mocked(ky.get);
 			mockKyGet.mockResolvedValue({
-				json: vi.fn().mockResolvedValue(mockMetadata),
+				json: vi.fn().mockResolvedValue(mockIPFSData),
 			} as any);
 
 			const mockUpload = {
@@ -87,25 +96,34 @@ describe("storacha-entry-mapper", () => {
 			expect(result).toEqual({
 				id: "bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
 				spaceId: "test-space-id",
-				contentTypeId: "",
-				title: "Mountain View",
-				content: "Beautiful mountain landscape",
+				name: "Mountain View",
+				contentTypeId: "landscape-type",
+				data: {
+					description: "Beautiful mountain landscape",
+					image: "ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu/fuji1.jpg",
+				},
 				storageProviderKey: "test-space-id",
+				storageProviderMetadata: {
+					cid: "bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu",
+				},
 				tags: {
 					shards: ["shard1", "shard2"],
-					metadata: mockMetadata,
+					metadata: mockIPFSData.metadata,
 				},
 				publishedAt: new Date("2024-01-01T00:00:00.000Z"),
 			});
 		});
 
 		it("should create EntryData with fallback values when metadata is minimal", async () => {
-			const mockMetadata: any = {};
+			const mockIPFSData: any = {
+				metadata: {},
+				data: {}
+			};
 
 			const { default: ky } = await import("ky");
 			const mockKyGet = vi.mocked(ky.get);
 			mockKyGet.mockResolvedValue({
-				json: vi.fn().mockResolvedValue(mockMetadata),
+				json: vi.fn().mockResolvedValue(mockIPFSData),
 			} as any);
 
 			const mockUpload = {
@@ -116,7 +134,6 @@ describe("storacha-entry-mapper", () => {
 			} as unknown as UploadListItem;
 
 			const spaceId = "test-space-id";
-			const gatewayUrl = "https://test-gateway.ipfs.w3s.link";
 
 			const result = await createEntryDataFromIPFS(spaceId, mockUpload);
 
