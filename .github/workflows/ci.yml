@@ -55,8 +55,8 @@ jobs:
       - name: Setup Dagger module
         working-directory: ./dagger
         run: |
-          npm install
-          npm run build
+          pnpm install
+          pnpm run build
 
       - name: Run Dagger CI pipeline
         run: |
