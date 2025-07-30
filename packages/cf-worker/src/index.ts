@@ -1,8 +1,8 @@
 import { Buffer } from "node:buffer";
-import { DurableObject } from "cloudflare:workers";
 import type { DurableObjectId } from "cloudflare:workers";
-import { authorizeUcan } from "@geist-filecoin/auth";
+import { DurableObject } from "cloudflare:workers";
 import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
+import { authorizeUcan } from "@geist-filecoin/auth";
 import {
 	createGatewayUrl,
 	initStorachaClient,
@@ -13,8 +13,8 @@ import { gcm } from "@noble/ciphers/aes.js";
 import { bytesToUtf8, utf8ToBytes } from "@noble/ciphers/utils.js";
 import { randomBytes } from "@noble/ciphers/webcrypto.js";
 import jwt from "@tsndr/cloudflare-worker-jwt";
-import { Router, cors, error, json } from "itty-router";
 import type { IRequest } from "itty-router";
+import { Router, cors, error, json } from "itty-router";
 import * as jose from "jose";
 
 export class Policies extends DurableObject<Env> {

@@ -1,18 +1,18 @@
 ---
-import { type CollectionEntry, getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
+import { type CollectionEntry, getCollection } from "astro:content";
+import BaseHead from "../../components/BaseHead.astro";
+import Footer from "../../components/Footer.astro";
+import Header from "../../components/Header.astro";
 
 export async function getStaticPaths() {
-	const products = await getCollection('products');
+	const products = await getCollection("products");
 	return products.map((product) => ({
 		params: { slug: product.id },
 		props: product,
 	}));
 }
 
-type Props = CollectionEntry<'products'>;
+type Props = CollectionEntry<"products">;
 
 const product = Astro.props;
 const { data } = product;

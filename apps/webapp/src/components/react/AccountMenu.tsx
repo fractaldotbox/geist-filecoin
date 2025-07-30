@@ -1,8 +1,8 @@
-import { loginWithBluesky } from "@/lib/bluesky-oauth";
-import { getShortForm, truncate } from "@/lib/utils/string";
 import { Copy, LogIn, User } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { loginWithBluesky } from "@/lib/bluesky-oauth";
+import { getShortForm, truncate } from "@/lib/utils/string";
 import { useUiState } from "../../livestore/queries";
 import { LoginState, useAuth } from "./AuthProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";

@@ -1,10 +1,10 @@
 import { useStore } from "@livestore/react";
-import { type Capabilities, type Delegation, Provider } from "@w3ui/react";
 import * as Client from "@storacha/client";
 import { StoreIndexedDB } from "@storacha/client/stores/indexeddb";
+import { type Capabilities, type Delegation, Provider } from "@w3ui/react";
 import {
-	type ReactNode,
 	createContext,
+	type ReactNode,
 	useContext,
 	useEffect,
 	useRef,

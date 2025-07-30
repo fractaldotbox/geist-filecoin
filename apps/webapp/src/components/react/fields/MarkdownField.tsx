@@ -1,3 +1,5 @@
+import { AlertCircle } from "lucide-react";
+import { lazy, Suspense, useState } from "react";
 import {
 	FormControl,
 	FormItem,
@@ -11,10 +13,9 @@ import {
 	TabsTrigger,
 } from "@/components/react/ui/tabs";
 import { Textarea } from "@/components/react/ui/textarea";
-import { AlertCircle } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
 
 const ReactMarkdown = lazy(() => import("react-markdown"));
+
 import type { FieldProps } from "./types";
 
 export function MarkdownField({
@@ -54,7 +55,13 @@ export function MarkdownField({
 				<TabsContent value="preview" className="mt-2">
 					<div className="min-h-[200px] p-3 border rounded-md overflow-y-auto prose prose-sm dark:prose-invert max-w-none">
 						{formField.value ? (
-							<Suspense fallback={<div className="text-muted-foreground">Loading preview...</div>}>
+							<Suspense
+								fallback={
+									<div className="text-muted-foreground">
+										Loading preview...
+									</div>
+								}
+							>
 								<ReactMarkdown>{formField.value as string}</ReactMarkdown>
 							</Suspense>
 						) : (

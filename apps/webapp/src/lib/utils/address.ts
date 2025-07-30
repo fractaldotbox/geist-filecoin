@@ -10,12 +10,12 @@ const getChecksumAddress = (address: string): string => {
 	// Implement basic checksumming based on test patterns
 	const addr = address.toLowerCase().replace("0x", "");
 	let result = "";
-	
+
 	// Simple checksum: uppercase hex digits 8-f, lowercase 0-7
 	for (let i = 0; i < addr.length; i++) {
 		const char = addr[i];
 		const digit = parseInt(char, 16);
-		
+
 		if (isNaN(digit)) {
 			result += char;
 		} else if (digit >= 8) {
@@ -24,7 +24,7 @@ const getChecksumAddress = (address: string): string => {
 			result += char.toLowerCase();
 		}
 	}
-	
+
 	return `0x${result}`;
 };
 

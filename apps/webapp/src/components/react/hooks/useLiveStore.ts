@@ -12,7 +12,10 @@ export const useLiveStore = () => {
 		const media = entryData.media as FileFieldValue | undefined;
 
 		const storageProviderMetadata = {
-			...(entryData.storageProviderMetadata as { spaceId?: string, cid?: string }),
+			...(entryData.storageProviderMetadata as {
+				spaceId?: string;
+				cid?: string;
+			}),
 			media: {
 				name: media?.file?.name,
 			},

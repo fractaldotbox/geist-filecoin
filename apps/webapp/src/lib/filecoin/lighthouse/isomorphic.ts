@@ -1,4 +1,3 @@
-import { uploadFiles as uploadFilesLighthouse } from "@/lib/filecoin/lighthouse/browser";
 import kavach from "@lighthouse-web3/kavach";
 import lighthouse from "@lighthouse-web3/sdk";
 import type {
@@ -6,6 +5,7 @@ import type {
 	IUploadProgressCallback,
 } from "@lighthouse-web3/sdk/dist/types";
 import ky, { type Options, type Progress } from "ky";
+import { uploadFiles as uploadFilesLighthouse } from "@/lib/filecoin/lighthouse/browser";
 // Removed viem dependency - wallet functionality moved elsewhere
 // import { CID } from 'multiformats/cid'
 

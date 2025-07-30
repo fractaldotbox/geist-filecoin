@@ -1,5 +1,5 @@
-import { Input } from "@/components/react/ui/input";
 import type { ControllerRenderProps, FieldValues } from "react-hook-form";
+import { Input } from "@/components/react/ui/input";
 
 export const FileInput = ({
 	field,

@@ -1,5 +1,22 @@
-import SpaceBreadcrumb from "@/components/react/SpaceBreadcrumb";
+import { useStore } from "@livestore/react";
+import {
+	AlertCircle,
+	Calendar,
+	Copy,
+	ExternalLink,
+	Eye,
+	FilePlus,
+	FileText,
+	Filter,
+	Folder,
+	MoreHorizontal,
+	RefreshCw,
+	Search,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useSpaceFiles } from "@/components/react/hooks/useStoracha";
+import SpaceBreadcrumb from "@/components/react/SpaceBreadcrumb";
 import { Badge } from "@/components/react/ui/badge";
 import {
 	Breadcrumb,
@@ -33,23 +50,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/react/ui/table";
-import { useStore } from "@livestore/react";
-import {
-	AlertCircle,
-	Calendar,
-	Copy,
-	ExternalLink,
-	Eye,
-	FilePlus,
-	FileText,
-	Filter,
-	Folder,
-	MoreHorizontal,
-	RefreshCw,
-	Search,
-} from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { useStorachaContext } from "../components/react/StorachaProvider";
 import { allEntries$, allSpaces$, useUiState } from "../livestore/queries";
 import { useSync } from "../services/storachaSync";
@@ -387,8 +387,7 @@ export default function ContentEntriesPage() {
 														</div>
 														{entry.storageProviderKey && (
 															<div className="text-xs text-muted-foreground">
-																Provider:{" "}
-																{entry.storageProviderKey}
+																Provider: {entry.storageProviderKey}
 															</div>
 														)}
 														{entry.spaceId && (
@@ -440,13 +439,15 @@ export default function ContentEntriesPage() {
 									</h4>
 									<p className="text-muted-foreground mb-4">
 										{searchQuery ||
-											selectedStatus !== "all" ||
-											selectedContentTypeId !== "all" ||
-											selectedFilter === "recent"
+										selectedStatus !== "all" ||
+										selectedContentTypeId !== "all" ||
+										selectedFilter === "recent"
 											? "No content matches your current filters. Try adjusting your search criteria."
 											: "Your space is ready but doesn't have any content entries yet."}
 									</p>
-									<Link to={`/editor/space/${uiState.currentSpaceId}/content-type/select`}>
+									<Link
+										to={`/editor/space/${uiState.currentSpaceId}/content-type/select`}
+									>
 										<Button>Create Your First Entry</Button>
 									</Link>
 								</div>

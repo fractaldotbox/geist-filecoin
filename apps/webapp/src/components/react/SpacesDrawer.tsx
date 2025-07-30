@@ -1,3 +1,4 @@
+import type { StorageProviderCredentialConfig } from "@geist-filecoin/domain";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useStore } from "@livestore/react";
 import {
@@ -19,16 +20,14 @@ import {
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { z } from "zod";
 import {
-	STORAGE_PROVIDERS,
 	STORAGE_PROVIDER_LABELS,
+	STORAGE_PROVIDERS,
 	StorageProvider,
 } from "../../constants/storage-providers";
 import { allSpaces$, useUiState } from "../../livestore/queries";
-
-import type { StorageProviderCredentialConfig } from "@geist-filecoin/domain";
-import { toast } from "sonner";
 import { useLiveStore } from "./hooks/useLiveStore";
 import { useSpaceStore } from "./hooks/useSpaceStore";
 import { Badge } from "./ui/badge";
