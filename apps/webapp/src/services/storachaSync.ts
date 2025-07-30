@@ -103,7 +103,6 @@ export const useSync = (spaceId: string) => {
 			await createEntry({
 				...entry,
 				name: entry.name,
-				tags: JSON.parse(entry.tags),
 				publishedAt: entry.publishedAt.toISOString(),
 			});
 		}

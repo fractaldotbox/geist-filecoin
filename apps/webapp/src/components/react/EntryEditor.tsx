@@ -204,14 +204,14 @@ export function EntryEditor({
 
 	const contentType = contentTypeData
 		? {
-				type: "object" as const,
-				...contentTypeData,
-				properties: JSON.parse(contentTypeData.properties) as Record<
-					string,
-					ContentTypeField
-				>,
-				required: JSON.parse(contentTypeData.required) as string[],
-			}
+			type: "object" as const,
+			...contentTypeData,
+			properties: JSON.parse(contentTypeData.properties) as Record<
+				string,
+				ContentTypeField
+			>,
+			required: JSON.parse(contentTypeData.required) as string[],
+		}
 		: null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -281,7 +281,7 @@ export function EntryEditor({
 				} else if (field.type === "array") {
 					defaultValues[key] = [];
 				} else if (field.type === "object" && field.properties?.url) {
-					defaultValues[key] = { url: "" };
+					defaultValues[key] = { spaceId: undefined, cid: undefined };
 				} else if (field.type === "string" && field.format === "date") {
 					defaultValues[key] = "";
 				} else {
@@ -320,9 +320,9 @@ export function EntryEditor({
 	// Only set defaultValues after entry is loaded (if editing)
 	const initialDefaultValues = contentType
 		? createDefaultValues(
-				contentType,
-				entryId && entry ? getEntryFormDefaults(contentType, entry) : undefined,
-			)
+			contentType,
+			entryId && entry ? getEntryFormDefaults(contentType, entry) : undefined,
+		)
 		: {};
 
 	const form = useForm<Partial<EntryFormData>>({
@@ -412,17 +412,24 @@ export function EntryEditor({
 			});
 
 			const entryId = crypto.randomUUID();
-			// Create entry using LiveStore event
-			await createEntry({
+
+			const entry = {
 				id: entryId,
 				...entryData,
 				// TODO allow configure per schema
 				name: values.title as string,
 				contentTypeId,
-				media: { url: url, cid },
-			});
+				media: { name: media?.file?.name },
+				storageProviderMetadata: {
+					spaceId: activeSpace?.id,
+					cid,
+				},
+			}
+			// Create entry using LiveStore event
+			await createEntry(entry);
 
-			console.log("Entry created successfully");
+			console.log("Entry created successfully", entry?.id);
+			console.log(entry);
 
 			// Set the submission result for the sidebar
 			setSubmissionResult({

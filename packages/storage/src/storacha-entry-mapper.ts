@@ -54,12 +54,15 @@ export const createEntryDataFromIPFS = async (
 		spaceId,
 		name: metadata.name || "",
 		contentTypeId: metadata.contentTypeId || "",
-		data: JSON.stringify(data),
+		data,
 		storageProviderKey: spaceId,
-		tags: JSON.stringify({
+		storageProviderMetadata: {
+			cid,
+		},
+		tags: {
 			shards: upload.shards || [],
 			metadata: metadata,
-		}),
+		},
 		publishedAt: new Date(upload.insertedAt),
 	};
 };
