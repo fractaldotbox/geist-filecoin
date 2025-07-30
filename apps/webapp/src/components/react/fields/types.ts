@@ -7,7 +7,6 @@ export type EntryFormData = {
 		| string
 		| string[]
 		| { spaceId?: string, cid?: string }
-		| { url: string; cid?: string; file?: File }
 		| undefined;
 };
 

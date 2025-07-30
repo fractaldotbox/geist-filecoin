@@ -281,7 +281,7 @@ export function EntryEditor({
 				} else if (field.type === "array") {
 					defaultValues[key] = [];
 				} else if (field.type === "object" && field.properties?.url) {
-					defaultValues[key] = { url: "" };
+					defaultValues[key] = { spaceId: undefined, cid: undefined };
 				} else if (field.type === "string" && field.format === "date") {
 					defaultValues[key] = "";
 				} else {
