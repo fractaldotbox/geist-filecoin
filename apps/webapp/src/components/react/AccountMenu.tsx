@@ -131,7 +131,7 @@ export function AccountMenu() {
 			setUiState({ currentLoginEmail: "" });
 			form.reset();
 			blueskyForm.reset();
-			setUiState({ isShowSocialLogins: false });
+			setUiState({ isShowSocialLogins: false, isLoginDialogOpen: false });
 		}
 	};
 
