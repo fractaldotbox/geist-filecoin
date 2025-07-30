@@ -6,6 +6,7 @@ export type EntryFormData = {
 	[key: string]:
 		| string
 		| string[]
+		| { spaceId?: string, cid?: string }
 		| { url: string; cid?: string; file?: File }
 		| undefined;
 };

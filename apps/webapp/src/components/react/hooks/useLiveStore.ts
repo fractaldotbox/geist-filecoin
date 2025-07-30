@@ -11,6 +11,13 @@ export const useLiveStore = () => {
 		// Handle media field properly
 		const media = entryData.media as FileFieldValue | undefined;
 
+		const storageProviderMetadata = {
+			...(entryData.storageProviderMetadata as { spaceId?: string, cid?: string }),
+			media: {
+				name: media?.file?.name,
+			},
+		};
+
 		return store.commit(
 			events.entryCreated({
 				id: entryData.id,
@@ -18,7 +25,8 @@ export const useLiveStore = () => {
 				spaceId: (entryData.spaceId as string) || "",
 				contentTypeId: entryData.contentTypeId,
 				data: (entryData.data as string) || "",
-				storageProviderKey: media?.cid || "", // Add missing storageProviderKey field
+				storageProviderKey: "storacha",
+				storageProviderMetadata: JSON.stringify(storageProviderMetadata),
 				tags: entryData.tags ? JSON.stringify(entryData.tags) : "",
 				publishedAt: entryData.publishedAt
 					? new Date(entryData.publishedAt as string)

@@ -388,7 +388,7 @@ export default function ContentEntriesPage() {
 														{entry.storageProviderKey && (
 															<div className="text-xs text-muted-foreground">
 																Provider:{" "}
-																{entry.storageProviderKey.substring(0, 8)}...
+																{entry.storageProviderKey}
 															</div>
 														)}
 														{entry.spaceId && (

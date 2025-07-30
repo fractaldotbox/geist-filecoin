@@ -91,10 +91,10 @@ describe("storacha-entry-mapper", () => {
 				title: "Mountain View",
 				content: "Beautiful mountain landscape",
 				storageProviderKey: "test-space-id",
-				tags: JSON.stringify({
+				tags: {
 					shards: ["shard1", "shard2"],
 					metadata: mockMetadata,
-				}),
+				},
 				publishedAt: new Date("2024-01-01T00:00:00.000Z"),
 			});
 		});
