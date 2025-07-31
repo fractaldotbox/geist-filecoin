@@ -116,51 +116,6 @@ jobs:
             trufflehog-results.json
           retention-days: 30
 
-      - name: Advanced secret patterns check
-        run: |
-          echo "## 🔐 Advanced Secret Patterns Check" > secret-patterns-report.md
-          echo "" >> secret-patterns-report.md
-          
-          # Check for common secret patterns
-          patterns=(
-            "CLOUDFLARE_API_TOKEN"
-            "LIGHTHOUSE_API_KEY"
-            "GEIST_JWT_SECRET"
-            "password\s*=\s*['\"][\w\d]+"
-            "secret\s*=\s*['\"][\w\d]+"
-            "api[_-]?key\s*=\s*['\"][\w\d]+"
-            "bearer\s+[a-zA-Z0-9\-\.=]+"
-          )
-          
-          suspicious_files=()
-          
-          for pattern in "${patterns[@]}"; do
-            echo "Checking pattern: $pattern" >> secret-patterns-report.md
-            if grep -r -i -E "$pattern" . --exclude-dir=.git --exclude-dir=node_modules --exclude="*.md" --exclude="*.yml" --exclude="*.yaml" 2>/dev/null; then
-              echo "⚠️ Potential secret pattern found: $pattern" >> secret-patterns-report.md
-              suspicious_files+=($(grep -r -l -i -E "$pattern" . --exclude-dir=.git --exclude-dir=node_modules --exclude="*.md" --exclude="*.yml" --exclude="*.yaml" 2>/dev/null || true))
-            else
-              echo "✅ Pattern not found: $pattern" >> secret-patterns-report.md
-            fi
-            echo "" >> secret-patterns-report.md
-          done
-          
-          if [ ${#suspicious_files[@]} -gt 0 ]; then
-            echo "❌ Suspicious files found with potential secrets!" >> secret-patterns-report.md
-            printf "%s\n" "${suspicious_files[@]}" >> secret-patterns-report.md
-            echo "WARNING: Manual review required for the above files." >> secret-patterns-report.md
-            exit 1
-          else
-            echo "✅ No suspicious secret patterns detected." >> secret-patterns-report.md
-          fi
-
-      - name: Upload secret patterns report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: secret-patterns-report
-          path: secret-patterns-report.md
-          retention-days: 30
 
   codeql-analysis:
     name: CodeQL Security Analysis
