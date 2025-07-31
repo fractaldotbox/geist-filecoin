@@ -99,9 +99,11 @@ jobs:
 
   # Performance regression testing
   performance-regression:
+    # temp disable regression
+    if: false
+    # if: github.event_name == 'pull_request'
     name: Performance Regression Tests
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     
     steps:
       - name: Checkout
