@@ -1,4 +1,3 @@
-import { AlertCircle } from "lucide-react";
 import {
 	FormControl,
 	FormItem,
@@ -6,6 +5,7 @@ import {
 	FormMessage,
 } from "@/components/react/ui/form";
 import { Input } from "@/components/react/ui/input";
+import { AlertCircle } from "lucide-react";
 import { FileInput } from "./FileInput";
 import type { FieldProps, FileFieldValue } from "./types";
 

@@ -21,10 +21,9 @@ export const fetchIPFSMetadata = async (
 	cidRootWithGatewayUrl: string,
 ): Promise<EntryIPFSData> => {
 	try {
-		const response = await ky
-			.get(`${cidRootWithGatewayUrl}/entry.json`)
-			.json<EntryIPFSData>();
-		return response;
+		const response = await ky.get(`${cidRootWithGatewayUrl}/entry.json`);
+		const data = await response.json<EntryIPFSData>();
+		return data;
 	} catch (error) {
 		console.error("Failed to fetch IPFS metadata:", error);
 		throw new Error(`Failed to fetch metadata from ${cidRootWithGatewayUrl}`);
@@ -48,11 +47,22 @@ export const createEntryDataFromIPFS = async (
 	const cid = upload.root.toString();
 
 	const cidRootWithGatewayUrl = createGatewayUrl(cid);
-	const { metadata, data } = await fetchIPFSMetadata(cidRootWithGatewayUrl);
+	let metadata: EntryMetadata = {};
+	let data: { [key: string]: unknown } = {};
+
+	try {
+		const ipfsData = await fetchIPFSMetadata(cidRootWithGatewayUrl);
+		metadata = ipfsData.metadata || {};
+		data = ipfsData.data || {};
+	} catch (error) {
+		// Use fallback values when metadata fetch fails
+		console.warn(`Failed to fetch metadata for ${cid}, using fallback values`);
+	}
+
 	return {
 		id: cid,
 		spaceId,
-		name: metadata.name || "",
+		name: metadata.name || `Upload ${cid}`,
 		contentTypeId: metadata.contentTypeId || "",
 		data,
 		storageProviderKey: spaceId,

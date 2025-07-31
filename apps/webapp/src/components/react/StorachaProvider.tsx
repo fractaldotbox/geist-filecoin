@@ -3,8 +3,8 @@ import * as Client from "@storacha/client";
 import { StoreIndexedDB } from "@storacha/client/stores/indexeddb";
 import { type Capabilities, type Delegation, Provider } from "@w3ui/react";
 import {
-	createContext,
 	type ReactNode,
+	createContext,
 	useContext,
 	useEffect,
 	useRef,

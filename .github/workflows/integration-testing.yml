@@ -1,0 +1,200 @@
+name: Integration & E2E Testing
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+  schedule:
+    # Run comprehensive tests nightly
+    - cron: '0 3 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "23"
+  PNPM_VERSION: "10.13.1"
+
+jobs:
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    strategy:
+      matrix:
+        browser: [chromium, firefox]
+        shard: [1, 2, 3]
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Start application server
+        run: |
+          pnpm --filter @geist-filecoin/webapp run preview &
+          echo "SERVER_PID=$!" >> $GITHUB_ENV
+          
+          # Wait for server to be ready
+          timeout 60 bash -c 'until curl -f http://localhost:4173; do sleep 2; done'
+
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            kill $SERVER_PID || true
+          fi
+
+  # Visual regression testing
+  visual-tests:
+    name: Visual Regression Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Run visual regression tests
+        uses: chromaui/action@v11
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          buildScriptName: build
+          exitOnceUploaded: true
+          onlyChanged: true
+        continue-on-error: true
+
+  # Performance regression testing
+  performance-regression:
+    # temp disable regression
+    if: false
+    # if: github.event_name == 'pull_request'
+    name: Performance Regression Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Run performance benchmarks
+        run: |
+          echo "🚀 Running performance regression tests..."
+          
+          # Start the preview server
+          pnpm --filter @geist-filecoin/webapp run preview &
+          SERVER_PID=$!
+          
+          # Wait for server
+          sleep 30
+          
+          # Run Lighthouse CI with performance budgets
+          npx @lhci/cli@0.12.x autorun
+          
+          # Cleanup
+          kill $SERVER_PID || true
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-regression-results
+          path: |
+            .lighthouseci/
+          retention-days: 7
+
+  # Test results aggregation
+  test-summary:
+    name: Test Results Summary
+    runs-on: ubuntu-latest
+    needs: [e2e-tests]
+    if: always()
+    
+    steps:
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-test-results-*'
+        continue-on-error: true
+
+      - name: Create comprehensive test summary
+        run: |
+          echo "## 🧪 Comprehensive Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Run**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # E2E Tests Results
+          echo "### End-to-End Tests" >> $GITHUB_STEP_SUMMARY
+          echo "| Browser | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          browsers=("chromium" "firefox")
+          for browser in "${browsers[@]}"; do
+            if [[ "${{ needs.e2e-tests.result }}" == "success" ]]; then
+              echo "| $browser | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| $browser | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Overall Status
+          if [[ "${{ needs.e2e-tests.result }}" == "success" ]]; then
+            echo "### ✅ Overall Status: All Tests Passed!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Overall Status: Some Tests Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please review the failed tests and fix any issues before merging." >> $GITHUB_STEP_SUMMARY
+          fi

@@ -1,6 +1,3 @@
-import { lazy, Suspense, useEffect } from "react";
-import { Route, Routes } from "react-router-dom";
-import { Toaster } from "sonner";
 import { GlobalProgressProvider } from "@/components/react/GlobalProgressProvider";
 import Layout from "@/components/react/Layout";
 import { Navigation } from "@/components/react/Navigation";
@@ -10,6 +7,9 @@ import {
 	useSpacesDrawer,
 } from "@/components/react/SpacesDrawerProvider";
 import { THEME_STORAGE_KEY } from "@/stores/theme";
+import { Suspense, lazy, useEffect } from "react";
+import { Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
 import { DemoModeBanner } from "./components/react/DemoModeBanner";
 import { useDemoMode } from "./components/react/hooks/useDemoMode";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";

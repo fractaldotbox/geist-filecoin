@@ -97,7 +97,7 @@ export const listAllFiles = async ({
 	let cursor = "";
 
 	do {
-		const result = await client.capability.upload.list({ cursor, size: 1 });
+		const result = await client.capability.upload.list({ cursor, size: 25 });
 		allFiles.push(...result.results);
 		cursor = result.cursor || "";
 	} while (cursor);
@@ -170,7 +170,7 @@ export const initStorachaClient = async ({
 	keyString,
 	proofString,
 	store = new StoreMemory(),
-}: StorachaInitParams) => {
+}: StorachaInitParams): Promise<{ client: Client; space: any }> => {
 	const principal = Signer.parse(keyString);
 	const client = await createClient({
 		principal,

@@ -1,19 +1,9 @@
-import type { Entry } from "@geist-filecoin/domain";
-import { uploadFiles } from "@geist-filecoin/storage";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { Client } from "@storacha/client";
-import ky from "ky";
-import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { useForm, useFormState } from "react-hook-form";
-import { useParams } from "react-router-dom";
-import * as z from "zod";
 import {
 	ArrayField,
 	DateField,
 	FileField,
-	TextareaField,
 	TextField,
+	TextareaField,
 } from "@/components/react/fields";
 import type {
 	EntryFormData,
@@ -34,10 +24,20 @@ import {
 	type ContentTypeField,
 	useContentType,
 } from "@/stores/schema";
+import type { Entry } from "@geist-filecoin/domain";
+import { uploadFiles } from "@geist-filecoin/storage";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Client } from "@storacha/client";
+import ky from "ky";
+import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useForm, useFormState } from "react-hook-form";
+import { useParams } from "react-router-dom";
+import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
+import { useStorachaContext } from "./StorachaProvider";
 import { MarkdownField } from "./fields/MarkdownField";
 import { useLiveStore } from "./hooks/useLiveStore";
-import { useStorachaContext } from "./StorachaProvider";
 
 // Upload mode enum
 export enum UploadMode {

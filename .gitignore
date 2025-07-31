@@ -7,6 +7,6 @@ dist/
 
 .next/
 .dev.vars*
+# Dagger
 
-packages/web/playwright-report/
 packages/web/build

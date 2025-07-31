@@ -1,5 +1,3 @@
-import { AlertCircle } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
 import {
 	FormControl,
 	FormItem,
@@ -13,6 +11,8 @@ import {
 	TabsTrigger,
 } from "@/components/react/ui/tabs";
 import { Textarea } from "@/components/react/ui/textarea";
+import { AlertCircle } from "lucide-react";
+import { Suspense, lazy, useState } from "react";
 
 const ReactMarkdown = lazy(() => import("react-markdown"));
 

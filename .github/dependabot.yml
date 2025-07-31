@@ -1,0 +1,148 @@
+version: 2
+updates:
+  # Root package.json
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@geist-team/developers"
+    assignees:
+      - "@geist-team/developers"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    groups:
+      dev-dependencies:
+        patterns:
+          - "@types/*"
+          - "@typescript*"
+          - "eslint*"
+          - "typescript"
+          - "vite*"
+          - "@vitejs/*"
+          - "vitest*"
+          - "@vitest/*"
+          - "wrangler"
+          - "@cloudflare/*"
+          - "@biomejs/*"
+          - "turbo"
+        update-types:
+          - "minor"
+          - "patch"
+      ui-dependencies:
+        patterns:
+          - "@radix-ui/*"
+          - "lucide-react"
+          - "class-variance-authority"
+          - "clsx"
+          - "tailwind*"
+        update-types:
+          - "minor"
+          - "patch"
+      react-ecosystem:
+        patterns:
+          - "react"
+          - "react-*"
+          - "@types/react*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Webapp package
+  - package-ecosystem: "npm"
+    directory: "/apps/webapp"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:30"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "@geist-team/developers"
+    commit-message:
+      prefix: "chore(webapp)"
+      include: "scope"
+    groups:
+      livestore-deps:
+        patterns:
+          - "@livestore/*"
+        update-types:
+          - "minor"
+          - "patch"
+      storage-deps:
+        patterns:
+          - "@w3ui/*"
+          - "@storacha/*"
+          - "@lighthouse-web3/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Auth package
+  - package-ecosystem: "npm"
+    directory: "/packages/auth"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "@geist-team/developers"
+    commit-message:
+      prefix: "chore(auth)"
+
+  # Domain package
+  - package-ecosystem: "npm"
+    directory: "/packages/domain"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:30"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "@geist-team/developers"
+    commit-message:
+      prefix: "chore(domain)"
+
+  # Storage package
+  - package-ecosystem: "npm"
+    directory: "/packages/storage"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:00"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "@geist-team/developers"
+    commit-message:
+      prefix: "chore(storage)"
+
+  # CF Worker package
+  - package-ecosystem: "npm"
+    directory: "/packages/cf-worker"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:30"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "@geist-team/developers"
+    commit-message:
+      prefix: "chore(cf-worker)"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "first-monday"
+      time: "06:00"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "@geist-team/developers"
+    commit-message:
+      prefix: "chore(actions)"

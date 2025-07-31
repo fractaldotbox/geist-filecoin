@@ -1,7 +1,7 @@
-import { SAMPLE_SPACES } from "@geist-filecoin/domain/fixture/space";
-import { useStore } from "@livestore/react";
 import { useSpaceStore } from "@/components/react/hooks/useSpaceStore";
 import { allSpaces$ } from "@/livestore/queries";
+import { SAMPLE_SPACES } from "@geist-filecoin/domain/fixture/space";
+import { useStore } from "@livestore/react";
 
 export function useSpaceSeeder() {
 	const { store } = useStore();

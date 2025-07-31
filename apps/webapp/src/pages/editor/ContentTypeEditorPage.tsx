@@ -1,4 +1,3 @@
-import { useParams } from "react-router-dom";
 import { ContentTypeEditor } from "@/components/react/ContentTypeEditor";
 
 export default function ContentTypeEditorPage() {
