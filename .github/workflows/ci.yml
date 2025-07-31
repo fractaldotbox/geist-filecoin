@@ -63,12 +63,12 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Setup Dagger module
         working-directory: ./dagger
         run: |
           pnpm install
-          pnpm run build
+          pnpm -w run build
 
       - name: Run Dagger CI pipeline
         run: |
