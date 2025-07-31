@@ -1,7 +1,7 @@
 import { loginWithBluesky } from "@/lib/bluesky-oauth";
-import { getShortForm, truncate } from "@/lib/utils/string";
+import { getShortForm } from "@/lib/utils/string";
 import { Copy, LogIn, User } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useUiState } from "../../livestore/queries";
 import { LoginState, useAuth } from "./AuthProvider";
@@ -13,7 +13,6 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from "./ui/dialog";
 import {
 	DropdownMenu,
@@ -32,7 +31,6 @@ import {
 	FormMessage,
 } from "./ui/form";
 import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 interface LoginFormData {
