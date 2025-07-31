@@ -3,7 +3,6 @@ import { useLiveStore } from "@/components/react/hooks/useLiveStore";
 import { Button } from "@/components/react/ui/button";
 import {
 	Dialog,
-	DialogClose,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
@@ -12,7 +11,6 @@ import {
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -36,9 +34,8 @@ import {
 } from "@geist-filecoin/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useStore } from "@livestore/react";
-import ky from "ky";
 import { useState } from "react";
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
