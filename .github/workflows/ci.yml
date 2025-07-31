@@ -61,6 +61,9 @@ jobs:
           sudo mv bin/dagger /usr/local/bin
           dagger version
 
+      - name: Checkout
+        uses: actions/checkout@v4
+        
       - name: Setup Dagger module
         working-directory: ./dagger
         run: |
