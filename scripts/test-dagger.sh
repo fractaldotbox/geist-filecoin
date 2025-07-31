@@ -19,7 +19,7 @@ cd "$(dirname "$0")/.."
 # Check if Dagger is available
 if ! command -v dagger &> /dev/null; then
     echo -e "${RED}❌ Dagger CLI not found. Please install it first.${NC}"
-    echo "Run: curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.14.0 sh"
+    echo "Run: curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.18.14 sh"
     exit 1
 fi
 

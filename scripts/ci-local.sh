@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 # Check if Dagger is installed
 if ! command -v dagger &> /dev/null; then
     echo -e "${RED}❌ Dagger CLI not found. Installing...${NC}"
-    curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.14.0 sh
+    curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.18.14 sh
     sudo mv bin/dagger /usr/local/bin
 fi
 
