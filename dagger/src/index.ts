@@ -35,8 +35,11 @@ export class GeistCi {
   @func()
   installDependencies(source: Directory): Container {
     return this.nodeContainer()
-      .withDirectory("/app", source)
+      .withDirectory("/app", source, {
+        exclude: ["**/node_modules/**"]
+      })
       .withWorkdir("/app")
+      .withEnvVariable("CI", "true")
       .withExec(["pnpm", "install", "--frozen-lockfile"])
   }
 
@@ -81,7 +84,7 @@ export class GeistCi {
       throw new Error(`Unknown workspace: ${workspace}`)
     }
 
-    return await container.withExec(command).stdout()
+    return await container.withExec(command).withEnvVariable("CI", "true").stdout()
   }
 
   /**
@@ -160,7 +163,7 @@ export class GeistCi {
       await Promise.all(buildPromises)
       console.log("✅ All builds passed")
 
-      // Run type checking
+      // // Run type checking
       await this.typeCheck(source)
       console.log("✅ Type checking passed")
 
@@ -191,6 +194,7 @@ export class GeistCi {
     // Install wrangler and deploy
     const deployContainer = buildContainer
       .withExec(["npm", "install", "-g", "wrangler@latest"])
+      .withEnvVariable("CI", "true")
       .withEnvVariable("CLOUDFLARE_API_TOKEN", cloudflareApiToken)
       .withEnvVariable("CLOUDFLARE_ACCOUNT_ID", cloudflareAccountId)
       .withEnvVariable("LIGHTHOUSE_API_KEY", lighthouseApiKey)
@@ -243,6 +247,7 @@ export class GeistCi {
       .withDirectory("/app", source)
       .withWorkdir("/app")
       .withExec(["npm", "install", "-g", "wrangler@latest"])
+      .withEnvVariable("CI", "true")
       .withEnvVariable("CLOUDFLARE_API_TOKEN", cloudflareApiToken)
       .withEnvVariable("CLOUDFLARE_ACCOUNT_ID", cloudflareAccountId)
       .withWorkdir("/app/packages/cf-worker/livestore-sync")
