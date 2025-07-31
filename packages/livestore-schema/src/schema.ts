@@ -443,3 +443,5 @@ const materializers = State.SQLite.materializers(events, {
 const state = State.SQLite.makeState({ tables, materializers });
 
 export const schema = makeSchema({ events, state });
+
+export * from "./schema-types";

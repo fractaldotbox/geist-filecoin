@@ -1,6 +1,6 @@
 import type { StorageProviderCredentialConfig } from "@geist-filecoin/domain";
 import { useStore } from "@livestore/react";
-import { events } from "../../../livestore/schema";
+import { events } from "@geist-filecoin/livestore-schema";
 
 export const useSpaceStore = () => {
 	const { store } = useStore();

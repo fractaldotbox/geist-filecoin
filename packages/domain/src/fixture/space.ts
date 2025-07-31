@@ -11,7 +11,7 @@ export const SAMPLE_SPACES = [
 		description: "A demo space for blog content using Storacha storage",
 		storageProvider: StorageProvider.Storacha,
 		storageProviderId:
-			"did:key:z6Mkvu57pm2XaQYr28RAxRnMZmp8owcf2EtD7MT8FsMVxCnj",
+			"did:key:z6MkpZ2zQMdFMXSuVq3iJRLD8HkrPT9EkpNHUabibFwkqEwK",
 		storageProviderCredentials: [
 			{
 				type: "secret-ref",

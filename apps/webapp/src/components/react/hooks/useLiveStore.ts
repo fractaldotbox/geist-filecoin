@@ -1,5 +1,5 @@
 import { useStore } from "@livestore/react";
-import { events } from "../../../livestore/schema";
+import { events } from "@geist-filecoin/livestore-schema";
 import type { EntryFormData, FileFieldValue } from "../fields/types";
 
 export const useLiveStore = () => {

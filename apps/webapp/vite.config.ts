@@ -12,9 +12,15 @@ export default defineConfig({
 		react(),
 		cloudflare(),
 		tailwindcss(),
-		livestoreDevtoolsPlugin({ schemaPath: "./src/livestore/schema.ts" }),
-		process.env.ANALYZE && analyzer(),
-	].filter(Boolean),
+		// TODO: instead of using relative path, use the package name
+		livestoreDevtoolsPlugin({
+			schemaPath: path.resolve(
+				__dirname,
+				"../../packages/livestore-schema/src/index.ts",
+			),
+		}),
+		...(process.env.ANALYZE ? [analyzer()] : []),
+	],
 
 	resolve: {
 		alias: {

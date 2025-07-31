@@ -8,7 +8,7 @@ import App from "./App.js";
 import { AuthProvider } from "./components/react/AuthProvider.js";
 import { StorachaProvider } from "./components/react/StorachaProvider.js";
 import LiveStoreWorker from "./livestore/livestore.worker?worker";
-import { schema } from "./livestore/schema.js";
+import { schema } from "@geist-filecoin/livestore-schema";
 
 const adapter = makePersistedAdapter({
 	storage: { type: "opfs" },

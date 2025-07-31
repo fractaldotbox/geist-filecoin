@@ -1,6 +1,6 @@
 import { queryDb } from "@livestore/livestore";
 import { useClientDocument } from "@livestore/react";
-import { tables } from "./schema.js";
+import { tables } from "@geist-filecoin/livestore-schema";
 
 export const useUiState = () => useClientDocument(tables.uiState);
 

@@ -1,7 +1,7 @@
 import { makeWorker } from "@livestore/adapter-web/worker";
 import { makeCfSync } from "@livestore/sync-cf";
 
-import { schema } from "./schema.js";
+import { schema } from "@geist-filecoin/livestore-schema";
 
 // Type declaration for import.meta.env
 declare global {

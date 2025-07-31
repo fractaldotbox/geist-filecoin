@@ -22,6 +22,7 @@
 		"@geist-filecoin/auth": "workspace:*",
 		"@geist-filecoin/domain": "workspace:*",
 		"@geist-filecoin/storage": "workspace:*",
+		"@geist-filecoin/livestore-schema": "workspace:*",
 		"@hookform/resolvers": "^5.0.1",
 		"@lighthouse-web3/kavach": "^0.2.1",
 		"@lighthouse-web3/sdk": "^0.3.7",

@@ -17,7 +17,13 @@ import type { IRequest } from "itty-router";
 import { Router, cors, error, json } from "itty-router";
 import * as jose from "jose";
 
-export class Policies extends DurableObject<Env> {
+import { makeAdapter } from '@livestore/adapter-node'
+import { createStorePromise } from '@livestore/livestore'
+import { makeCfSync } from '@livestore/sync-cf'
+
+import { events, schema, tables } from '@geist-filecoin/livestore-schema';
+
+ export class Policies extends DurableObject<Env> {
 	private storage: any;
 
 	constructor(state: any, env: any) {
@@ -153,11 +159,15 @@ router.post("/api/upload", async (request: Request) => {
 
 export const loadStorachaSecrets = async (env: any) => {
 	const agentKeyString = await env.STORACHA_AGENT_KEY_STRING.get();
+	console.log("agentKeyString", agentKeyString);
+
 	if (!agentKeyString) {
 		throw new Error("STORACHA_AGENT_KEY_STRING is not set");
 	}
 
 	const proofString = await env.GEIST.get("STORACHA_PROOF_STRING");
+
+	console.log("proofString", proofString);
 
 	if (!proofString) {
 		throw new Error("STORACHA_PROOF_STRING is not set");
@@ -173,16 +183,25 @@ export const loadStorachaSecrets = async (env: any) => {
 // better off separate 2 requests from very beginning
 
 router.post("/api/auth/ucan", async (request: Request, env: any) => {
-	const { agentDid, spaceId, tokenType } = await request.json();
+	const {
+		agentDid,
+		spaceId,
+		tokenType,
+	}: { agentDid: string; spaceId: string; tokenType: string } =
+		await request.json();
 
 	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
+	console.log("agentKeyString", agentKeyString, "proofString", proofString);
 
 	if (!agentDid) {
 		throw new Error("did is not set");
 	}
 
+	const geistUser = await env.GEIST.get("GEIST_USER");
+	console.log("geistUser", geistUser);
+
 	const input = {
-		subject: agentDid,
+		subject: `did:${agentDid}`,
 		tokenType,
 		context: {
 			spaceId,
@@ -203,6 +222,7 @@ router.post("/api/auth/ucan", async (request: Request, env: any) => {
 		proofString,
 	});
 
+	console.log(ucan);
 	try {
 		return new Response(ucan, {
 			headers: {
@@ -397,7 +417,7 @@ router.get("/websocket", async (request: Request, env: any) => {
 });
 
 router.post("/api/iam", async (request: Request, env: any) => {
-	const { policies } = await request.json();
+	const { policies }: { policies: AccessPolicy[] } = await request.json();
 	console.log("iam add policies", policies);
 	const policyDO = await getPolicyDO(request, env);
 
@@ -412,7 +432,8 @@ router.post("/api/iam", async (request: Request, env: any) => {
 });
 
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
-	const { agentDid, tokenType } = await request.json();
+	const { agentDid, tokenType }: { agentDid: string; tokenType: string } =
+		await request.json();
 
 	const policyDO = await getPolicyDO(request, env);
 
@@ -430,7 +451,7 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 	const jwt = await authorizeJWT(
 		policies,
 		{
-			subject: agentDid,
+			subject: `did:${agentDid}`,
 		},
 		jwtSecret,
 	);
@@ -445,6 +466,22 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 			},
 		},
 	);
+});
+
+const adapter = makeAdapter({
+  storage: { type: 'in-memory' },
+  sync: { backend: makeCfSync({ url: 'ws://localhost:8787' }), onSyncError: 'shutdown' },
+})
+
+const store = await createStorePromise({
+  adapter,
+  schema,
+  storeId: 'demo5',
+  syncPayload: { },
+})
+
+router.get("/api/test", async (request: Request, env: any) => {
+
 });
 
 export default {
