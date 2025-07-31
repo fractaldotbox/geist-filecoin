@@ -23,16 +23,17 @@ describe("storacha-entry-mapper", () => {
 				metadata: {
 					name: "Test NFT",
 					contentTypeId: "nft-content-type",
-					spaceId: "test-space"
+					spaceId: "test-space",
 				},
 				data: {
 					description: "A test NFT with metadata",
-					image: "ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu/fuji1.jpg",
+					image:
+						"ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu/fuji1.jpg",
 					attributes: [
 						{ trait_type: "Color", value: "Blue" },
 						{ trait_type: "Size", value: "Large" },
 					],
-				}
+				},
 			};
 
 			const { default: ky } = await import("ky");
@@ -72,8 +73,9 @@ describe("storacha-entry-mapper", () => {
 				},
 				data: {
 					description: "Beautiful mountain landscape",
-					image: "ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu/fuji1.jpg",
-				}
+					image:
+						"ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu/fuji1.jpg",
+				},
 			};
 
 			const { default: ky } = await import("ky");
@@ -100,7 +102,8 @@ describe("storacha-entry-mapper", () => {
 				contentTypeId: "landscape-type",
 				data: {
 					description: "Beautiful mountain landscape",
-					image: "ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu/fuji1.jpg",
+					image:
+						"ipfs://bafybeib7lhcwh3hvj2h7kiaqstxqnysnjl7hmibzx72zbni4wzhht4v4kuu/fuji1.jpg",
 				},
 				storageProviderKey: "test-space-id",
 				storageProviderMetadata: {
@@ -117,7 +120,7 @@ describe("storacha-entry-mapper", () => {
 		it("should create EntryData with fallback values when metadata is minimal", async () => {
 			const mockIPFSData: any = {
 				metadata: {},
-				data: {}
+				data: {},
 			};
 
 			const { default: ky } = await import("ky");

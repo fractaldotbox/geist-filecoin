@@ -20,7 +20,7 @@ concurrency:
 
 env:
   NODE_VERSION: "23"
-  PNMP_VERSION: "10.13.1"
+  PNPM_VERSION: "10.13.1"
 
 jobs:
   deploy:
@@ -32,6 +32,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
       - name: Install Dagger CLI
         run: |
           curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.14.0 sh
@@ -41,8 +52,8 @@ jobs:
       - name: Setup Dagger module
         working-directory: ./ci
         run: |
-          npm install
-          npm run build
+          pnpm install
+          pnpm run build
 
       - name: Deploy webapp to Cloudflare Workers
         run: |

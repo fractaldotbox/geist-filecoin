@@ -93,3 +93,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Spaces organize content with access policies
 - Content types define field schemas (JSON-based)
 - Entries are content instances linked to types and spaces
+
+### Linting
+- Use biome for all packages
