@@ -51,7 +51,6 @@ export default defineConfig({
 						"@radix-ui/react-label",
 						"@radix-ui/react-progress",
 						"@radix-ui/react-slot",
-						"@radix-ui/react-checkbox",
 						"class-variance-authority",
 						"clsx",
 						"tailwind-merge",
