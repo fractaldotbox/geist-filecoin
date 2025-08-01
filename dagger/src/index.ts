@@ -300,7 +300,6 @@ export class GeistCi {
   // }
 
 
-
   /**
    * Run health checks
    */
