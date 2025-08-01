@@ -116,6 +116,27 @@ const errorHandler = (error: Error, request: Request) => {
 	);
 };
 
+const authMiddleware = async (request: IRequest, env: any) => {
+	const authHeader = request.headers.get("Authorization");
+	if (!authHeader || !authHeader.startsWith("Bearer ")) {
+		return json({ error: "Missing or invalid Authorization header" }, { status: 401 });
+	}
+
+	const token = authHeader.substring(7); // Remove "Bearer "
+	const secret = await env.JWT_SECRET_KEY.get();
+
+	if (!secret) {
+		console.error("JWT_SECRET_KEY is not configured in worker environment.");
+		return json({ error: "Internal Server Error" }, { status: 500 });
+	}
+
+	const isValid = await jwt.verify(token, secret);
+
+	if (!isValid) {
+		return json({ error: "Invalid or expired token" }, { status: 401 });
+	}
+};
+
 const router = Router({
 	before: [preflight],
 	catch: errorHandler,
@@ -173,7 +194,15 @@ export const loadStorachaSecrets = async (env: any) => {
 // better off separate 2 requests from very beginning
 
 router.post("/api/auth/ucan", async (request: Request, env: any) => {
-	const { agentDid, spaceId, tokenType } = await request.json();
+	const {
+		agentDid,
+		spaceId,
+		tokenType,
+	} = (await request.json()) as {
+		agentDid: `did:${string}`;
+		spaceId: string;
+		tokenType: string;
+	};
 
 	const { agentKeyString, proofString } = await loadStorachaSecrets(env);
 
@@ -397,7 +426,7 @@ router.get("/websocket", async (request: Request, env: any) => {
 });
 
 router.post("/api/iam", async (request: Request, env: any) => {
-	const { policies } = await request.json();
+	const { policies } = (await request.json()) as { policies: AccessPolicy[] };
 	console.log("iam add policies", policies);
 	const policyDO = await getPolicyDO(request, env);
 
@@ -412,7 +441,10 @@ router.post("/api/iam", async (request: Request, env: any) => {
 });
 
 router.post("/api/auth/jwt", async (request: Request, env: any) => {
-	const { agentDid, tokenType } = await request.json();
+	const { agentDid, tokenType } = (await request.json()) as {
+		agentDid: `did:${string}`;
+		tokenType: string;
+	};
 
 	const policyDO = await getPolicyDO(request, env);
 
@@ -445,6 +477,30 @@ router.post("/api/auth/jwt", async (request: Request, env: any) => {
 			},
 		},
 	);
+});
+
+router.post("/api/auth/token", async (request: Request, env: any) => {
+	const secret = await env.JWT_SECRET_KEY.get();
+	if (!secret) {
+		throw new Error("JWT_SECRET_KEY is not set");
+	}
+
+	// In a real app, you'd have user authentication here
+	const payload = {
+		sub: "user123",
+		name: "John Doe",
+		email: "john.doe@gmail.com",
+		iat: Math.floor(Date.now() / 1000),
+		exp: Math.floor(Date.now() / 1000) + 60 * 60,
+	};
+
+	const token = await jwt.sign(payload, secret);
+
+	return json({ token });
+});
+
+router.get("/api/test-guard", authMiddleware, (request: IRequest) => {
+	return json({ message: "This is a protected route, you are authorized." });
 });
 
 export default {
