@@ -23,7 +23,7 @@ class StoreSingleton {
 
       const adapter = makeAdapter({
         storage: { type: 'in-memory' }, // Use in-memory storage for containers
-        sync: { 
+        sync: {
           backend: makeCfSync({
             url: 'https://geist-livestore-sync-worker.debuggingfuturecors.workers.dev',
           }),
@@ -42,7 +42,7 @@ class StoreSingleton {
 
       this.store = store;
       return store;
-    
+
 
   }
 }
@@ -55,17 +55,17 @@ app.get('/api/resources/entries', async (c) => {
   console.log('Syncing Resources: entires');
 
   try {
- 
+
     const store = await StoreSingleton.getInstance();
     const entries = store.query(tables.entries)
-  
+
     return c.json(entries);
 
   } catch (e) {
     console.error(e);
 
     return c.text('Error', e.message);
-  
+
   }
 
 });
