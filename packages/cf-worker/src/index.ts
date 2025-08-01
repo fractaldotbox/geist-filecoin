@@ -493,10 +493,14 @@ router.post("/api/auth/token", async (request: Request, env: any) => {
 	}
 
 	// In a real app, you'd have user authentication here
+	const { sub, name, email } = await request.json();
+	if (!sub || !name || !email) {
+		return json({ error: "Missing required user information (sub, name, email)" }, { status: 400 });
+	}
 	const payload = {
-		sub: "user123",
-		name: "John Doe",
-		email: "john.doe@gmail.com",
+		sub,
+		name,
+		email,
 		iat: Math.floor(Date.now() / 1000),
 		exp: Math.floor(Date.now() / 1000) + 60 * 60,
 	};
