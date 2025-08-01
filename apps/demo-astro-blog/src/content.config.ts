@@ -40,7 +40,7 @@ const blog = defineCollection({
 			id: z.string(),
 			slug: z.string(),
 			title: z.string(),
-			description: z.string(),
+			metaDescription: z.string(),
 			author: z.string(),
 			publishDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),

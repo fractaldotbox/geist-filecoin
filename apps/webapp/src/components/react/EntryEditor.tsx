@@ -5,7 +5,11 @@ import type { Client } from "@storacha/client";
 import ky from "ky";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useForm, useFormState } from "react-hook-form";
+import {
+	type ControllerRenderProps,
+	useForm,
+	useFormState,
+} from "react-hook-form";
 import { useParams } from "react-router-dom";
 import * as z from "zod";
 import {
@@ -172,9 +176,12 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 
 	useEffect(() => {
 		if (existingEntry) {
-			setEntry(existingEntry);
+			setEntry({
+				...existingEntry,
+				data: JSON.parse(existingEntry.data || "{}"),
+			});
 		} else {
-			setEntry({});
+			setEntry({} as Entry);
 		}
 	}, [existingEntry]);
 
@@ -220,7 +227,9 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 	const createFormSchema = (contentType: ContentType) => {
 		const schemaShape: Record<string, z.ZodTypeAny> = {};
 
-		for (const [key, field] of Object.entries(contentType.properties)) {
+		for (const [key, field] of Object.entries(
+			contentType.properties,
+		) as [string, ContentTypeField][]) {
 			const isRequired = contentType.required.includes(key);
 
 			if (field.type === "object" && field.properties?.url) {
@@ -332,7 +341,7 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 			return;
 		}
 		if (contentType && entryId && entry) {
-			const entryData = JSON.parse(entry.data);
+			const entryData = entry.data;
 			const entryDefaults = createDefaultValues(
 				contentType,
 				getEntryFormDefaults(contentType, entryData),
@@ -393,7 +402,10 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 				media: media?.file?.name,
 			};
 
-			const file = new File([JSON.stringify(entryData)], "entry.json");
+			const file = new File(
+				[JSON.stringify(entryData)],
+				`entry-${contentTypeId}.json`,
+			);
 
 			const files = [file, media?.file as File].filter(Boolean);
 
@@ -421,7 +433,7 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 				},
 			};
 			// Create entry using LiveStore event
-			await createEntry(entry);
+			await createEntry({ ...entry, data: JSON.stringify(entry.data) });
 
 			console.log("Entry created successfully", entry?.id);
 			console.log(entry);
@@ -469,12 +481,16 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 					key={name}
 					control={form.control}
 					name="media"
-					render={({ field: formField }) => (
+					render={({
+						field: formField,
+					}: {
+						field: ControllerRenderProps<Partial<EntryFormData>, "media">;
+					}) => (
 						<div className={`${animationClass} ${delayClass}`}>
 							<FileField
 								name={name}
 								field={field}
-								formField={formField}
+								formField={formField as any}
 								isRequired={isRequired}
 								isDirty={isDirty}
 								error={error}
@@ -491,7 +507,11 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 					key={name}
 					control={form.control}
 					name={name}
-					render={({ field: formField }) => (
+					render={({
+						field: formField,
+					}: {
+						field: ControllerRenderProps<Partial<EntryFormData>, string>;
+					}) => (
 						<div className={`${animationClass} ${delayClass}`}>
 							<ArrayField
 								name={name}
@@ -513,7 +533,11 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 					key={name}
 					control={form.control}
 					name={name}
-					render={({ field: formField }) => (
+					render={({
+						field: formField,
+					}: {
+						field: ControllerRenderProps<Partial<EntryFormData>, string>;
+					}) => (
 						<div className={`${animationClass} ${delayClass}`}>
 							<DateField
 								name={name}
@@ -534,7 +558,11 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 				key={name}
 				control={form.control}
 				name={name}
-				render={({ field: formField }) => (
+				render={({
+					field: formField,
+				}: {
+					field: ControllerRenderProps<Partial<EntryFormData>, string>;
+				}) => (
 					<div className={`${animationClass} ${delayClass}`}>
 						{/* always use markdown field for now */}
 						{field.description?.toLowerCase()?.includes("content") ? (
