@@ -76,6 +76,31 @@ export class Policies extends DurableObject<Env> {
 	}
 }
 
+export class MyContainer extends Container<Env> {
+	// Port the container listens on (default: 8080)
+	defaultPort = 8080;
+	// Time before container sleeps due to inactivity (default: 30s)
+	sleepAfter = "2m";
+	// Environment variables passed to the container
+	envVars = {
+	  MESSAGE: "I was passed in via the container class!",
+	};
+  
+	// Optional lifecycle hooks
+	override onStart() {
+	  console.log("Container successfully started");
+	  console.log('check container', this.ctx.storage);
+	}
+  
+	override onStop() {
+	  console.log("Container successfully shut down");
+	}
+  
+	override onError(error: unknown) {
+	  console.log("Container error:", error);
+	}
+  }
+
 const { preflight, corsify } = cors({
 	origin: "*",
 	credentials: true,
@@ -140,6 +165,25 @@ export const authorizeJWT = async (
 
 	return token;
 };
+
+// Route requests to a specific container using the container ID
+router.get("/container/:id", async (request: IRequest, env: any) => {
+	const id = request.params.id;
+	const containerId = env.MY_CONTAINER.idFromName(`/container/${id}`);
+	const container = env.MY_CONTAINER.get(containerId);
+	return await container.fetch(request.raw);
+  });
+
+
+  // Route requests to a specific container using the container ID
+router.get("/api/resources/entries", async (request: IRequest, env: any) => {
+	const id = request.params.id;
+	const containerId = env.MY_CONTAINER.idFromName(`/container/${id}`);
+	const container = env.MY_CONTAINER.get(containerId);
+
+	// TODO
+	return await container.fetch(request.raw);
+  });
 
 router.post("/api/upload", async (request: Request) => {
 	console.log("upload");

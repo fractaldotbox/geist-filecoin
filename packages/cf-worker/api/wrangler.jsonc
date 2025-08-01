@@ -67,10 +67,21 @@
 			{
 				"name": "POLICIES",
 				"class_name": "Policies"
+			},
+			{
+				"class_name": "Container",
+				"name": "CONTAINER"
 			}
 		]
 	},
 
+	"containers": [
+		{
+			"class_name": "Container",
+			"image": "./container/Dockerfile",
+			"max_instances": 10
+		}
+	],
 	/**
 	 * Migrations
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#migrations
@@ -79,6 +90,12 @@
 		{
 			"tag": "v1",
 			"new_sqlite_classes": ["Policies"]
+		},
+		{
+			"new_sqlite_classes": [
+				"Container"
+			],
+			"tag": "v1"
 		}
 	],
 
