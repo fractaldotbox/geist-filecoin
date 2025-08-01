@@ -1,3 +1,6 @@
+import { useLiveStore } from "@/components/react/hooks/useLiveStore";
+import type { Space } from "@/domain/space";
+import { allEntries$ } from "@/livestore/queries";
 import { createEntryDataFromIPFS, listFiles } from "@geist-filecoin/storage";
 /**
  * now sync from client side, after client receive delegations
@@ -9,9 +12,6 @@ import { useStore } from "@livestore/react";
 import type { Client } from "@storacha/client";
 import type { DID as W3DID } from "@storacha/client/principal/ed25519";
 import type { UploadListItem } from "@w3ui/react";
-import { useLiveStore } from "@/components/react/hooks/useLiveStore";
-import type { Space } from "@/domain/space";
-import { allEntries$ } from "@/livestore/queries";
 import { StorageProvider } from "../constants/storage-providers";
 
 interface StorachaUpload {

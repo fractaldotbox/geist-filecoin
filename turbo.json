@@ -1,18 +1,49 @@
 {
 	"$schema": "https://turbo.build/schema.json",
 	"globalDependencies": ["**/.env.*local"],
+	"globalEnv": ["NODE_ENV", "CI"],
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
-			"outputs": ["dist/**"]
+			"inputs": ["src/**", "public/**", "*.config.*", "package.json"],
+			"outputs": ["dist/**", ".vite/**"],
+			"env": ["NODE_ENV", "VITE_*"]
 		},
 		"lint": {
-			"outputs": []
+			"dependsOn": ["^build"],
+			"inputs": ["src/**", "*.config.*", "package.json"]
+		},
+		"test": {
+			"dependsOn": ["build"],
+			"inputs": ["src/**", "test/**", "*.config.*", "package.json"],
+			"outputs": ["coverage/**"],
+			"env": ["NODE_ENV"]
+		},
+		"test:integration": {
+			"dependsOn": ["build"],
+			"inputs": ["src/**", "test/**", "*.config.*", "package.json"],
+			"outputs": ["coverage/**", "test-results/**"],
+			"env": ["NODE_ENV", "DATABASE_URL", "TEST_*"]
+		},
+		"type-check": {
+			"dependsOn": ["^build"],
+			"inputs": ["src/**", "*.config.*", "tsconfig*.json", "package.json"],
+			"outputs": ["tsconfig.tsbuildinfo"]
 		},
 		"dev": {
 			"cache": false,
-			"persistent": true
+			"persistent": true,
+			"env": ["NODE_ENV", "VITE_*"]
+		},
+		"deploy": {
+			"dependsOn": ["build"],
+			"inputs": ["dist/**", "wrangler.jsonc", "worker/**"],
+			"outputs": [],
+			"cache": false
 		}
 	},
-	"globalPassThroughEnv": ["CF_DOMAIN", "CF_JWT_TOKEN"]
+	"globalPassThroughEnv": ["CF_DOMAIN", "CF_JWT_TOKEN"],
+	"remoteCache": {
+		"signature": true
+	}
 }

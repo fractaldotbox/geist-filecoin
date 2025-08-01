@@ -1,20 +1,15 @@
-import { useStore } from "@livestore/react";
-import { useMemo } from "react";
-import { useLocation, useParams } from "react-router-dom";
 import { EntryEditor } from "@/components/react/EntryEditor";
 import SpaceBreadcrumb from "@/components/react/SpaceBreadcrumb";
-import { allEntries$, allSpaces$, useUiState } from "@/livestore/queries";
+import { allSpaces$, useUiState } from "@/livestore/queries";
+import { useStore } from "@livestore/react";
+import { useParams } from "react-router-dom";
 
 export default function EntryEditorPage() {
-	const { entryId, contentTypeId, spaceId } = useParams();
+	const { entryId, contentTypeId } = useParams();
 
 	const { store } = useStore();
 	const spaces = store.useQuery(allSpaces$);
-	const [uiState, setUiState] = useUiState();
-	const entries = store.useQuery(allEntries$);
-
-	const location = useLocation();
-	// const isNewEntry = location.pathname.includes('/new');
+	const [uiState] = useUiState();
 
 	return (
 		<div className="container mx-auto p-6">

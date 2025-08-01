@@ -1,5 +1,5 @@
-import type { ControllerRenderProps } from "react-hook-form";
 import type { ContentTypeField } from "@/stores/schema";
+import type { ControllerRenderProps } from "react-hook-form";
 
 export type EntryFormData = {
 	id: string;

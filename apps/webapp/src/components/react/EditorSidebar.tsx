@@ -1,8 +1,7 @@
-import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
-import { useState } from "react";
 import { Card } from "@/components/react/ui/card";
 import type { ContentType } from "@/stores/schema";
-import { Button } from "./ui/button";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 interface EditorSidebarProps {
 	contentType: ContentType;

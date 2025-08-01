@@ -1,23 +1,9 @@
-import type { Entry } from "@geist-filecoin/domain";
-import { uploadFiles } from "@geist-filecoin/storage";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { Client } from "@storacha/client";
-import ky from "ky";
-import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import {
-	type ControllerRenderProps,
-	useForm,
-	useFormState,
-} from "react-hook-form";
-import { useParams } from "react-router-dom";
-import * as z from "zod";
 import {
 	ArrayField,
 	DateField,
 	FileField,
-	TextareaField,
 	TextField,
+	TextareaField,
 } from "@/components/react/fields";
 import type {
 	EntryFormData,
@@ -38,10 +24,20 @@ import {
 	type ContentTypeField,
 	useContentType,
 } from "@/stores/schema";
+import type { Entry } from "@geist-filecoin/domain";
+import { uploadFiles } from "@geist-filecoin/storage";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Client } from "@storacha/client";
+import ky from "ky";
+import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useForm, useFormState } from "react-hook-form";
+import { useParams } from "react-router-dom";
+import * as z from "zod";
 import { EditorSidebar } from "./EditorSidebar";
+import { useStorachaContext } from "./StorachaProvider";
 import { MarkdownField } from "./fields/MarkdownField";
 import { useLiveStore } from "./hooks/useLiveStore";
-import { useStorachaContext } from "./StorachaProvider";
 
 // Upload mode enum
 export enum UploadMode {
@@ -176,12 +172,9 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 
 	useEffect(() => {
 		if (existingEntry) {
-			setEntry({
-				...existingEntry,
-				data: JSON.parse(existingEntry.data || "{}"),
-			});
+			setEntry(existingEntry);
 		} else {
-			setEntry({} as Entry);
+			setEntry({});
 		}
 	}, [existingEntry]);
 
@@ -227,9 +220,7 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 	const createFormSchema = (contentType: ContentType) => {
 		const schemaShape: Record<string, z.ZodTypeAny> = {};
 
-		for (const [key, field] of Object.entries(
-			contentType.properties,
-		) as [string, ContentTypeField][]) {
+		for (const [key, field] of Object.entries(contentType.properties)) {
 			const isRequired = contentType.required.includes(key);
 
 			if (field.type === "object" && field.properties?.url) {
@@ -341,7 +332,7 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 			return;
 		}
 		if (contentType && entryId && entry) {
-			const entryData = entry.data;
+			const entryData = JSON.parse(entry.data);
 			const entryDefaults = createDefaultValues(
 				contentType,
 				getEntryFormDefaults(contentType, entryData),
@@ -402,10 +393,7 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 				media: media?.file?.name,
 			};
 
-			const file = new File(
-				[JSON.stringify(entryData)],
-				`entry-${contentTypeId}.json`,
-			);
+			const file = new File([JSON.stringify(entryData)], "entry.json");
 
 			const files = [file, media?.file as File].filter(Boolean);
 
@@ -433,7 +421,7 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 				},
 			};
 			// Create entry using LiveStore event
-			await createEntry({ ...entry, data: JSON.stringify(entry.data) });
+			await createEntry(entry);
 
 			console.log("Entry created successfully", entry?.id);
 			console.log(entry);
@@ -481,16 +469,12 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 					key={name}
 					control={form.control}
 					name="media"
-					render={({
-						field: formField,
-					}: {
-						field: ControllerRenderProps<Partial<EntryFormData>, "media">;
-					}) => (
+					render={({ field: formField }) => (
 						<div className={`${animationClass} ${delayClass}`}>
 							<FileField
 								name={name}
 								field={field}
-								formField={formField as any}
+								formField={formField}
 								isRequired={isRequired}
 								isDirty={isDirty}
 								error={error}
@@ -507,11 +491,7 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 					key={name}
 					control={form.control}
 					name={name}
-					render={({
-						field: formField,
-					}: {
-						field: ControllerRenderProps<Partial<EntryFormData>, string>;
-					}) => (
+					render={({ field: formField }) => (
 						<div className={`${animationClass} ${delayClass}`}>
 							<ArrayField
 								name={name}
@@ -533,11 +513,7 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 					key={name}
 					control={form.control}
 					name={name}
-					render={({
-						field: formField,
-					}: {
-						field: ControllerRenderProps<Partial<EntryFormData>, string>;
-					}) => (
+					render={({ field: formField }) => (
 						<div className={`${animationClass} ${delayClass}`}>
 							<DateField
 								name={name}
@@ -558,11 +534,7 @@ export function EntryEditor({ entryId }: { entryId?: string }) {
 				key={name}
 				control={form.control}
 				name={name}
-				render={({
-					field: formField,
-				}: {
-					field: ControllerRenderProps<Partial<EntryFormData>, string>;
-				}) => (
+				render={({ field: formField }) => (
 					<div className={`${animationClass} ${delayClass}`}>
 						{/* always use markdown field for now */}
 						{field.description?.toLowerCase()?.includes("content") ? (

@@ -1,0 +1,8 @@
+{
+	"name": "geist-ci",
+	"engineVersion": "v0.18.14",
+	"sdk": {
+		"source": "typescript"
+	},
+	"source": "dagger"
+}
