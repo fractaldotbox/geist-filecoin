@@ -5,7 +5,6 @@ const domain = process.env.CF_DOMAIN || "http://localhost:4003";
 
 const getAuthHeaders = () => {
 	const token = process.env.CF_JWT_TOKEN;
-	console.log(token);
 	const headers: HeadersInit = {};
 	if (token) {
 		headers.Authorization = `Bearer ${token}`;
