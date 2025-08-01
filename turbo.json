@@ -13,5 +13,6 @@
 			"cache": false,
 			"persistent": true
 		}
-	}
+	},
+	"globalPassThroughEnv": ["CF_DOMAIN", "CF_JWT_TOKEN"]
 }

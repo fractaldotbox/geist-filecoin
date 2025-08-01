@@ -3,11 +3,25 @@ import { glob } from "astro/loaders";
 
 const domain = process.env.CF_DOMAIN || "http://localhost:4003";
 
+const getAuthHeaders = () => {
+	const token = process.env.CF_JWT_TOKEN;
+	console.log(token);
+	const headers: HeadersInit = {};
+	if (token) {
+		headers.Authorization = `Bearer ${token}`;
+	}
+	return headers;
+};
+
 const blog = defineCollection({
 	loader: {
 		name: "blog-loader",
 		load: async ({ store, parseData, renderMarkdown }) => {
-			const response = await fetch(`${domain}/api/resources/blogs?mode=append`);
+			console.log(`${domain}`);
+			console.log(getAuthHeaders());
+			const response = await fetch(`${domain}/api/resources/blogs?mode=append`, {
+				headers: getAuthHeaders(),
+			});
 			const responseData = await response.json();
 			store.clear();
 
@@ -56,6 +70,7 @@ const landing = defineCollection({
 		load: async ({ store, parseData }) => {
 			const response = await fetch(
 				`${domain}/api/resources/landing?decrypt=false&mode=replace`,
+				{ headers: getAuthHeaders() },
 			);
 			const responseData = await response.json();
 			store.clear();
@@ -104,6 +119,7 @@ const products = defineCollection({
 		load: async ({ store, parseData }) => {
 			const response = await fetch(
 				`${domain}/api/resources/products?mode=append`,
+				{ headers: getAuthHeaders() },
 			);
 			const responseData = await response.json();
 			store.clear();

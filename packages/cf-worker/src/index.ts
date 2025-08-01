@@ -262,6 +262,7 @@ router.get("/api/health", async (request: Request) => {
 
 router.get(
 	"/api/resources/:resourceId",
+	authMiddleware,
 	async (request: IRequest, env: any) => {
 		const resourceId = request.params.resourceId;
 		const version = request.query.version;
