@@ -177,7 +177,7 @@ export class GeistCi {
    * Deploy to Cloudflare Workers
    */
   @func()
-  async deploy(
+  async deployWebapp(
     source: Directory,
     environment: string = "production",
     cloudflareApiToken: string,
@@ -197,8 +197,6 @@ export class GeistCi {
       .withEnvVariable("CI", "true")
       .withEnvVariable("CLOUDFLARE_API_TOKEN", cloudflareApiToken)
       .withEnvVariable("CLOUDFLARE_ACCOUNT_ID", cloudflareAccountId)
-      .withEnvVariable("LIGHTHOUSE_API_KEY", lighthouseApiKey)
-      .withEnvVariable("GEIST_JWT_SECRET", geistJwtSecret)
       .withWorkdir("/app/apps/webapp")
 
     // Handle environment-specific deployment
@@ -235,13 +233,13 @@ export class GeistCi {
   }
 
   /**
-   * Deploy LiveStore sync worker
+   * Deploy Api worker & LiveStore sync worker
    */
   @func()
-  async deployLivestoreSync(
+  async deployCfWorker(
     source: Directory,
+    cloudflareAccountId: string,
     cloudflareApiToken: string,
-    cloudflareAccountId: string
   ): Promise<string> {
     const container = this.nodeContainer()
       .withDirectory("/app", source)
@@ -253,9 +251,10 @@ export class GeistCi {
       .withWorkdir("/app/packages/cf-worker/livestore-sync")
 
     return await container
-      .withExec(["wrangler", "deploy"])
+      .withExec(["pnpm", "run", "deploy"])
       .stdout()
   }
+
 
   /**
    * Run health checks

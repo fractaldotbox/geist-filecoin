@@ -7,10 +7,10 @@ import { defineConfig } from "vite";
 export default defineConfig({
 	plugins: [
 		cloudflare({
-			configPath: "./api/wrangler.toml",
+			configPath: "./api/wrangler.jsonc",
 			auxiliaryWorkers: [
 				{
-					configPath: "./livestore-sync/wrangler.toml",
+					configPath: "./livestore-sync/wrangler.jsonc",
 				},
 			],
 		}),
