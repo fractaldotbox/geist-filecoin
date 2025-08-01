@@ -8,7 +8,9 @@
 		"dev": "vite dev ",
 		"build": "vite build",
 		"preview": "npm run build && vite preview",
-		"deploy": "npm run build && wrangler deploy",
+		"deploy": "npm run deploy:sync && npm run deploy:api",
+		"deploy:sync": "npm run build && wrangler -c livestore-sync/wrangler.jsonc deploy",
+		"deploy:api": "npm run build && wrangler -c api/wrangler.jsonc deploy",
 		"lint": "biome check --fix"
 	},
 	"dependencies": {

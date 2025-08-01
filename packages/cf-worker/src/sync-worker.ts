@@ -36,3 +36,5 @@ export class WorkerLiveStore extends WorkerEntrypoint {
 		);
 	}
 }
+
+export default WorkerLiveStore;
