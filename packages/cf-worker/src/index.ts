@@ -130,7 +130,13 @@ const authMiddleware = async (request: IRequest, env: any) => {
 		return json({ error: "Internal Server Error" }, { status: 500 });
 	}
 
-	const isValid = await jwt.verify(token, secret);
+	let isValid = false;
+	try {
+		isValid = await jwt.verify(token, secret);
+	} catch (err) {
+		console.error("JWT verification error:", err);
+		return json({ error: "Invalid or malformed token" }, { status: 401 });
+	}
 
 	if (!isValid) {
 		return json({ error: "Invalid or expired token" }, { status: 401 });
