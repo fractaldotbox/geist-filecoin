@@ -16,7 +16,6 @@ const blog = defineCollection({
 	loader: {
 		name: "blog-loader",
 		load: async ({ store, parseData, renderMarkdown }) => {
-			console.log(`${domain}`);
 			console.log(getAuthHeaders());
 			const response = await fetch(`${domain}/api/resources/blogs?mode=append`, {
 				headers: getAuthHeaders(),
