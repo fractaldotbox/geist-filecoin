@@ -169,8 +169,8 @@ export const authorizeJWT = async (
 // Route requests to a specific container using the container ID
 router.get("/container/:id", async (request: IRequest, env: any) => {
 	const id = request.params.id;
-	const containerId = env.MY_CONTAINER.idFromName(`/container/${id}`);
-	const container = env.MY_CONTAINER.get(containerId);
+	const containerId = env.LIVESTORE_SIDECAR.idFromName(`/container/${id}`);
+	const container = env.LIVESTORE_SIDECAR.get(containerId);
 	return await container.fetch(request.raw);
   });
 
@@ -178,8 +178,8 @@ router.get("/container/:id", async (request: IRequest, env: any) => {
   // Route requests to a specific container using the container ID
 router.get("/api/resources/entries", async (request: IRequest, env: any) => {
 	const id = request.params.id;
-	const containerId = env.MY_CONTAINER.idFromName(`/container/${id}`);
-	const container = env.MY_CONTAINER.get(containerId);
+	const containerId = env.LIVESTORE_SIDECAR.idFromName(`/container/${id}`);
+	const container = env.LIVESTORE_SIDECAR.get(containerId);
 
 	// TODO
 	return await container.fetch(request.raw);
