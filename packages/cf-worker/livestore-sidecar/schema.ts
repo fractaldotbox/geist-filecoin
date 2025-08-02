@@ -1,0 +1,1 @@
+../../../apps/webapp/src/livestore/schema.ts

@@ -75,10 +75,12 @@
 		]
 	},
 
+	// decouple the image build step for more flexible build, e.g. we want to resolve symlink for files
+
 	"containers": [
 		{
 			"class_name": "Container",
-			"image": "./container/Dockerfile",
+			"image": "registry.cloudflare.com/geist-filecoin-livestore-sidecar",
 			"max_instances": 10
 		}
 	],
