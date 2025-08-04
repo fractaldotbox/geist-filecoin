@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import type { DurableObjectId } from "cloudflare:workers";
 import { DurableObject } from "cloudflare:workers";
+import { Container, getContainer } from "@cloudflare/containers";
 import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import { authorizeUcan } from "@geist-filecoin/auth";
 import {
@@ -16,8 +17,6 @@ import jwt from "@tsndr/cloudflare-worker-jwt";
 import type { IRequest } from "itty-router";
 import { Router, cors, error, json } from "itty-router";
 import * as jose from "jose";
-import { Container, getContainer } from '@cloudflare/containers';
-
 
 export class Policies extends DurableObject<Env> {
 	private storage: any;
@@ -85,23 +84,23 @@ export class LivestoreSidecar extends Container<Env> {
 	sleepAfter = "2m";
 	// Environment variables passed to the container
 	envVars = {
-	  MESSAGE: "I was passed in via the container class!",
+		MESSAGE: "I was passed in via the container class!",
 	};
-  
+
 	// Optional lifecycle hooks
 	override onStart() {
-	  console.log("Container successfully started");
-	  console.log('check container', this.ctx.storage);
+		console.log("Container successfully started");
+		console.log("check container", this.ctx.storage);
 	}
-  
+
 	override onStop() {
-	  console.log("Container successfully shut down");
+		console.log("Container successfully shut down");
 	}
-  
+
 	override onError(error: unknown) {
-	  console.log("Container error:", error);
+		console.log("Container error:", error);
 	}
-  }
+}
 
 const { preflight, corsify } = cors({
 	origin: "*",
@@ -174,10 +173,10 @@ router.get("/api/resources/entries", async (request: IRequest, env: any) => {
 	const containerId = env.LIVESTORE_SIDECAR.idFromName(`/container/${id}`);
 	const container = env.LIVESTORE_SIDECAR.get(containerId);
 
-	// can't pass hono based response to itty-router directly 
-	
+	// can't pass hono based response to itty-router directly
+
 	// TODO
-	const results =	 await container.fetch(request);
+	const results = await container.fetch(request);
 	const res = await results.json();
 
 	return new Response(JSON.stringify(res), {
@@ -185,7 +184,7 @@ router.get("/api/resources/entries", async (request: IRequest, env: any) => {
 			"Content-Type": "application/json",
 		},
 	});
-  });
+});
 
 router.post("/api/upload", async (request: Request) => {
 	console.log("upload");
