@@ -47,19 +47,12 @@ class StoreSingleton {
   }
 }
 
-app.get('/hello', (c) => {
-  return c.text('Hello World');
-});
-app.get('/container/:id', (c) => {
-  return c.text('Hello ');
+app.get('/health', (c) => {
+  return c.text('ok');
 });
 
-app.get('/container', (c) => {
-  return c.text('Hello Container ');
-});
-
-app.get('/sync', async (c) => {
-  console.log('Syncing');
+app.get('/api/resources/entries', async (c) => {
+  console.log('Syncing Resources: entires');
 
   try {
  
@@ -70,7 +63,6 @@ app.get('/sync', async (c) => {
 
   } catch (e) {
     console.error(e);
-  
 
     return c.text('Error', e.message);
   

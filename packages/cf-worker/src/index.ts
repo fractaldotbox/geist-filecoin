@@ -16,6 +16,8 @@ import jwt from "@tsndr/cloudflare-worker-jwt";
 import type { IRequest } from "itty-router";
 import { Router, cors, error, json } from "itty-router";
 import * as jose from "jose";
+import { Container, getContainer } from '@cloudflare/containers';
+
 
 export class Policies extends DurableObject<Env> {
 	private storage: any;
@@ -76,7 +78,7 @@ export class Policies extends DurableObject<Env> {
 	}
 }
 
-export class MyContainer extends Container<Env> {
+export class LivestoreSidecar extends Container<Env> {
 	// Port the container listens on (default: 8080)
 	defaultPort = 8080;
 	// Time before container sleeps due to inactivity (default: 30s)
@@ -167,22 +169,22 @@ export const authorizeJWT = async (
 };
 
 // Route requests to a specific container using the container ID
-router.get("/container/:id", async (request: IRequest, env: any) => {
-	const id = request.params.id;
-	const containerId = env.LIVESTORE_SIDECAR.idFromName(`/container/${id}`);
-	const container = env.LIVESTORE_SIDECAR.get(containerId);
-	return await container.fetch(request.raw);
-  });
-
-
-  // Route requests to a specific container using the container ID
 router.get("/api/resources/entries", async (request: IRequest, env: any) => {
 	const id = request.params.id;
 	const containerId = env.LIVESTORE_SIDECAR.idFromName(`/container/${id}`);
 	const container = env.LIVESTORE_SIDECAR.get(containerId);
 
+	// can't pass hono based response to itty-router directly 
+	
 	// TODO
-	return await container.fetch(request.raw);
+	const results =	 await container.fetch(request);
+	const res = await results.json();
+
+	return new Response(JSON.stringify(res), {
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
   });
 
 router.post("/api/upload", async (request: Request) => {

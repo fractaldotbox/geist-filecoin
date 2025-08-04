@@ -254,47 +254,50 @@ export class GeistCi {
       .withExec(["pnpm", "run", "deploy"])
       .stdout()
   }
+  
 
 
   /**
    * Build livestore-sidecar Docker image
+   * 
+   * Seems cloudflare registry can only be pushed via wrangler publish, which requires docker process
+   * Dind creates extra complexity and we will run separately
+   * currently, as workaround use separate script to build and push with wrangler
    */
-  @func()
-  async buildSidecarImage(source: Directory, tag = "latest"): Promise<string> {
-    // Create a temporary directory to copy files with symlinks resolved
-    const tempContainer = dag
-      .container()
-      .from("alpine:latest")
-      .withDirectory("/source", source)
-      .withWorkdir("/tmp")
+  // @func()
+  // async buildSidecarImage(source: Directory, tag = "latest"): Promise<string> {
+  //   // Create a temporary directory to copy files with symlinks resolved
+  //   const tempContainer = dag
+  //     .container()
+  //     .from("alpine:latest")
+  //     .withDirectory("/source", source)
+  //     .withWorkdir("/tmp")
 
-    // Copy sidecar files to temp directory, resolving symlinks
-    const copiedFiles = tempContainer
-      .withExec([
-        "cp", "-Lr",
-        "/source/packages/cf-worker/livestore-sidecar/",
-        "/tmp/sidecar/"
-      ])
-      .directory("/tmp/sidecar")
+  //   // Copy sidecar files to temp directory, resolving symlinks
+  //   const copiedFiles = tempContainer
+  //     .withExec([
+  //       "cp", "-Lr",
+  //       "/source/packages/cf-worker/livestore-sidecar/",
+  //       "/tmp/sidecar/"
+  //     ])
+  //     .directory("/tmp/sidecar")
 
-    const uuid = crypto.randomUUID()
-    // Build and tag the Docker image with Cloudflare registry
-    const imageRef = `ttl.sh/${uuid}:2h`
+  //   const uuid = crypto.randomUUID()
+  //   // Build and tag the Docker image with Cloudflare registry
+  //   const imageRef = `ttl.sh/${uuid}:2h`
     
-    // seems cloudflare registry can only be pushed via wrangler publish, which requires docker process
-    // Dind creates extra complexity and we will run separately
 
-    const container = dag
-      .container()
-      .build(copiedFiles, {
-        dockerfile: "Dockerfile"
-      })
-      .withLabel("org.opencontainers.image.title", imageRef)
-      .withLabel("org.opencontainers.image.description", "LiveStore sidecar for Geist Filecoin")
-      .publish(imageRef)
+  //   const container = dag
+  //     .container()
+  //     .build(copiedFiles, {
+  //       dockerfile: "Dockerfile"
+  //     })
+  //     .withLabel("org.opencontainers.image.title", imageRef)
+  //     .withLabel("org.opencontainers.image.description", "LiveStore sidecar for Geist Filecoin")
+  //     .publish(imageRef)
 
-    return await container
-  }
+  //   return await container
+  // }
 
 
   /**

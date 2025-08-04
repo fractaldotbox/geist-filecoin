@@ -5,10 +5,11 @@
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"scripts": {
-		"dev": "vite dev ",
+		"dev": "wrangler -c ./api/wrangler.jsonc dev ",
 		"build": "vite build",
 		"preview": "npm run build && vite preview",
 		"deploy": "npm run deploy:sync && npm run deploy:api",
+		"deploy:sidecar": "cp -Lr livestore-sidecar dist/sidecar && cd dist/sidecar && npm i &&  wrangler containers build -p -t registry.cloudflare.com/geist-filecoin-livestore-sidecar:latest .",
 		"deploy:sync": "npm run build && wrangler -c livestore-sync/wrangler.jsonc deploy",
 		"deploy:api": "npm run build && wrangler -c api/wrangler.jsonc deploy",
 		"lint": "biome check --fix"
@@ -28,6 +29,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@cloudflare/workers-types": "^4.20250620.0",
+		"@cloudflare/containers": "^0.0.19",
 		"typescript": "^5.8.3",
 		"vite": "^6.3.4",
 		"wrangler": "^4.26.0"
