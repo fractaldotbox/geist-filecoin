@@ -177,7 +177,7 @@ export class GeistCi {
    * Deploy to Cloudflare Workers
    */
   @func()
-  async deploy(
+  async deployWebapp(
     source: Directory,
     environment: string = "production",
     cloudflareApiToken: string,
@@ -197,8 +197,6 @@ export class GeistCi {
       .withEnvVariable("CI", "true")
       .withEnvVariable("CLOUDFLARE_API_TOKEN", cloudflareApiToken)
       .withEnvVariable("CLOUDFLARE_ACCOUNT_ID", cloudflareAccountId)
-      .withEnvVariable("LIGHTHOUSE_API_KEY", lighthouseApiKey)
-      .withEnvVariable("GEIST_JWT_SECRET", geistJwtSecret)
       .withWorkdir("/app/apps/webapp")
 
     // Handle environment-specific deployment
@@ -235,13 +233,13 @@ export class GeistCi {
   }
 
   /**
-   * Deploy LiveStore sync worker
+   * Deploy Api worker & LiveStore sync worker
    */
   @func()
-  async deployLivestoreSync(
+  async deployCfWorker(
     source: Directory,
+    cloudflareAccountId: string,
     cloudflareApiToken: string,
-    cloudflareAccountId: string
   ): Promise<string> {
     const container = this.nodeContainer()
       .withDirectory("/app", source)
@@ -253,9 +251,54 @@ export class GeistCi {
       .withWorkdir("/app/packages/cf-worker/livestore-sync")
 
     return await container
-      .withExec(["wrangler", "deploy"])
+      .withExec(["pnpm", "run", "deploy"])
       .stdout()
   }
+  
+
+
+  /**
+   * Build livestore-sidecar Docker image
+   * 
+   * Seems cloudflare registry can only be pushed via wrangler publish, which requires docker process
+   * Dind creates extra complexity and we will run separately
+   * currently, as workaround use separate script to build and push with wrangler
+   */
+  // @func()
+  // async buildSidecarImage(source: Directory, tag = "latest"): Promise<string> {
+  //   // Create a temporary directory to copy files with symlinks resolved
+  //   const tempContainer = dag
+  //     .container()
+  //     .from("alpine:latest")
+  //     .withDirectory("/source", source)
+  //     .withWorkdir("/tmp")
+
+  //   // Copy sidecar files to temp directory, resolving symlinks
+  //   const copiedFiles = tempContainer
+  //     .withExec([
+  //       "cp", "-Lr",
+  //       "/source/packages/cf-worker/livestore-sidecar/",
+  //       "/tmp/sidecar/"
+  //     ])
+  //     .directory("/tmp/sidecar")
+
+  //   const uuid = crypto.randomUUID()
+  //   // Build and tag the Docker image with Cloudflare registry
+  //   const imageRef = `ttl.sh/${uuid}:2h`
+    
+
+  //   const container = dag
+  //     .container()
+  //     .build(copiedFiles, {
+  //       dockerfile: "Dockerfile"
+  //     })
+  //     .withLabel("org.opencontainers.image.title", imageRef)
+  //     .withLabel("org.opencontainers.image.description", "LiveStore sidecar for Geist Filecoin")
+  //     .publish(imageRef)
+
+  //   return await container
+  // }
+
 
   /**
    * Run health checks
