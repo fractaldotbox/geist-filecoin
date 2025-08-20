@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import type { DurableObjectId } from "cloudflare:workers";
 import { DurableObject } from "cloudflare:workers";
+import { Container, getContainer } from "@cloudflare/containers";
 import type { AccessPolicy, AuthInput } from "@geist-filecoin/auth";
 import { authorizeUcan } from "@geist-filecoin/auth";
 import {
@@ -73,6 +74,31 @@ export class Policies extends DurableObject<Env> {
 			`INSERT OR REPLACE INTO policies (policyId, criteriaType, criteria, access) VALUES ${values}
 			`,
 		);
+	}
+}
+
+export class LivestoreSidecar extends Container<Env> {
+	// Port the container listens on (default: 8080)
+	defaultPort = 8080;
+	// Time before container sleeps due to inactivity (default: 30s)
+	sleepAfter = "2m";
+	// Environment variables passed to the container
+	envVars = {
+		MESSAGE: "I was passed in via the container class!",
+	};
+
+	// Optional lifecycle hooks
+	override onStart() {
+		console.log("Container successfully started");
+		console.log("check container", this.ctx.storage);
+	}
+
+	override onStop() {
+		console.log("Container successfully shut down");
+	}
+
+	override onError(error: unknown) {
+		console.log("Container error:", error);
 	}
 }
 
@@ -167,6 +193,25 @@ export const authorizeJWT = async (
 
 	return token;
 };
+
+// Route requests to a specific container using the container ID
+router.get("/api/resources/entries", async (request: IRequest, env: any) => {
+	const id = request.params.id;
+	const containerId = env.LIVESTORE_SIDECAR.idFromName(`/container/${id}`);
+	const container = env.LIVESTORE_SIDECAR.get(containerId);
+
+	// can't pass hono based response to itty-router directly
+
+	// TODO
+	const results = await container.fetch(request);
+	const res = await results.json();
+
+	return new Response(JSON.stringify(res), {
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+});
 
 router.post("/api/upload", async (request: Request) => {
 	console.log("upload");

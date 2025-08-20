@@ -1,0 +1,62 @@
+{
+  // Worker configuration
+  "name": "geist-livestore-sync-worker",
+  "main": "../src/sync-worker.ts",
+  "compatibility_date": "2025-05-08",
+  "compatibility_flags": ["nodejs_compat"],
+  
+  // Secrets configuration
+  "secrets_store_secrets": [
+    {
+      "binding": "GEIST_SECRETS",
+      "store_id": "d2267c5ce2614745a2735d712daf194e",
+      "secret_name": "STORACHA_AGENT_KEY_STRING"
+    }
+  ],
+  
+  // KV namespaces
+  "kv_namespaces": [
+    {
+      "binding": "GEIST",
+      "id": "316261addb8c486c966b8a7913fce8ea",
+      "preview_id": "316261addb8c486c966b8a7913fce8ea"
+    }
+  ],
+
+
+  
+  // Environment variables
+  "vars": {
+    "LIVESTORE_CF_SYNC_DATABASE_ID": "9b7a07d6-88d6-4663-9dae-a3b1de63450c"
+  },
+  
+  // Durable Objects
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "WEBSOCKET_SERVER",
+        "class_name": "WebSocketServer"
+      }
+    ]
+  },
+  
+  // Migrations
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["WebSocketServer"]
+    }
+  ],
+  
+  // D1 Databases
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "geist-demo",
+      "database_id": "c7017400-232e-40dd-ad4a-5f84d4b6a6ec"
+    }
+  ],
+  "observability": {
+		"enabled": true
+	}
+}
