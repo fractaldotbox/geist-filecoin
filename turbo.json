@@ -42,6 +42,7 @@
 			"cache": false
 		}
 	},
+	"globalPassThroughEnv": ["CF_DOMAIN", "CF_JWT_TOKEN"],
 	"remoteCache": {
 		"signature": true
 	}
