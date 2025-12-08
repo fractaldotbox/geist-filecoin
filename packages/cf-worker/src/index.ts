@@ -145,7 +145,10 @@ const errorHandler = (error: Error, request: Request) => {
 const authMiddleware = async (request: IRequest, env: any) => {
 	const authHeader = request.headers.get("Authorization");
 	if (!authHeader || !authHeader.startsWith("Bearer ")) {
-		return json({ error: "Missing or invalid Authorization header" }, { status: 401 });
+		return json(
+			{ error: "Missing or invalid Authorization header" },
+			{ status: 401 },
+		);
 	}
 
 	const token = authHeader.substring(7); // Remove "Bearer "
@@ -245,11 +248,7 @@ export const loadStorachaSecrets = async (env: any) => {
 // better off separate 2 requests from very beginning
 
 router.post("/api/auth/ucan", async (request: Request, env: any) => {
-	const {
-		agentDid,
-		spaceId,
-		tokenType,
-	} = (await request.json()) as {
+	const { agentDid, spaceId, tokenType } = (await request.json()) as {
 		agentDid: `did:${string}`;
 		spaceId: string;
 		tokenType: string;
@@ -540,7 +539,10 @@ router.post("/api/auth/token", async (request: Request, env: any) => {
 	// In a real app, you'd have user authentication here
 	const { sub, name, email } = await request.json();
 	if (!sub || !name || !email) {
-		return json({ error: "Missing required user information (sub, name, email)" }, { status: 400 });
+		return json(
+			{ error: "Missing required user information (sub, name, email)" },
+			{ status: 400 },
+		);
 	}
 	const payload = {
 		sub,

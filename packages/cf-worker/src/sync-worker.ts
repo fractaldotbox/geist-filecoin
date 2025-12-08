@@ -1,11 +1,16 @@
 import { type ExecutionContext, WorkerEntrypoint } from "cloudflare:workers";
 import {
-	type Env,
+	type CfTypes,
 	makeDurableObject,
 	makeWorker,
 } from "@livestore/sync-cf/cf-worker";
 
-export class WebSocketServer extends makeDurableObject({
+// Define the environment type with the sync backend binding
+type Env = CfTypes.Env & {
+	SYNC_BACKEND_DO: CfTypes.DurableObjectNamespace;
+};
+
+export class SyncBackendDO extends makeDurableObject({
 	onPush: async (message) => {
 		console.log("onPush", message.batch);
 	},
@@ -14,26 +19,26 @@ export class WebSocketServer extends makeDurableObject({
 	},
 }) {}
 
-// Note AutoRouter not compatabile
-const syncWorker = makeWorker({
-	validatePayload: (payload: any) => {
-		if (payload?.authToken !== "insecure-token-change-me") {
+// Note AutoRouter not compatible
+const syncWorker = makeWorker<Env>({
+	syncBackendBinding: "SYNC_BACKEND_DO",
+	validatePayload: (payload: unknown) => {
+		if (
+			typeof payload !== "object" ||
+			payload === null ||
+			!("authToken" in payload) ||
+			payload.authToken !== "insecure-token-change-me"
+		) {
 			throw new Error("Invalid auth token");
 		}
 	},
 	enableCORS: true,
 });
 
-export class WorkerLiveStore extends WorkerEntrypoint {
+export class WorkerLiveStore extends WorkerEntrypoint<Env> {
 	// Currently, entrypoints without a named handler are not supported
 	async fetch(request: Request) {
-		return syncWorker.fetch(
-			request,
-			// @ts-expect-error
-			this.env as Env,
-			// @ts-expect-error
-			this.ctx as ExecutionContext,
-		);
+		return syncWorker.fetch(request, this.env, this.ctx as ExecutionContext);
 	}
 }
 
