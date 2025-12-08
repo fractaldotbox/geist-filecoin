@@ -61,7 +61,7 @@ export default defineConfig({
 						"@livestore/react",
 						"@livestore/adapter-web",
 						"@livestore/livestore",
-						"@livestore/sync-cf",
+						"@livestore/sync-cf/client",
 					],
 					"markdown-editor": ["react-markdown"],
 					"form-vendor": ["react-hook-form", "@hookform/resolvers", "zod"],

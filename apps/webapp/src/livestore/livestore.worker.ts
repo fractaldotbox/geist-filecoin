@@ -1,5 +1,5 @@
 import { makeWorker } from "@livestore/adapter-web/worker";
-import { makeCfSync } from "@livestore/sync-cf";
+import { makeWsSync } from "@livestore/sync-cf/client";
 
 import { schema } from "./schema.js";
 
@@ -13,7 +13,7 @@ declare global {
 makeWorker({
 	schema,
 	sync: {
-		backend: makeCfSync({
+		backend: makeWsSync({
 			url: import.meta.env.VITE_LIVESTORE_SYNC_URL || "http://localhost:8787",
 		}),
 		initialSyncOptions: { _tag: "Blocking", timeout: 5000 },

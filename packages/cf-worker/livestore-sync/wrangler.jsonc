@@ -3,7 +3,7 @@
   "name": "geist-livestore-sync-worker",
   "main": "../src/sync-worker.ts",
   "compatibility_date": "2025-05-08",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "enable_request_signal"],
   
   // Secrets configuration
   "secrets_store_secrets": [
@@ -34,17 +34,22 @@
   "durable_objects": {
     "bindings": [
       {
-        "name": "WEBSOCKET_SERVER",
-        "class_name": "WebSocketServer"
+        "name": "SYNC_BACKEND_DO",
+        "class_name": "SyncBackendDO"
       }
     ]
   },
-  
+
   // Migrations
   "migrations": [
     {
       "tag": "v1",
       "new_classes": ["WebSocketServer"]
+    },
+    {
+      "tag": "v2",
+      "deleted_classes": ["WebSocketServer"],
+      "new_sqlite_classes": ["SyncBackendDO"]
     }
   ],
   

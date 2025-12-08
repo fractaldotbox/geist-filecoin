@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { makeAdapter } from '@livestore/adapter-node';
 import { createStorePromise, Store } from '@livestore/livestore';
-import { makeCfSync } from '@livestore/sync-cf';
+import { makeWsSync } from '@livestore/sync-cf/client';
 import { serve } from '@hono/node-server'
 import { events, schema, tables } from './schema';
 
@@ -24,7 +24,7 @@ class StoreSingleton {
       const adapter = makeAdapter({
         storage: { type: 'in-memory' }, // Use in-memory storage for containers
         sync: {
-          backend: makeCfSync({
+          backend: makeWsSync({
             url: 'https://geist-livestore-sync-worker.debuggingfuturecors.workers.dev',
           }),
           initialSyncOptions: {
